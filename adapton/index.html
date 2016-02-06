@@ -1,0 +1,113 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Adapton: Composable, Demand-Driven Incremental Computation</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<div class="textcolumn">
+
+<h1><b>Adapton</b>: <br/>Composable, Demand-Driven Incremental Computation</h1>
+
+<a href="..">Matthew A. Hammer</a>,
+<a href="http://www.cs.umd.edu/~khooyp/">Yit Phang Khoo</a>,
+<a href="http://www.cs.umd.edu/~mwh/"> Michael Hicks</a>
+and
+<a href="http://www.cs.umd.edu/~jfoster/"> Jeffrey S. Foster</a>
+<br/>
+<i>Programming Language Design and Implementation</i>
+(<a href="http://conferences.inf.ed.ac.uk/pldi2014">PLDI 2014</a>).<br/> 
+Edinburgh, Scotland. June 2014.
+
+
+<h2>Resources</h2>
+<ul>
+
+<li>
+  Final draft of PLDI paper:
+  <a href="adapton-pldi2014.pdf">
+    adapton-pldi2014.pdf
+  </a>
+</li>
+
+<li>
+  Slides from PLDI talk:  
+  <a href="adapton-slides.pdf">
+  adapton-slides.pdf
+  </a>
+</li>  
+
+<li>
+  OCaml Implementation: 
+  <a href="https://bitbucket.org/khooyp/adapton.ocaml">
+    Bitbucket repository (mercurial)
+  </a>
+</li>
+
+<li>
+  Python Implementation: 
+  <a href="https://bitbucket.org/khooyp/adapton.python">
+    Bitbucket repository (mercurial)
+  </a>
+</li>
+
+</ul>
+
+<h2>Abstract</h2>
+
+<p>Many researchers have proposed programming languages that
+support <i>incremental computation</i> (IC), which allows programs to
+be efficiently re-executed after a small change to the input. However,
+existing implementations of such languages have two important
+drawbacks. First, recomputation is oblivious to specific demands on
+the program output; that is, if a program input changes, all
+dependencies will be recomputed, even if an observer no longer
+requires certain outputs. Second, programs are made incremental as a
+unit, with little or no support for reusing results outside of their
+original context, e.g., when reordered.</p> <p>To address these
+problems, we present λ<sub>ic</sub><sup>cdd</sup>, a core calculus
+that applies a <i>demand-driven</i> semantics to incremental
+computation, tracking changes in a hierarchical fashion in a
+novel <i>demanded computation graph</i>. λ<sub>ic</sub><sup>cdd</sup>
+also formalizes an explicit separation between inner, incremental
+computations and outer observers. This combination ensures
+λ<sub>ic</sub><sup>cdd</sup> programs only recompute computations as
+demanded by observers, and allows inner computations to be reused more
+liberally. We present Adapton, an OCaml library implementing
+λ<sub>ic</sub><sup>cdd</sup>. We evaluated Adapton on a range of
+benchmarks, and found that it provides reliable speedups, and in many
+cases dramatically outperforms state-of-the-art IC approaches.</p>
+<h2>Bibtex Entry</h2>
+
+<div class="lstbibtex">
+<pre>
+@inproceedings{Adapton2014,
+ author = {Hammer, Matthew A. and Phang, Khoo Yit and Hicks, Michael and Foster, Jeffrey S.},
+ title = {Adapton: Composable, Demand-driven Incremental Computation},
+ booktitle = {Proceedings of the 35th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+ series = {PLDI '14},
+ year = {2014},
+ isbn = {978-1-4503-2784-8},
+ location = {Edinburgh, United Kingdom},
+ pages = {156--166},
+ numpages = {11},
+ url = {http://doi.acm.org/10.1145/2594291.2594324},
+ doi = {10.1145/2594291.2594324},
+ acmid = {2594324},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+</pre>
+<div>
+
+
+</div>
+</div>
+
+</body>
+</html>

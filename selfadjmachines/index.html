@@ -1,0 +1,134 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=iso-8859-1" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Self-Adjusting Machines</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<div class="textcolumn">
+<h1>Self-Adjusting Machines</h1>
+<a href="..">Matthew A. Hammer</a>.</br>
+<i>Ph.D. Dissertation, University of Chicago</i>
+
+<h2>Abstract</h2>
+<p>
+In computer systems, the interaction of computations and data often
+causes incremental changes, not wholesale ones. 
+
+Hence, there exists the possibility of improving the efficiency of a
+system by recording and reusing computations, rather than blindly
+remaking them anew. 
+
+To this end, self-adjusting computation is a technique for
+systematically constructing computational structures that evolve
+efficiently and incrementally. 
+
+Past work has explored several facets of this programming
+language-based approach, but no prior formulations have given a
+low-level account of self-adjusting computation. 
+
+By low-level, we mean an account where machine resources are defined
+and managed explicitly, e.g., as in the C programming language.
+</p>
+<p>
+We offer self-adjusting machines, a concept based on an operational
+interpretation of self-adjusting computation with explicit machine
+resources. 
+
+By making their resources explicit, self-adjusting machines give an
+operational account of self-adjusting computation suitable for
+interoperation with low-level languages; via practical compilation and
+run- time techniques, these machines are programmable, sound and
+efficient.
+</p>
+<p>
+Abstractly, we formally define self-adjusting machines that run an
+intermediate language; we prove that this abstract machine semantics
+is sound. 
+
+Concretely, we give techniques based on this semantics that construct
+self-adjusting machines by compiling a C-like surface language into C
+target code that runs within an extensible, C-based run-time
+system. 
+
+By creating new programming abstractions, library programmers can
+extend this C-based system with new self-adjusting behavior. 
+
+We demonstrate that this extension framework is powerful by using it
+to express a variety of both new and old self-adjusting
+abstractions. 
+
+We give an empirical evaluation showing that our approach is efficient
+and well-suited for programming space and time-efficient
+self-adjusting computations.
+</p>
+
+<h2>Bibtex Entry</h2>
+
+<div class="lstbibtex">
+<pre>
+@phdthesis{Hammer2012,
+ author = "Matthew Arthur Hammer",
+ title = "Self-Adjusting Machines",
+ school = "Computer Science Department, University of Chicago",
+ year = 2012,
+ month = december,
+}
+</pre>
+<div>
+
+<h2>Dissertation and Slides</h2>
+<ul>
+
+<li>
+<a href="self-adjusting-machines--hammer2012-slides.pdf">Self-Adjusting Machines (Slides for defense)</a><br/>
+July 2012</br>
+</li>
+
+<li>
+<a href="self-adjusting-machines--hammer2012.pdf"> Self-Adjusting Machines (dissertation)</a>.<br/>
+December 2012<br/> 
+(uses the University of Chicago Dissertation Office formatting guidelines).
+</li>
+
+</ul>
+
+<h2>Code</h2>
+<ul>
+<li>
+Visit the wiki for information on the latest version:<br/>
+<a href="https://wiki.mpi-sws.org/pls/CEAL">
+https://ceal.mpi-sws.org
+</a>
+</li>
+</ul>
+
+<!-- <p> -->
+<!-- This is the "official version" published by the University of Chicago; -->
+<!-- it adheres to formatting guidelines required by the University that I -->
+<!-- dislike (see below for other versions). -->
+<!-- </p> -->
+<!-- </li> -->
+
+<!-- <li> -->
+<!-- <div class="alert">Coming soon in December 2012: A technical report -->
+<!--   with hyperlinks and more economical printing (smaller font, single -->
+<!--   space, etc.). </div> -->
+<!-- </li> -->
+<!-- </ul> -->
+<!-- </div> -->
+
+</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=iso-8859-1" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Self-Adjusting Stack Machines</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<h1>Self-Adjusting Stack Machines</h1>
+<a href="..">Matthew A. Hammer</a>,
+<a href="http://mpi-sws.org/~neis">Georg Neis</a>,
+<a href="http://mpi-sws.org/~chenyan">Yan Chen</a> and
+<a href="http://mpi-sws.org/~umut">Umut A. Acar</a>
+
+<h2>Abstract</h2>
+<div class="textcolumn">
+<p>
+Self-adjusting computation offers a language-based approach to writing
+programs that automatically respond to dynamically changing data.
+Recent work made significant progress in developing sound semantics
+and associated implementations of self-adjusting computation for
+high-level, functional languages. These techniques, however, do not
+address issues that arise for low-level languages, i.e., stack-based
+imperative languages that lack strong type systems and automatic
+memory management.
+</p>
+<p>
+In this paper, we describe techniques for self-adjusting computation
+which are suitable for low-level languages. Necessarily, we take a
+different approach than previous work: instead of starting with a
+high-level language with additional primitives to support
+self-adjusting computation, we start with a low-level intermediate
+language, whose semantics is given by a stack-based abstract machine.
+We prove that this semantics is sound: it always updates computations
+in a way that is consistent with full reevaluation. We give a compiler
+and runtime system for the intermediate language used by our abstract
+machine. We present an empirical evaluation that shows that our
+approach is efficient in practice, and performs favorably compared to
+prior proposals.
+</p>
+</div>
+
+<h2>Bibtex</h2>
+
+<div class="lstbibtex">
+<pre>
+@inproceedings{HammerNeChAc11-SAStackMachines,
+ author = "Matthew Hammer and Georg Neis and Yan Chen and Umut A. Acar",
+ title = "Self-Adjusting Stack Machines",
+ booktitle = {ACM SIGPLAN Conference on Object-Oriented Programming, Systems, Languages, and Applications (OOPSLA)},
+ year = 2011
+}
+</pre>
+<div>
+
+<h2>Paper</h2> 
+<ul>
+<li> 
+The <a href="oopsla2011.pdf">OOPSLA 2011 paper</a>
+</li>
+
+<li>
+<div class="textcolumn">
+The accompanying <a href="http://arxiv.org/abs/1108.3265">technical
+report</a> contains complete proofs, as well as some additional
+subsections that didn't fit into the conference version.
+</div>
+</li>
+</ul>
+
+
+<h2>Resources</h2>
+
+<ul>    
+  <li>Visit the wiki:
+
+  <a href="https://wiki.mpi-sws.org/pls/CEAL">
+  https://wiki.mpi-sws.org/pls/CEAL
+  </a>  
+  </li>
+
+  <li><a href="slides.pdf">Slides for the OOPSLA 2011 talk</a>.</li>
+
+  <li>Download the code:  
+  <a href="https://github.com/matthewhammer/ceal">
+  https://github.com/matthewhammer/ceal
+  </a>  
+  </li>
+</ul>
+
+</div>
+</body>
+</html>

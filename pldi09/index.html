@@ -1,0 +1,111 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=iso-8859-1" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>CEAL: A C-Based Language for Self-Adjusting Computation</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<h1>CEAL: A C-Based Language for Self-Adjusting Computation</h1>
+<a href="..">Matthew A. Hammer</a>,
+<a href="http://ttic.uchicago.edu/~umut">Umut A. Acar</a> and
+<a href="http://ttic.uchicago.edu/~chenyan">Yan Chen</a>
+
+<div class="textcolumn">
+<h2>Abstract</h2>
+<p>
+ Self-adjusting computation offers a language-centric approach to
+ writing programs that can automatically respond to modifications to
+ their data (e.g., inputs).  Except for several domain-specific
+ implementations, however, all previous implementations of
+ self-adjusting computation assume mostly functional, higher-order
+ languages such as Standard ML.  Prior to this work, it was not known
+ if self-adjusting computation can be made to work with low-level,
+ imperative languages such as C without placing undue burden on the
+ programmer.
+</p>
+<p>
+ We describe the design and implementation of CEAL: a C-based language
+ for self-adjusting computation.  The language is fully general and
+ extends C with a small number of primitives to enable writing
+ self-adjusting programs in a style similar to conventional C
+ programs.  We present efficient compilation techniques for
+ translating CEAL programs into C that can be compiled with existing C
+ compilers using primitives supplied by a run-time library for
+ self-adjusting computation.  We implement the proposed compiler and
+ evaluate its effectiveness.  Our experiments show that CEAL is
+ effective in practice: compiled self-adjusting programs respond to
+ small modifications to their data by orders of magnitude faster than
+ recomputing from scratch while slowing down a from-scratch run by a
+ moderate constant factor.  Compared to previous work, we measure
+ significant space and time improvements.
+</p>
+
+<h2>Bibtex Entry</h2>
+
+<pre>
+@inproceedings{HammerAcCh09-CEAL,
+  author = "Matthew A. Hammer and Umut A. Acar and Yan Chen",
+  title = "{CEAL}: a {C}-Based Language for Self-Adjusting Computation",
+  booktitle = "ACM SIGPLAN Conference on Programming Language Design and Implementation",
+  year = 2009
+}
+</pre>
+
+<h2>Paper and Slides</h2> 
+
+<ul>
+<li> 
+The <a href="pldi09.pdf">PLDI 2009 paper</a>
+(<a href="pldi09.ps">PostScript</a>)
+</li>
+
+<li>
+The <a href="pldi09-talk.pdf">slides</a> from my talk.
+</li>
+
+<li>
+The accompanying <a href="ttic-tr-2009-2.pdf">technical
+report (PDF)</a>.
+</li>
+
+</ul>
+
+<h2>Code</h2>
+
+  Visit the wiki for information on the latest version:<br/>
+  <a href="https://wiki.mpi-sws.org/pls/CEAL">
+  https://ceal.mpi-sws.org
+  </a>
+
+<div class="alert">
+
+  <b>Note</b>: The code provided below is no longer maintained,
+  though we still provide it here for posterity purposes.
+  
+  This code has been subsumed by a new implementation, whose
+  design is different in several ways.  We describe this new approach
+  in our <a href="../oopsla11">OOPSLA 2011 paper</a>, and document it
+  online at <a href="https://wiki.mpi-sws.org/pls/CEAL">
+  https://ceal.mpi-sws.org</a>
+
+</div>
+
+
+<ul>
+<li><a href="manual">The manual</a> (the current draft, online) </li>
+<li>The code: <a href="ceal-0.1.1.tar.gz">ceal-0.1.1.tar.gz</a></li>
+</ul>
+
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Implicit Self-Adjusting Computation for Purely Functional Programs</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<h1>Implicit Self-Adjusting Computation for Purely Functional Programs</h1>
+<a href="http://mpi-sws.org/~chenyan/">Yan Chen</a>,
+<a href="http://mpi-sws.org/~joshua/">Joshua Dunfield</a>,
+<a href="..">Matthew A. Hammer</a> and
+<a href="http://ttic.uchicago.edu/~umut">Umut A. Acar</a>
+
+<div class="textcolumn">
+<h2>Abstract</h2>
+<p>
+Computational problems that involve dynamic data, such as physics
+simulations and program development environments, have been an
+important subject of study in programming languages. Building on this
+work, recent advances in self-adjusting computation have developed
+techniques that enable programs to respond automatically and
+efficiently to dynamic changes in their inputs. Self-adjusting
+programs have been shown to be efficient for a reasonably broad range
+of problems but the approach still requires an explicit programming
+style, where the programmer must use specific monadic types and
+primitives to identify, create and operate on data that can change
+over time.
+</p>
+<p>
+We describe techniques for automatically translating purely functional
+programs into self-adjusting programs. In this implicit approach, the
+programmer need only annotate the (top-level) input types of the
+programs to be translated. Type inference finds all other types, and a
+type-directed translation rewrites the source program into an
+explicitly self-adjusting target program. The type system is related
+to information-flow type systems and enjoys decidable type inference
+via constraint solving. We prove that the translation outputs
+well-typed self-adjusting programs and preserves the source program’s
+input-output behavior, guaranteeing that translated programs respond
+correctly to all changes to their data. Using a cost semantics, we
+also prove that the translation preserves the asymptotic complexity of
+the source program.
+</p>
+</div>
+
+<h2>Bibtex Entry</h2>
+
+<div class="lstbibtex">
+<pre>
+@InProceedings{Chen11:implicit,
+  author =     {Yan Chen and Joshua Dunfield and Matthew A. Hammer and Umut A. Acar},
+  title =      {Implicit Self-Adjusting Computation for Purely Functional Programs},
+  booktitle =  {International Conference on Functional Programming},
+  year =       {2011},
+  month =      sep,
+  pages =      {129--141}
+}
+</pre>
+<div>
+
+<h2>Paper</h2> 
+<ul>
+<li> 
+The <a href="ChenDuHaAc2011-implicit-SAC.pdf">ICFP 2011 paper + Additional appendix</a>
+</li>
+
+<li>
+The <a href="implicitSAC-talk.pdf">slides</a> from Yan Chen's talk.
+</li>
+</ul>
+
+</body>
+</html>

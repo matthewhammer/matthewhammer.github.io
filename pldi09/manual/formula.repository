@@ -1,0 +1,8 @@
+\form#0:\[x_1, x_2, ...\]
+\form#1:$x_1, x_2, ...$
+\form#2:$(x_1), f(x_2),...$
+\form#3:$f$
+\form#4:$f(x_1), f(x_2),...$
+\form#5:$f(x_1), f(x_2),\ldots$
+\form#6:$x_1, x_2, \ldots, x_n$
+\form#7:$f(x_1), f(x_2),\ldots, f(x_n)$

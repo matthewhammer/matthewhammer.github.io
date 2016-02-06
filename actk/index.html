@@ -1,0 +1,86 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=iso-8859-1" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Memory Management for Self-Adjusting Computation</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<h1>Memory Management for Self-Adjusting Computation</h1>
+<a href="..">Matthew A. Hammer</a> and 
+<a href="http://ttic.uchicago.edu/~umut">Umut A. Acar</a>
+
+<h2>Abstract</h2>
+<p>
+The cost of reclaiming space with traversal-based garbage collection
+is inversely proportional to the amount of free memory, i.e.,
+<i>O(1/(1-f))</i>, where <i>f</i> is the fraction of memory that is
+live.  Consequently, the cost of garbage collection can be very high
+when the size of the live data remains large relative to the available
+free space.  Intuitively, this is because allocating a small amount of
+memory space will require the garbage collector to traverse a
+significant fraction of the memory only to discover little garbage.
+This is unfortunate because in some application domains the size of
+the memory-resident data can be generally high.  This can cause high
+GC overheads, especially when generational assumptions do not hold.
+One such application domain is self-adjusting computation, where
+computations use memory-resident execution traces in order to respond
+to changes to their state (e.g., inputs) efficiently.
+</p>
+<p>
+This paper proposes memory-management techniques for self-adjusting
+computation that remain efficient even when the size of the live data
+is large.  More precisely, the proposed techniques guarantee
+<i>O(1)</i> amortized cost for each reclaimed memory object.  We
+propose a set of primitives for self-adjusting computation that
+support the proposed memory management techniques.  The primitives
+provide an operation for allocating memory; we reclaim unused memory
+automatically.
+</p>
+<p>
+We implement a library for supporting the primitives in the C language
+and perform an experimental evaluation.  Our experiments show that the
+approach can be implemented with reasonably small constant-factor
+overheads and that the programs written using the library behave
+optimally.  Compared to previous implementations, we measure up to an
+order of magnitude improvement in performance and up to a 75%
+reduction in space usage.
+</p>
+
+<h2>Paper</h2> 
+<p>Available as <a href="ismm08.pdf">PDF</a>.</p>  
+
+<p>It was presented at the <a
+href="http://www.cs.kent.ac.uk/~rej/ismm2008"> International Symposium
+for Memory Management (ISMM) 2008</a> on June 7<sup>th</sup> in Tuscon
+Arizona.  The <a href="ismm08-slides.pdf">slides</a> from the talk are
+also available.</p>
+
+<h2>Code</h2>
+<p>
+The paper describes an implementation that we call <b>ACTK</b>
+(Self-<b>A</b>djusting <b>C</b>omputation <b>T</b>ool<b>K</b>it), for
+lack of a better name.
+
+ACTK is a C library that allows users to embed self-adjusting
+computations within their C programs.  It features efficient memory
+management techniques for these computations including automatic reuse
+and reclamation.
+</p>
+
+<p>
+ACTK is available for <a href="actk-devel.tgz">download</a>.  The code
+is licensed under the <a href="http://www.gnu.org/licenses/gpl.txt">GPL</a>.
+</p>
+
+</div>
+</body>
+</html>

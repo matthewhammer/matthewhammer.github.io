@@ -1,0 +1,82 @@
+<html>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=iso-8859-1" />
+  <meta name="author" content="Matthew Hammer" />
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
+  <link rel="shortcut icon"
+        href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Knowledge Inference for Optimizing Secure Multi-party Computation</title>
+</head>
+<body>
+<div class="pagecontent">
+
+<h1>Knowledge Inference for Optimizing Secure Multi-party Computation</h1>
+
+<b>Aseem Rastogi, Piotr Mardziel, Michael Hicks and Matthew A. Hammer</b><br/>
+
+<i>In Proceedings of the ACM SIGPLAN Workshop on Programming Languages
+  and Analysis for Security (PLAS), June 2013</i><br/>
+
+<div class="textcolumn">
+<h2>Abstract</h2>
+
+<p>
+In secure multi-party computation, mutually distrusting parties
+cooperatively compute functions of their private data; in the process,
+they only learn certain results as per the protocol (e.g., the final
+output). The realization of these protocols uses cryptographic
+techniques to avoid leaking information between the parties. A
+protocol for a secure computation can sometimes be optimized without
+changing its security guarantee: when the parties can use their
+private data and the revealed output to infer the values of other
+data, then this other data need not be concealed from them via
+cryptography.
+</p>
+<p>
+In the context of automatically optimizing secure multi-party
+computation, we define two related problems, knowledge inference and
+constructive knowledge inference. In both problems, we attempt to
+automatically discover when and if intermediate variables used in a
+protocol will (eventually) be known to the parties involved in the
+computation. Provably-known variables offer optimization
+opportunities.
+</p>
+<p>
+We formally state the problem of knowledge inference (and its
+constructive variant); we describe our solutions, which are built atop
+existing, standard technology such as SMT solvers. We show that our
+approach is sound, and further, we characterize the completeness
+properties enjoyed by our approach. We have implemented our approach,
+and present a preliminary experimental evaluation.
+</p>
+
+<h2>Bibtex Entry</h2>
+<div class="lstbibtex">
+<pre>
+@INPROCEEDINGS{rastogi13knowledge,
+  AUTHOR = {Aseem Rastogi and Piotr Mardziel and Michael Hicks and Matthew A. Hammer},
+  TITLE = {Knowledge Inference for Optimizing Secure Multi-party Computation},
+  BOOKTITLE = {Proceedings of the {ACM SIGPLAN} Workshop on Programming Languages and Analysis for Security (PLAS)},
+  MONTH = JUN,
+  YEAR = 2013
+}
+</pre>
+</div>
+
+<h2>Paper</h2>
+<ul>
+<li>
+As a
+<a href="./RastogiMaMiHa2013-SMC-Knowledge.pdf">PDF</a> 
+</li>
+</ul>
+
+
+</div>
+</div>
+</body>
+</html>
