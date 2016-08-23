@@ -1,0 +1,362 @@
+\documentclass[11pt]{article}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage{amsmath,proof,amsthm,amssymb,color}
+\usepackage{ifthen}
+\usepackage{hyperref}
+%\usepackage{code}
+
+\newcounter{taskcounter}
+\newcounter{taskPercentCounter}
+\newcounter{taskcounterSection}
+\setcounter{taskcounter}{1}
+\setcounter{taskPercentCounter}{0}
+\setcounter{taskcounterSection}{\value{section}}
+\newcommand{\mayresettaskcounter}{\ifthenelse{\value{taskcounterSection} < \value{section}}
+{\setcounter{taskcounterSection}{\value{section}}\setcounter{taskcounter}{1}}
+{}}
+
+\newcommand{\ttt}[1]{\texttt{#1}}
+
+%% part of a problem
+\newcommand{\task}[1]
+  {\bigskip \noindent {\bf Task\mayresettaskcounter{}\addtocounter{taskPercentCounter}{#1} \arabic{section}.\arabic{taskcounter}\addtocounter{taskcounter}{1}} (#1 pts).}
+
+\newcommand{\ectask}
+  {\bigskip \noindent {\bf Task\mayresettaskcounter{} \arabic{section}.\arabic{taskcounter}\addtocounter{taskcounter}{1}} (Extra Credit).}
+
+%% The rule counter
+\newcounter{rule}
+\setcounter{rule}{0}
+\newcommand{\rn}
+  {\addtocounter{rule}{1}(\arabic{rule})}
+
+%% Set to "false" to generate the problem set, set to "true" to generate the solution set
+\def\issolution{false}
+
+\newcommand{\problemset}[1]
+  {\ifthenelse{\equal{\issolution}{true}}
+  {}{{#1}}}
+
+% Solution-only - uses an "input" so that it's still safe to publish the problem set file
+\definecolor{solutioncolor}{rgb}{0.0, 0.0, 0.5}
+\newcommand{\solution}[1]
+  {\ifthenelse{\equal{\issolution}{true}}
+  {\begin{quote}
+    \addtocounter{taskcounter}{-1}
+    \fbox{\textcolor{solutioncolor}{\bf Solution \arabic{section}.\arabic{taskcounter}}}
+    \addtocounter{taskcounter}{1}
+    \textcolor{solutioncolor}{\input{solutions/#1}}
+  \end{quote}}
+  {}}
+
+\newcommand{\ms}[1]{\ensuremath{\mathsf{#1}}}
+\newcommand{\irl}[1]{\texttt{#1}}
+
+\title{Assignment 0: \\
+       Rule Induction}
+\author{15-312: Principles of Programming Languages}
+\date{Out: Tuesday, January 12th, 2016 \\
+      Due: Tuesday, January 19nd, 2016, 11:59pm}
+
+\begin{document}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\maketitle
+Welcome to 15-312!  First things first.  We will be using Piazza for all class communications.  If you have already received a welcome e-mail, there is nothing more you need to do.  If not, please subscribe post-haste at
+\url{https://piazza.com/class#spring2016/15312}.
+
+Go to the course web page to understand the whiteboard policy for collaboration regarding the homework assignments, the late policy regarding timeliness of homework submissions, and the use of Piazza.
+
+Homework will typically consist of a theoretical section and an implementation section.  For the first assignment, there is only the theoretical section.  You are required to typeset your answers; see the course Web page for some guidance.
+
+In this first assignment we are asking you to practice proving theorems by rule induction.  You
+may find this assignment difficult.    Start early, and ask us for
+help if you get stuck!  In particular, you are encouraged to ask the
+TAs for help over Piazza, and/or come to office hours.
+
+Remember to submit early via autolab.
+
+
+\section{Course Mechanics}
+
+The purpose of this question is to ensure that you get familiar with
+this course's collaboration policy.
+
+As in any class, you are responsible for following our collaboration
+policy; violations will be handled according to university policy.
+
+\task{4} Our course's collaboration policy is on the course's Web
+site.  Read it; then, for each of the following situations, decide
+whether or not the students' actions are permitted by the policy.
+Explain your answers.
+\begin{enumerate}
+\item Dolores and Toby are discussing Problem 3 by IM.  Meanwhile, Toby
+  is writing up his solution to that problem.
+\solution{policy1}
+
+\item Amy, Jeff, and Chris split a pizza while talking about their homework,
+  and by the end of lunch, their pizza box is covered with notes and
+  solutions. Chris throws out the pizza box and the three go to class.
+\solution{policy2}
+
+\item Ian and Jeremy write out a solution to Problem 4 on a whiteboard
+  in Newell-Simon Hall.  Then, they erase the whiteboard and run to the
+  atrium. Sitting at separate tables, each student types up the solution
+  on his laptop.
+\solution{policy3}
+
+\item Nitin and Margaret are working on this homework over lunch; they
+  write out a solution to Problem 2 on a napkin.  After lunch, Nitin
+  pockets the napkin, heads home, and writes up his solution.
+\solution{policy4}
+\end{enumerate}
+
+\newcommand{\heart}{\ensuremath{\heartsuit}}
+\newcommand{\spade}{\ensuremath{\spadesuit}}
+\newcommand{\club}{\ensuremath{\clubsuit}}
+\newcommand{\dia}{\ensuremath{\diamondsuit}}
+\newcommand{\card}[1]{\ensuremath{#1 \, \ms{card}}}
+
+\newcommand{\deck}[1]{\ensuremath{#1 \, \ms{deck}}}
+\newcommand{\emp}[0]{\ensuremath{\ms{nil}}}
+\newcommand{\cons}[2]{\ensuremath{\ms{cons}(#1, #2)}}
+\newcommand{\unshuff}[3]{\ensuremath{\ms{unshuffle}(#1, #2, #3)}}
+\newcommand{\cut}[3]{\ensuremath{\ms{cut}(#1, #2, #3)}}
+\newcommand{\edeck}[1]{\ensuremath{#1 \, \ms{even}}}
+\newcommand{\odeck}[1]{\ensuremath{#1 \, \ms{odd}}}
+\section{Shuffling cards}
+
+For this assignment, we will play with cards. Rather than the standard 52 different cards, we will define four different cards, one for each suit. We model a deck of cards as a list.
+
+\[
+\infer[\rn]{\card{\heart}}{} \qquad
+\infer[\rn]{\card{\spade}}{} \qquad
+\infer[\rn]{\card{\club}}{} \qquad
+\infer[\rn]{\card{\dia}}{}
+\]
+
+\[
+\infer[\rn]{\deck{\emp}}{}
+\qquad
+\infer[\rn]{\deck{\cons{c}{s}}}{\card{c} \quad \deck{s}}
+\]
+
+These rules are an iterated inductive definition for a deck of cards; these rules lead to the following induction principle:
+
+\begin{quote}
+In order to show $\mathcal{P}(s)$ whenever \deck{s}, it is enough to show
+
+\begin{enumerate}
+\item $\mathcal{P}(\emp)$
+\item $\mathcal{P}(\cons{c}{s})$ assuming \card{c} and $\mathcal{P}(s)$
+\end{enumerate}
+\end{quote}
+
+We also want to define an judgment \ensuremath{\ms{unshuffle}}. Shuffling takes two decks of cards and creates a new deck of cards by interleaving the two decks in some way; un-shuffling is just the opposite operation.
+
+The definition of \unshuff{s_1}{s_2}{s_3} defines a relation between three decks of cards $s_1$, $s_2$, and $s_3$, where $s_2$ and $s_3$ are arbitrary ``unshufflings'' of the first deck -- sub-decks where the order from the original deck is preserved, so that the two sub-decks $s_2$ and $s_3$ could potentially be shuffled back to produce the original deck $s_1$.
+
+\[
+\infer[\rn]{\unshuff{\emp}{\emp}{\emp}}{}
+\qquad
+\infer[\rn]{\unshuff{\cons{c}{s_1}}{s_2}{\cons{c}{s_3}}}{\card{c} \quad \unshuff{s_1}{s_2}{s_3}}
+\]
+
+\[
+\infer[\rn]{\unshuff{\cons{c}{s_1}}{\cons{c}{s_2}}{s_3}}{\card{c} \quad \unshuff{s_1}{s_2}{s_3}}
+\]
+\\
+
+\task{5} Prove the following (by giving a derivation).  There are at least two ways to do so.
+
+\[\unshuff
+{\cons{\heart}{\cons{\spade}{\cons{\spade}{\cons{\dia}{\emp}}}}}
+{\;\; \cons{\spade}{\cons{\dia}{\emp}}}
+{\;\; \cons{\heart}{\cons{\spade}{\emp}}}
+\]
+
+\task{5} What was the other way? (describe briefly, or just give the other derivation)
+\solution{derivation}
+
+\task{10} Prove that $\ms{unshuffle}$ has the following property:
+
+\begin{quote}
+For all $s_1$, if $\deck{s_1}$, then there exists $s_2$ and $s_3$ such that $\unshuff{s_1}{s_2}{s_3}$.
+\end{quote}
+
+Note that there are a number of different ways of proving this! What
+the $s_2$ and $s_3$ ``look like'' may be very different depending on
+how you write the proof. Restate any induction principle you use, and
+identify what property $P$ you are proving with that induction
+principle.  \solution{unshufflemode}
+
+\task{10} Give an inductive definition of $\ms{separate}$, a judgment
+similar to \ensuremath{\ms{unshuffle}} that relates a deck of cards
+to two ``un-shuffled'' sub decks where all of the red cards (suits
+$\dia$ and $\heart$) are in one deck and all the black cards (suits
+$\club$ and $\spade$) are in the other. The following should be
+provable from your inductive definition:
+\newcommand{\separate}[3]{\ensuremath{\ms{separate}(#1, #2, #3)}}
+\[\begin{array}{c}
+\separate{\cons{\heart}{\cons{\dia}{\cons{\spade}{\emp}}}}
+  {\;\; \cons{\heart}{\cons{\dia}{\emp}}}
+  {\;\; \cons{\spade}{\emp}}\\
+\separate{\cons{\spade}{\cons{\dia}{\cons{\club}{\cons{\heart}{\emp}}}}}
+  {\;\; \cons{\dia}{\cons{\heart}{\emp}}}
+  {\;\; \cons{\spade}{\cons{\club}{\emp}}}\\
+\separate{\cons{\club}{\cons{\heart}{\cons{\club}{\cons{\spade}{\emp}}}}}
+  {\;\; \cons{\heart}{\emp}}
+  {\;\; \cons{\club}{\cons{\club}{\cons{\spade}{\emp}}}}\\
+\end{array}\]
+
+However \separate{\cons{\heart}{\cons{\spade}{\emp}}}{\cons{\heart}{\cons{\spade}{\emp}}}{\emp} should
+{\bf not} be provable from your definition, because the deck in the second position has both a red and a black card.
+
+Similarly, \separate{\cons{\heart}{\cons{\dia}{\emp}}}{\cons{\dia}{\cons{\heart}{\emp}}}{\emp} should not be provable from your definitions, because ordering is not preserved.
+\solution{separate}
+
+\task{5} Hopefully, your definition of $\ms{separate}$ will have a
+similar property to $\ms{unshuffle}$. That is, for any $\ms{s1}$ there
+exists $\ms{s2}$ and $\ms{s3}$ so that $\separate{s1}{s2}{s3}$
+holds. However, it should satisfy a stronger property: for any
+$\ms{s1}$ the corresponding $\ms{s2}$ and $\ms{s3}$ should be
+unique. Argue why this is the case. Why does $\ms{unshuffle}$
+\emph{not} have this property?
+\solution{existsunique}
+
+\section{Cutting cards}
+
+For this part of the assignment we will define, using simultaneous inductive definition, decks of cards with even or odd numbers of cards in them.
+
+\[
+\infer[\rn]{\edeck{\emp}}{}
+\qquad
+\infer[\rn]{\edeck{\cons{c}{s}}}
+{\card{c} \quad \odeck{s}}
+\qquad
+\infer[\rn]{\odeck{\cons{c}{s}}}
+{\card{c} \quad \edeck{s}}
+\]
+
+This inductive definition is \emph{simultaneous} (because it simultaneously defines {\sf even} and {\sf odd}) as well as \emph{iterated} (because it relies on the previously-defined definition of {\sf card}).
+
+\task{6} What is the induction principle for these judgments? You may want to examine the induction
+principle for {\sf even} and {\sf odd} natural numbers from PFPL.
+\solution{inductionp}
+
+
+\task{15} Prove well-formedness for the {\sf even} judgment. That is, prove
+``For all $s$, if \edeck{s} then \deck{s}."
+
+You should use the induction principle from the previous task. Again, be sure to identify what property or properties you are proving with that induction principle.
+\solution{wellformed}
+
+\task{10} Prove the following theorem:
+
+\begin{quote}
+For all $S$, if
+\begin{enumerate}
+\item $S(\emp)$.
+\item For all $c_1$, $c_2$, and $s$, if \card{c_1}, \card{c_2}, and $S(s)$, then $S(\cons{c_1}{\cons{c_2}{s}})$.
+\end{enumerate}
+then for all $s$, if \edeck{s} then $S(s)$.
+\end{quote}
+
+You will want to use the induction principle mentioned above in order to prove this; as always,
+remember to carefully consider and state the induction hypothesis you are using.
+
+Note: this is a difficult proof, because the induction hypothesis is not immediately obvious. Here's a hint: because you are dealing with a simultaneous inductive definition, the induction hypothesis will have two parts. In our solution, the induction hypothesis pertaining to even-sized decks is ``$S(s)$," and the one pertaining to odd-size decks is ``For all $c'$, if \card{c'} then $S(\cons{c'}{s})$."
+
+\solution{derivedinduction}
+
+Proving this statement justifies a new induction principle, a  \emph{derived induction principle}:
+
+\begin{quote}
+To show that $\mathcal{S}(s)$ whenever $\edeck{s}$, it is enough to show
+\begin{itemize}
+\item $\mathcal{S}(\emp)$
+\item $\mathcal{S}(\cons{c_1}{\cons{c_2}{s}})$, assuming \card{c_1}, \card{c_2}, and $\mathcal{S}(s)$
+\end{itemize}
+\end{quote}
+
+\task{15} Another ``operation'' on cards is \emph{cutting}, where a player separates a single deck of cards into two decks of cards by removing some number of cards from the top of the deck. We can define cutting cards using an inductive definition.
+
+\[
+\infer[\rn]{\cut{s}{s}{\emp}}{\deck{s}}
+\qquad
+\infer[\rn]{\cut{\cons{c}{s_1}}{s_2}{\cons{c}{s_3}}}
+{\card{c} \quad \cut{s_1}{s_2}{s_3}}
+\]
+
+\noindent
+Using the derived induction principle from the previous task (you can use the induction principle from the previous task even if you do not do the previous task!), prove the following:
+
+\begin{quote}
+For all $s_1$, $s_2$, $s_3$, if \edeck{s_2}, \edeck{s_3}, and \cut{s_1}{s_2}{s_3}, then \edeck{s_1}.
+\end{quote}
+
+You are allowed to assume the following lemmas:
+
+\begin{itemize}
+\item {\bf Inversion for {\sf nil}:} For all $s_1$ and $s_2$, if \cut{s_1}{s_2}{\emp}, then $s_1 = s_2$ and \deck{s_1}.
+\item {\bf Inversion for {\sf cons}:} For all $s_1$, $s_2$, and $s_3$, if \cut{s_1}{s_2}{\cons{c}{s_3}}, then there exists a $s_1'$ such that $s_1 = \cons{c}{s_1'}$, \card{c}, and \cut{s_1'}{s_2}{s_3}.
+\end{itemize}
+\solution{cutting}
+
+\newcommand{\old}[1]{\ensuremath{\ms{old(c_1.c_2.#1)}}}
+\newcommand{\olddeck}[1]{\ensuremath{#1 \,\ \ms{old\ deck}}}
+\newcommand{\fix}[4]{\ensuremath{#1 \ #2 \ #3 \ #4 \ \ms{fix}}}
+\newcommand{\remove}[4]{\ensuremath{#1 \ #2 \ #3 \ #4 \ \ms{remove}}}
+\section{Missing Cards}
+
+For the final part of the assignment we will define a way of modelling
+a deck that is \emph{missing} several cards using generic and
+hypothetical judgments. Consider the following operator $\old{\_}$. It
+takes a single argument which binds two terms. We have a new judgment
+$\olddeck{x}$ which will be used to define what it means to be an old
+deck.
+
+\[
+   \infer{\olddeck{\old{d}}}
+         {\mid_{c_1,\ c_2}\ \card{c_1}, \, \card{c_2} \vdash \deck{d}}
+\]
+
+With this rule, we stipulate that something is an old deck if for
+whatever pair of cards we choose to insert into $d$ the result is a
+valid deck.
+
+\task{5} Define (only!) one inference rule for the judgment
+$\fix{od}{c_1}{c_2}{d}$ which takes an old deck and two cards and
+``fixes'' the old deck by inserting the two new cards into the slots
+left by the missing cards producing a normal deck $d$.
+
+\task{5} Define one inference rule for the judgment
+$\remove{d}{c_1}{c_2}{od}$ so that if $d$ is a deck with two cards then
+$od$ is the old deck version of $d$ with $c_1$ and $c_2$ removed. For
+simplicity (and the next task) ensure that $c_1$ and $c_2$ are the top
+two items on $d$.
+
+\task{5} Assuming that you have completed the previous two tasks, you
+may now justify that you have done so correctly by proving that they
+are inverses of sorts. That is prove
+
+\begin{quote}
+  For all $d$, $c_1$, $c_2$, and $od$ so $\card{c_1}$, $\card{c_2}$,
+  $\deck{d}$ and $\olddeck{od}$ holds, then if
+  \[\remove{\cons{c_1}{\cons{c_2}{d}}}{c_1}{c_2}{od}\] holds,
+  so does \[\fix{od}{c_1}{c_2}{\cons{c_1}{\cons{c_2}{d}}}\]
+\end{quote}
+
+Hint: be sure to use induction on $\remove{X}{Y}{W}{Z}$! This will
+tell you enough about the structure of all the different arguments to
+the judgment to prove the claim.
+
+\solution{missing}
+
+\ifthenelse{\value{taskPercentCounter} = 100}{\typeout{Good: The points adds to 100.}}{\typeout{Warning: THE POINTS ADDS UP TO
+\arabic{taskPercentCounter} WHICH IS NOT 100. You probably want to
+correct the points.}}
+
+\end{document}
