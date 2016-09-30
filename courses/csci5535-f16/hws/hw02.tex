@@ -6,6 +6,7 @@
 \usepackage{ifthen}
 \usepackage{graphics}
 \usepackage{xspace}
+\usepackage{hyperref}
 %\usepackage{mathpartir}
 
 %% Question macros
@@ -135,7 +136,7 @@ these steps, but you make a mistake, you may still receive some partial credit, 
 
 \paragraph{Hint:}
 If you are unsure about how to structure these proofs to receive full credit, 
-\textbf{please refer to the HW \#1 Solution} as a reference and guide.
+\textbf{please refer to the HW \#1 Solution} on Moodle as a reference and guide.
 
 \paragraph{Note on omitting redundant proof cases:} In the proofs below, some cases are very
 similar to other cases, e.g., the cases for \texttt{plus} and
@@ -171,11 +172,11 @@ steps apply in the proof.  \textbf{When in doubt, do not omit the
 
 \paragraph{\underline{Hint (repeated again, for emphasis)}:}
 If you are unsure about how to structure these proofs to receive full credit, 
-\textbf{please refer to the HW \#1 Solution} as a reference and guide.
+\textbf{please refer to the HW \#1 Solution} on Moodle as a reference and guide.
 
-\task{30} Implement the theory of Language~\T in OCaml, along with tests.
+\task{25} Implement the theory of Language~\T in OCaml, along with tests.
 
-\task{30} Extend the theory of Language~\T with Pairs and Sums.  Include additional tests.
+\task{25} Extend the theory of Language~\T with Pairs and Sums.  Include additional tests.
 
 \paragraph{How to implement a Language Theory:}
 When we say ``implement Language $X$ in OCaml'', we mean precisely the
@@ -235,6 +236,52 @@ they are the same.  }
 (``Interesting'' means that you attempt to cover different execution paths of your implementation with each test).
 %
 
-\end{enumerate}
+\task{10} Start thinking about a class project.  Choose a partner, or
+email the instructor if you would like to be (randomly assigned) with
+others that want a random partner.  You may also work alone, if you
+wish; people working in pairs must do more work than an individual
+working alone.  Review the syllabus for detailed information about the
+class project.
 
+Recall, there are many possible class project options; here are a few ideas:
+
+\begin{itemize}
+\item \textbf{Functional implementation:}
+  Consider an algorithm or system that seems interesting to you.
+  Can you write this algorithm in a purely-functional style in OCaml?
+\item \textbf{Functional reactive implementation:} Learn a functional
+  reactive programming language like Elm. (See
+  \url{http://elm-lang.org/}). Write a game, simulation or
+  productivity application in this new language.
+\item \textbf{Survey project:} Choose a theme and six to eight papers
+  from POPL, PLDI, ICFP and OOPSLA (or other ACM SIGPLAN Conferences
+  in PL).  Write a survey paper about these papers, trying to tell a
+  cohesive story about how they relate.
+\end{itemize}
+
+To receive full points on this homework, you must do both of the following:
+
+\begin{itemize}
+
+\item Find a partner and discuss what project ideas seem most
+  interesting to you both.
+  %
+If you already have a research project, consider how to incorporate it!
+%
+Write about your idea in 250 words.
+%
+Be clear about your interests, and what background reading you have done thus far.
+
+\item Scan the titles of papers at (at least) five top PL conferences.
+%
+Name these conferences (including years), and include the conference
+URL with this information.
+%
+For each conference, name the paper title and abstract that seems most
+interesting to you from that conference's proceedings that year.
+%
+Include a URL for the author's draft of each paper, if any is available.
+\end{itemize}
+
+\end{enumerate}
 \end{document}
