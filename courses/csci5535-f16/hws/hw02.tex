@@ -1,0 +1,240 @@
+\documentclass[11pt]{article}
+\usepackage{fullpage}
+\usepackage{latexsym}
+\usepackage{verbatim}
+\usepackage{code,proof,amsthm,amssymb, amsmath}
+\usepackage{ifthen}
+\usepackage{graphics}
+\usepackage{xspace}
+%\usepackage{mathpartir}
+
+%% Question macros
+\newcounter{question}[section]
+\newcounter{extracredit}[section]
+\newcounter{totalPoints}
+\setcounter{totalPoints}{0}
+\newcommand{\question}[1]
+{
+\bigskip
+\addtocounter{question}{1}
+\addtocounter{totalPoints}{#1}
+\noindent
+{\textbf{Task \thesection.\thequestion}}[#1 points]:
+
+
+}
+\newcommand{\ecquestion}
+{
+\bigskip
+\addtocounter{extracredit}{1}
+\noindent
+\textbf{Extra Credit \thesection.\theextracredit}:}
+
+%% Set to "false" to generate the problem set, set to "true" to generate the solution set
+\def\issolution{false}
+
+\newcounter{taskcounter}
+\newcounter{taskPercentCounter}
+\newcounter{taskcounterSection}
+\setcounter{taskcounter}{1}
+\setcounter{taskPercentCounter}{0}
+\setcounter{taskcounterSection}{\value{section}}
+\newcommand{\mayresettaskcounter}{\ifthenelse{\value{taskcounterSection} < \value{section}}
+{\setcounter{taskcounterSection}{\value{section}}\setcounter{taskcounter}{1}}
+{}}
+
+% Solution-only - uses an "input" so that it's still safe to publish the problem set file
+\definecolor{solutioncolor}{rgb}{0.0, 0.0, 0.5}
+\newcommand{\solution}[1]
+  {\ifthenelse{\equal{\issolution}{true}}
+  {\begin{quote}
+    \addtocounter{taskcounter}{-1}
+    \fbox{\textcolor{solutioncolor}{\bf Solution \arabic{section}.\arabic{taskcounter}}}
+    \addtocounter{taskcounter}{1}
+    \textcolor{solutioncolor}{\input{./solution/#1}}
+  \end{quote}}
+  {}}
+
+\newcommand{\qbox}{\fbox{???}}
+
+\setcounter{taskcounter}{1}
+\setcounter{taskPercentCounter}{0}
+%\setcounter{taskcounterSection}{\value{section}}
+
+\newcommand{\ttt}[1]{\texttt{#1}}
+
+%% part of a problem
+\newcommand{\task}[1]
+  {\bigskip \noindent {\bf Task\addtocounter{taskPercentCounter}{#1} \arabic{taskcounter}\addtocounter{taskcounter}{1}} (#1 pts).}
+
+\newcommand{\ectask}
+  {\bigskip \noindent {\bf Task \arabic{section}.\arabic{taskcounter}\addtocounter{taskcounter}{1}} (Extra Credit).}
+
+\newcommand{\val}[1]{#1~\textsf{val}}
+\newcommand{\num}[1]{\texttt{num}[#1]}
+\newcommand{\str}[1]{\texttt{str}[#1]}
+\newcommand{\plus}[2]{\texttt{plus}(#1; #2)}
+\newcommand{\mult}[2]{\texttt{times}(#1; #2)}
+\newcommand{\cat}[2]{\texttt{cat}(#1; #2)}
+\newcommand{\len}[1]{\texttt{len}(#1)}
+\newcommand{\abst}[2]{#1.#2}
+\newcommand{\letbind}[3]{\texttt{let}(#1; \abst{#2}{#3})}
+\newcommand{\steps}[2]{#1 \mapsto #2}
+\newcommand{\subst}[3]{[#1/#2]#3}
+\newcommand{\err}[1]{#1~\textsf{err}}
+
+\newcommand{\proves}{\vdash}
+\newcommand{\hasType}[2]{#1 : #2}
+\newcommand{\typeJ}[3]{#1 \proves \hasType{#2}{#3}}
+\newcommand{\ctx}{\Gamma}
+\newcommand{\emptyCtx}{\emptyset}
+\newcommand{\xCtx}[2]{\ctx, \hasType{#1}{#2}}
+\newcommand{\typeJC}[2]{\typeJ{\ctx}{#1}{#2}}
+\newcommand{\numt}{\texttt{num}}
+\newcommand{\strt}{\texttt{str}}
+
+\newcommand{\laz}[1]{\left[ #1 \right]}
+
+\newcommand{\E}{\textbf{\textsf{E}}\xspace}
+\newcommand{\T}{\textbf{\textsf{T}}\xspace}
+
+\title{Assignment \#2: \\
+  %Abstract Binding Trees,
+  Meta Theory and Implementation:
+  \\Language~\T, with Finite Data Types}
+
+\author{Fundamentals of Programming Languages}
+% put together by Cyrus Omar and Shayak Sen, based on assignments from S10 and S09
+\date{Out: Thursday, Sept 30th, 2016\\
+      Due: Thursday, Oct 13th, 2016 11:59pm EST}
+
+\begin{document}
+\maketitle
+
+The tasks in this homework ask you to prove (``meta theoretical'')
+properties about the language~\T and about finite data types, defined
+in Ch. 8--10 of \emph{PFPL}.  These properties are ``meta
+theoretical'' in that they give a theory about the theory of the
+language, and are true about \emph{all} well-typed programs, not
+specific, individual programs.
+%
+This homework also asks you to program an implementation of these
+languages in OCaml.
+%
+We did this together in class for the simpler Language~\E; use this
+code and the video as a guide.
+
+\paragraph{Grading criteria:} To receive full credit for any proof below, you must \emph{at least} do the following:
+\begin{itemize}
+\item At the beginning of your proof, specify over what structure or derivation you are performing induction (i.e., which structure's inductive principle are you using?)
+\item In the inductive cases of the proof, specify how you are applying the inductive hypothesis, and what result it gives you.
+\end{itemize}
+\textbf{If you omit these steps and/or do not make them explicit, you
+  will receive zero credit for your proof.}  If you attempt to do
+these steps, but you make a mistake, you may still receive some partial credit, depending on your proof.
+
+\paragraph{Hint:}
+If you are unsure about how to structure these proofs to receive full credit, 
+\textbf{please refer to the HW \#1 Solution} as a reference and guide.
+
+\paragraph{Note on omitting redundant proof cases:} In the proofs below, some cases are very
+similar to other cases, e.g., the cases for \texttt{plus} and
+\texttt{times} in the proofs below are likely to be analogous, in that
+(nearly) the same proof steps are used in each.
+%
+When this happens, you can omit the redundant cases as follows: If you
+do one case, say for \texttt{plus}, you may (optionally) write in the
+other case for \texttt{times} that it is ``analogous to the case
+above, for \texttt{plus}''.  You must make this omission explicit, to
+show that you have thought about it.  Further, this shortcut is only
+applicable when the cases really are analogous, and (nearly) the same
+steps apply in the proof.  \textbf{When in doubt, do not omit the
+  proof case.}
+
+\section*{Tasks}
+
+\task{20} Meta theory for Language~\T (See PFPL Chapter 9).
+\begin{enumerate} 
+\item State the substitution lemma for Language~\T.
+\item State the canonical forms lemma for Language~\T.
+\item State and prove progress for Language~\T.
+\item State and prove preservation for Language~\T.
+\end{enumerate}
+
+\task{20} Meta theory for finite data types (See PFPL Chapters 10 and 11).
+\begin{enumerate} 
+\item State the substitution lemma for Language~\T extended with sum and product types.
+\item State the canonical forms lemma for Language~\T extended with sum and product types.
+\item State and prove progress for Language~\T extended with sum and product types.
+\item State and prove preservation for Language~\T extended with sum and product types.
+\end{enumerate}
+
+\paragraph{\underline{Hint (repeated again, for emphasis)}:}
+If you are unsure about how to structure these proofs to receive full credit, 
+\textbf{please refer to the HW \#1 Solution} as a reference and guide.
+
+\task{30} Implement the theory of Language~\T in OCaml, along with tests.
+
+\task{30} Extend the theory of Language~\T with Pairs and Sums.  Include additional tests.
+
+\paragraph{How to implement a Language Theory:}
+When we say ``implement Language $X$ in OCaml'', we mean precisely the
+following.  For a concrete example, see our implementation of
+Language~\E as a guide, where we did this together in class.  (There
+is a lecture video and OCaml code from September 29 available online).
+\begin{enumerate}
+\item Define syntax forms as OCaml datatypes 
+\begin{enumerate}
+\item Define the syntax of expressions as a new OCaml datatype named~\texttt{exp}
+\item Define the syntax of types as a new OCaml datatype named~\texttt{typ}
+\item Define variables~\texttt{var} as OCaml strings (type~\texttt{string})
+\item Define type contexts~\texttt{gamma} as OCaml lists of variable-type pairs.
+\end{enumerate}
+\item Implement a function \texttt{is\_val : exp -> bool} that implements a check for the $e~\textsf{val}$ judgment
+\item Implement a substitution function \texttt{subst : exp -> var -> exp -> exp}.  
+{
+Make sure that you implement \emph{shadowing} correctly, and you do
+not allow \emph{variable capture}.  
+%
+See our implemention of the \texttt{Let} case in language~\E
+as a reference; notice how we compare the \texttt{Let}-bound variable
+against the one being substituted, and do not substitute further if
+they are the same.  }
+\item Implement a type-checking function \texttt{exp\_typ : gamma ->
+  exp -> typ option}.  
+
+  \paragraph{Hint:}~Notice that to type-check lambda expressions \emph{without type
+  annotations}, an implementation of type-checking must ``guess'' a
+  type for the bound variable.  After all, this variable stands in for
+  a parameter that we may not have locally; how would we know its type?
+
+  This situation is different from the \texttt{Let} form in
+  language~\E, where we have the sub-expression to which the
+  variable is bound, and hence, we can get the type for the bound
+  variable by processing this sub-expression.
+  
+  To avoid this guessing problem, define your syntax for lambda
+  expressions to include a type for the argument variable.
+
+\item Implement a suite of five \textbf{interesting} tests of type-checking.  
+(``Interesting'' means that you attempt to cover different execution paths of your implementation with each test).
+%
+
+\item Implement a steps-to function \texttt{step : exp -> exp}. It
+  should take exactly one small step, or raise an exception if the
+  expression is a value.
+
+\item Implement a multiple-steps function \texttt{steps : exp ->
+  exp}. It should take as many steps as possible.  For programs that
+  type-check, it should produce a value of the same type.  This is
+  precisely what you proved in your \emph{meta theory} proofs about
+  the language.
+
+\item Implement a suite of five \textbf{interesting} tests of stepping once and multiple times.  
+  (Do your expressions always have the same type as they step?)
+(``Interesting'' means that you attempt to cover different execution paths of your implementation with each test).
+%
+
+\end{enumerate}
+
+\end{document}
