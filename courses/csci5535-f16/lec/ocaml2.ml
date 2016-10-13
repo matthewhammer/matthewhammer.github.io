@@ -202,6 +202,7 @@ let rec step : exp -> exp =
 		let e1' = step e1 in
 		App(e1', e2)
 	      
+	   (* THIS CASE WAS MISSING IN CLASS TODAY, Oct 13 2016 *)
 	   | Succ e -> Succ (step e)
 
 	   | Rec(e0, x,y,es, e) ->
