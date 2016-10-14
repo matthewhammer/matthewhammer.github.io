@@ -122,24 +122,30 @@
 \begin{document}
 \maketitle
 
-The tasks in this homework ask you to prove (``meta theoretical'')
-properties about the language~\ETSPL, which combines languages~\E, \T
-with sums and products; in homework \#2, we considered a large subset
-of this language (everything except language~\E).  Building on these
-language fragments, we will add generic lists, which like natural
-numbers, consist of a recursive structure.
-%
-We call the resulting language~\ETSPL.
+The tasks in this homework ask you to define, implement prove (``meta theoretical'')
+properties about the language~\ETSPL.
+
+We define \ETSPL as the combination of language~\E, language~\T, plus
+the addition of finite data types, via with sums and products.  In
+homework \#2, we considered a large subset of this language,
+everything except language~\E and the final ingredient: generic lists.
+
+Generic lists are somewhat like the natural numbers of \T, which
+consist of a recursive structure.
 %
 Unlike natural numbers, these generic list structures carry data of an
 arbitrary (generic) \emph{element type}.
+%
+Similar to natural numbers, we can define operations over them via
+recursion over their structure (\emph{structural recursion}).
 
-This homework also asks you to program an implementation of this
-combined language in OCaml.
+This homework also asks you program an implementation of
+language~\ETSPL in OCaml.
 %
 \emph{We did this together in class for fragments of this language,
-  but did not complete the implementation in OCaml; use this code and
-  these videos as a guide}.
+  but not all features.  Also, we did not complete the implementation
+  in OCaml for any one feature; use this code and these videos as a
+  rough guide}.
 
 \paragraph{Grading criteria for proofs:} 
 To receive full credit for any proof below, you must \emph{at least} do the following:
