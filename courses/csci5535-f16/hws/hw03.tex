@@ -101,6 +101,14 @@
 \newcommand{\ETSP}{\textbf{\textsf{ETSP}}\xspace}
 \newcommand{\ETSPL}{\textbf{\textsf{ETSPL}}\xspace}
 
+\newcommand{\typ}[0]{\tau}
+\newcommand{\List}[1]{\textsf{List}(#1)}
+\newcommand{\Nil}[0]{\textsf{Nil}}
+\newcommand{\Cons}[2]{\textsf{Cons}(#1, #2)}
+\newcommand{\match}[3]{\textsf{match}(#1, #2, #3)}
+\newcommand{\fold}[3]{\textsf{fold}(#1, #2, #3)}
+\newcommand{\map}[2]{\textsf{map}(#1, #2)}
+
 \title{Assignment \#3: \\
   %Abstract Binding Trees,
   Meta Theory and Implementation:
@@ -168,28 +176,28 @@ steps apply in the proof.  \textbf{When in doubt, do not omit the
 \paragraph{Syntax.} The syntax of generic lists consists of several additional forms:
 
 \[
-\begin{array}{llll}
-e & ::= & \textsf{Nil}
+\begin{array}{lllll}
+Types &
+\typ & ::= & \cdots
 \\
- &&      \textsf{Cons}(e_1, e_2)
+    && | & \List{\typ}
+\\[2mm]
+Expressions &
+e & ::= & \cdots 
 \\
- && \textsf{match}(e_l, e_n, x.y.e_c)
+ &&|& \textsf{Nil}
 \\
- && \textsf{fold}(e_l, e_n, x.y.e_c)
+ &&|&      \textsf{Cons}(e_1, e_2)
 \\
- && \textsf{map}(e_l, x.e_h)
+ &&|& \textsf{match}(e_l, e_n, x.y.e_c)
+\\
+ &&|& \textsf{fold}(e_l, e_n, x.y.e_c)
+\\
+ &&|& \textsf{map}(e_l, x.e_h)
 \end{array}
 \]
 
-\newcommand{\typ}[0]{\tau}
-\newcommand{\List}[1]{\textsf{List}~#1}
-\newcommand{\Nil}[0]{\textsf{Nil}}
-\newcommand{\Cons}[2]{\textsf{Cons}(#1, #2)}
-\newcommand{\match}[3]{\textsf{match}(#1, #2, #3)}
-\newcommand{\fold}[3]{\textsf{fold}(#1, #2, #3)}
-\newcommand{\map}[2]{\textsf{map}(#1, #2)}
-
-\paragraph{Statics}
+\paragraph{Statics} There is a new typing rule for each new syntactic form:
 
 \begin{mathpar}
 \inferrule[nil]{  }{
@@ -317,7 +325,7 @@ they are the same.  }
   the term $\Nil$, and thus could be anything.
   % 
   To give programs enough information to type them, add a type
-  annotation to the \Nil form, and other forms, but only \emph{if they
+  annotation to the $\Nil$ form, and other forms, but only \emph{if they
     require it}. 
 
 %\item Implement a suite of five \textbf{interesting} tests of type-checking.  
@@ -344,8 +352,9 @@ they are the same.  }
 %  cover different execution paths of your implementation with each
 %  test).
 %
+\end{enumerate}
 
-\task{10} \paragraph{Continue reading the papers that you chose in Homework \# 1.}
+\task{10} \paragraph{Continue reading the papers that you chose in Homework \#2.}
 
 For each of the five papers, and for each question below, write two concise sentences:
 \begin{enumerate}
@@ -385,5 +394,4 @@ Here are the same suggestions as on the prior homework:
   cohesive story about how they relate.
 \end{itemize}
 
-\end{enumerate}
 \end{document}
