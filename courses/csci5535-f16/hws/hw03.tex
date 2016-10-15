@@ -100,6 +100,7 @@
 \newcommand{\T}{\textbf{\textsf{T}}\xspace}
 \newcommand{\ETSP}{\textbf{\textsf{ETSP}}\xspace}
 \newcommand{\ETSPL}{\textbf{\textsf{ETSPL}}\xspace}
+\newcommand{\Ll}{\textbf{\textsf{L}}\xspace}
 
 \newcommand{\typ}[0]{\tau}
 \newcommand{\List}[1]{\textsf{List}(#1)}
@@ -122,13 +123,17 @@
 \begin{document}
 \maketitle
 
-The tasks in this homework ask you to define, implement prove (``meta theoretical'')
-properties about the language~\ETSPL.
+The tasks in this homework ask you to define, prove properties about,
+and implement the language~\ETSPL.
 
 We define \ETSPL as the combination of language~\E, language~\T, plus
-the addition of finite data types, via with sums and products.  In
-homework \#2, we considered a large subset of this language,
-everything except language~\E and the final ingredient: generic lists.
+the addition of finite data types, via with sums~(\textsf{S}) and
+products~(\textsf{P}).  In homework \#2, we considered a large subset
+of this language, everything except language~\E and the final
+ingredient: generic lists~(\Ll), which we partially define below.
+%
+Producing the full definition of the~language fragment for~\Ll is part
+of your task in this homework.
 
 Generic lists are somewhat like the natural numbers of \T, which
 consist of a recursive structure.
@@ -183,12 +188,12 @@ steps apply in the proof.  \textbf{When in doubt, do not omit the
 
 \[
 \begin{array}{lllll}
-Types &
+\textrm{Types} &
 \typ & ::= & \cdots
 \\
     && | & \List{\typ}
 \\[2mm]
-Expressions &
+\textrm{Expressions} &
 e & ::= & \cdots 
 \\
  &&|& \textsf{Nil}
