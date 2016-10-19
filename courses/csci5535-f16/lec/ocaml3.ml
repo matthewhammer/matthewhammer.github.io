@@ -5,6 +5,7 @@ type 'a list =
 
 let lrec : 'b -> ('a -> 'b -> 'b) -> 'a list -> 'b = 
   fun nil cons l ->
+(* TYPO: Notice the 'a that should be a 'b on the following line (From Lecture 2016-10-18). *)
 (* TYPO: let rec loop : 'a list -> 'a  = *)
          let rec loop : 'a list -> 'b =
     fun l ->
