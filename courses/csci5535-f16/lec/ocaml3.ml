@@ -35,7 +35,12 @@ let map : ('a -> 'b) -> 'a list -> 'b list =
     fun l ->	
     match l with
       Nil -> Nil (* << *)
-    | Cons(h,t) -> Cons(f h, loop t)
+(*    | Cons(h,t) -> Cons(f h, loop t) *)
+    | Cons (h,t) -> 
+       let p = (h,t) in
+       let p' = (f (fst p), loop (snd p)) in
+       let (h', t') = p' in
+       Cons (h', t')
   in
   loop l
 
