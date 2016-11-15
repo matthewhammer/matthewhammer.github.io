@@ -3,6 +3,7 @@
 type num = int
 type str = string
 type var = string
+type loc = int
 
 type exp = (* expressions in E *)
     Num of num
@@ -13,12 +14,20 @@ type exp = (* expressions in E *)
   | Cat of exp * exp
   | Let of exp * var * exp
   | Var of var
+(* Ref Stuff: *)
+  | Ref of exp
+  | Set of exp * exp
+  | Get of exp
+  | Loc of loc
 	    
 type typ = Num | Str
+	   | Ref of typ
 
 type gamma = (var * typ) list
+type store = (loc * exp) list
+type storetyp = (loc * typ) list
 
-let rec lookup : gamma -> var -> (typ option) =
+let rec lookup : ('a * 'b) list -> 'a -> ('b option) =
   fun gamma x -> 
   match gamma with
   | []              -> None
@@ -26,29 +35,60 @@ let rec lookup : gamma -> var -> (typ option) =
      if y = x then (Some t)
      else lookup gamma' x
 
-let rec exp_typ : gamma -> exp -> (typ option) =
-  fun gamma e ->
+let gamma_lookup = lookup
+let store_lookup = lookup
+let storetyp_lookup = lookup
+
+let rec exp_typ : storetyp -> gamma -> exp -> (typ option) =
+  fun storetyp gamma e ->
   match e with
   | Num _ -> Some Num
   | Str _ -> Some Str
   | Times _ -> Some Num
   | Cat _ -> Some Str
-  | Var x -> lookup gamma x
+
+  | Var x -> gamma_lookup    gamma    x
+  | Loc l -> storetyp_lookup storetyp l
+
+  | Get(e) -> (
+     match exp_typ storetyp gamma e with
+       None         -> None
+     | Some(Ref(t)) -> Some(t)
+  )
+
+  | Set(e1, e2) -> (
+     match exp_typ storetyp gamma e1 with
+       None         -> None
+     | Some(Ref(t)) -> (
+       match exp_typ storetyp gamma e2 with
+	 None -> None
+       | Some(t') -> (
+	 if t = t' then Some(Num) else None
+       )
+     )
+  )
+
+  | Ref(e) -> (
+    match exp_typ storetyp gamma e with
+      None -> None
+    | Some(t) -> Some(Ref(t))
+  )
+
   | Let (e1, x, e2) -> (
-     let to1 = exp_typ gamma e1 in
+     let to1 = exp_typ storetyp gamma e1 in
      match to1 with
-       Some t1 -> exp_typ ((x,t1)::gamma) e2
+       Some t1 -> exp_typ storetyp ((x,t1)::gamma) e2
      | None -> None
   )
   | Len e -> (
-     let t = exp_typ gamma e in
+     let t = exp_typ storetyp gamma e in
      match t with
      Some Str -> Some Num
      | _ -> None
   )
   | Plus (e1, e2) -> 
-     let t1 = exp_typ gamma e1 in
-     let t2 = exp_typ gamma e2 in
+     let t1 = exp_typ storetyp gamma e1 in
+     let t2 = exp_typ storetyp gamma e2 in
      match (t1, t2) with
        (Some Num, Some Num) -> Some Num
      | _ -> None
