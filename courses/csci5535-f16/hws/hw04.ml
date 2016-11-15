@@ -30,7 +30,7 @@ module NatStream = struct
   type nat = Z | S of nat
 
   let rec plus : nat -> nat -> nat = 
-    fun n m -> match n with Z -> m | S(n') -> plus n' m
+    fun n m -> match n with Z -> m | S(n') -> S(plus n' m)
 
   let rec times : nat -> nat -> nat =
     fun n m -> failwith "TODO: Should evaluate to n * m, that is, n multiplied by m."
