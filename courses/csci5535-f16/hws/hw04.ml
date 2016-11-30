@@ -134,35 +134,48 @@ module StreamNil = struct
   type 'a stream  = Nil | Cons of 'a * ('a stream_thk)
    and 'a stream_thk = (unit -> 'a stream)
 
+  let singleton : 'a -> 'a stream =
+    fun a -> Cons(a, fun ()->Nil)
+
   let rec singletons : ('a stream) -> (('a stream) stream) =
-    fun xs -> 
-    failwith "TODO StreamNil.singletons"
+    fun xs -> failwith "TODO"
 
   (* Should produce a stream of streams, such that each element from
      xs becomes a singleton stream (that is, a single-element stream)
      in the output stream. *)
 
   let rec merge : ('a -> 'a -> bool) -> ('a stream) -> ('a stream) -> ('a stream) =
-    fun choice xs ys ->
-    failwith "TODO StreamNil.merge"
+    fun choice xs ys -> failwith "TODO"
 
   (* Should produce a stream that merges xs and ys, according to the
      given choice function.  Given two elements, the choice function
      chooses which element to emit next in the output stream *)
 	     
-  let sort : ('a -> 'a -> bool) -> ('a stream) -> ('a stream) =
-    fun lte xs ->     
-    let rec sort_rec : (('a stream) stream) -> ('a stream) =
-      fun ys -> 
-      match ys with
-	Nil -> Nil
-       | Cons(s1, rest1) -> 
-	  match rest1 () with
-	  | Nil -> s1 (* Invariant: s is sorted *)
-	  | Cons(s2, rest2) ->
-	     failwith "TODO: Use merge and sort_rec to complete this algoritm"
+  let sort : ('a -> 'a -> bool) -> 'a stream -> 'a stream =
+    fun lte ->
+    let rec merge_adjacent 
+	    : ('a stream) stream -> ('a stream) stream =
+      fun zs -> 
+      match zs with
+      | Nil -> Nil
+      | Cons(s1, rest1) -> (* Invariant: s1 is sorted *)
+	 match rest1 () with
+	 | Nil -> singleton s1
+	 | Cons(s2, rest2) -> (* Invariant: s2 is sorted *)
+	    failwith "TODO: Use Cons, merge, lte, and merge_adjacent"
     in
-    sort_rec (failwith "TODO: Use singletons here")
+    fun xs ->
+    let rec sort_rec : ('a stream) stream -> 'a stream =
+      fun ys ->
+      match ys with
+      | Nil -> Nil
+      | Cons(s1, rest) ->
+	 match rest () with
+	 | Nil -> (s1: 'a stream) (* Invariant: s is sorted *)
+	 | Cons(_, _) -> 
+	    failwith "TODO: Use sort_rec and merge_adjacent"
+    in
+    failwith "TODO: Use sort_rec and singletons"
 
   (* Given an ordering for elements, less-than-or-equal-to function
      lte, sort should produce a sorted sequence of the elements from
@@ -174,12 +187,15 @@ module StreamNil = struct
 
      - On this stream of streams, we want to recursively produce a
        shorter stream of streams, where we merge adjacent streams with
-       merge.  I have written the pattern-match above in sort_rec that
-       identifies two adjacent streams to merge, s1 and s2.
+       merge.  I have written the pattern-match above in
+       merge_adjacent that identifies two adjacent streams to merge,
+       s1 and s2.
 
-     - The basecase of this function is when the stream of streams
-       consists of a single stream, of all of the the sorted input
-       elements.
+     - The pattern-match for sort_rec uses a similar pattern as
+       merge_adjacent, to detect when all of the streams have been
+       merged.  This is the basecase of this function: when the stream
+       of streams consists of a single stream, of all of the sorted
+       input elements.
 
      Note: Sorting only makes sense for finite streams that eventually end!
      You may wonder why is this is the case. Well, consider if the
