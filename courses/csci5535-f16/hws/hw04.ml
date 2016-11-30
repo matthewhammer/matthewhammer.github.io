@@ -169,9 +169,9 @@ module StreamNil = struct
       fun ys ->
       match ys with
       | Nil -> Nil
-      | Cons(s1, rest) ->
+      | Cons(s, rest) ->
 	 match rest () with
-	 | Nil -> (s1: 'a stream) (* Invariant: s is sorted *)
+	 | Nil -> (s: 'a stream) (* Invariant: s is sorted *)
 	 | Cons(_, _) -> 
 	    failwith "TODO: Use sort_rec and merge_adjacent"
     in
