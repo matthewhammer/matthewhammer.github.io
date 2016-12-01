@@ -1,0 +1,354 @@
+\documentclass{article}
+
+\usepackage{mathpartir}
+\usepackage{fullpage}
+
+\newcommand{\arr}{\rightarrow}
+\newcommand{\stepsto}{\longrightarrow}
+
+\title{Final Exam\\
+  CSCI 5535, Fall 2016}
+
+\begin{document}
+\maketitle
+
+\section*{Tasks (100 Points)}
+
+This exam consists of 100 points divided between OCaml-related tasks
+and proof-related tasks below.
+%
+The OCaml tasks carry 25 points in total, whereas the proof tasks
+carry 75 points in total.
+
+Below these two sets of tasks, there are additional tasks that you
+have the option of attempting to earn bonus points.  Since these bonus
+tasks are optional, and you need not do them to earn full credit on
+the exam.
+
+\subsection*{OCaml Tasks (25 Points, total)}~\\
+
+\noindent
+\textbf{5 Points:}\\
+Define OCaml datatypes~\texttt{card} and~\texttt{cards} for the following inductive definitions:
+\[\begin{array}{ccll}
+\textrm{Card }  & c & ::= & \textrm{Heart} ~|~ \textrm{Diamond} ~|~ \textrm{Spade} ~|~ \textrm{Club}
+\\
+\textrm{Cards } & s & ::= & c :: s ~|~ \textrm{Empty}
+\end{array}
+\]
+
+\paragraph{10 Points:}~\\
+Define an OCaml function~\texttt{unshuffle} with the following type:
+\begin{verbatim}
+unshuffle : ('a -> card -> (bool * 'a))
+            -> 'a -> cards -> (cards * cards)
+\end{verbatim}
+In particular, suppose a user runs your function as follows:
+\begin{verbatim}
+unshuffle choice init_state cards
+\end{verbatim}
+Where the user chooses expressions for \texttt{choice}, \texttt{init\_state} and \texttt{cards}.
+\\[2mm]
+\noindent
+\textbf{Requirement 1:} When the choice
+function~\texttt{choice} returns \texttt{true}, the algorithm for
+\texttt{unshuffle} places the given card into the left deck of cards,
+and when it returns \texttt{false}, it places the card into the right
+deck.
+\\[2mm]
+\noindent
+\textbf{Requirement 2:} Further, \texttt{unshuffle} should use the
+choice state (of abstract type~\texttt{'a}) that results from each
+choice to inform the next choice in the sequence of cards.
+%
+The initial choice state~\texttt{init\_state} is always given by the
+user.
+
+\paragraph{10 Points:}~\\
+Define an OCaml function~\texttt{fivefive} with the following type:
+\begin{verbatim}
+fivefive : cards -> (cards * cards)
+\end{verbatim}
+This function should call \texttt{unshuffle} with a choice function
+and initial choice state that ``unshuffles'' the cards from the input
+list into two lists.
+%
+\\[2mm]
+\noindent
+\textbf{Requirement:} The first five cards from the input deck
+should be placed in the left output deck.  The next five cards should
+be placed into the right output deck.  Each following ten cards should
+be distributed in the same way (five to the left, then five to the
+right).  The number of cards may be zero or more, and need not be a
+multiple of ten or five.  Until the cards end, \texttt{fivefive}
+follows the pattern described above.
+
+\section*{Proof Tasks (75 Points, total)}
+
+Let us define a programming language~\textbf{ExamLang}, with the
+following syntax, statics and dynamics (We covered this definition on
+Thursday Dec 1, 2016):
+
+\[\begin{array}{ccll}
+\textrm{Expressions}  & e & ::= & \lambda x.e ~|~ e_1~e_2 ~|~ e_1 + e_2 ~|~ n ~|~ x
+\\
+\textrm{Types} & \tau & ::= & \texttt{num} ~|~ \tau_1 \arr \tau_2
+\end{array}
+\]
+
+\fbox{$\Gamma \vdash e : \tau$} 
+``Under $\Gamma$, expression~$e$ has type~$\tau$''
+\begin{mathpar}
+\inferrule*[right=S-var]
+{ (x:\tau) \in \Gamma }
+{ \Gamma \vdash x : \tau }
+\and
+\inferrule*[right=S-num]
+{  }
+{ \Gamma \vdash n : \texttt{num} }
+\and
+\inferrule*[right=S-plus]
+{ \Gamma \vdash e_1 : \texttt{num}
+  \\
+  \Gamma \vdash e_2 : \texttt{num}
+}
+{ \Gamma \vdash e_1 + e_2 : \texttt{num} }
+\and
+\inferrule*[right=S-app]
+{ 
+  \Gamma \vdash e_1 : \tau_1 \arr \tau_2 
+  \\
+  \Gamma \vdash e_2 : \tau_1 
+}
+{ \Gamma \vdash e_1~e_2 : \tau_2 }
+\and
+\inferrule*[right=S-lam]
+{ 
+  \Gamma,~ x : \tau_1 \vdash e : \tau_2
+}
+{ \Gamma \vdash \lambda x. e : \tau_1 \arr \tau_2 }
+\end{mathpar}
+
+
+\fbox{$e~\textsf{val}$} 
+``Expression~$e$ is a value''
+\begin{mathpar}
+\inferrule*[right=V-num]
+{  }
+{ n~~\textsf{val} }
+\and
+\inferrule*[right=V-lam]
+{  }
+{ \lambda x.e~~\textsf{val} }
+\end{mathpar}
+
+\fbox{$e \stepsto e'$} 
+``expression~$e$ steps to expression~$e'$''
+\begin{mathpar}
+\inferrule*[right=D-App1]
+{ e_1 \stepsto e_1' }
+{ e_1~e_2 \stepsto e_1'~e_2}
+\and
+\inferrule*[right=D-App2]
+{ e_2 \stepsto e_2' }
+{ e_1~e_2 \stepsto e_1~e_2'}
+\and
+\inferrule*[right=D-App3]
+{ }
+{ (\lambda x.e_1)~e_2 \stepsto [e_2/x]e_1}
+\and
+\inferrule*[right=D-Plus1]
+{ e_1 \stepsto e_1' }
+{ e_1 + e_2 \stepsto e_1' + e_2}
+\and
+\inferrule*[right=D-Plus2]
+{ e_2 \stepsto e_2' }
+{ e_1 + e_2 \stepsto e_1 + e_2'}
+\and
+\inferrule*[right=D-Plus3]
+{ n_1 + n_2 = n_3 }
+{ n_1 + n_2 \stepsto n_3}
+\end{mathpar}
+
+\paragraph{Proof Task 1 (15 Points):}
+
+\begin{itemize}
+\item State (but do not prove) the substitution lemma for \textbf{ExamLang}
+\item State (but do not prove) the canonical forms lemma for \textbf{ExamLang}
+\item State the progress theorem for \textbf{ExamLang}. 
+State over what structure to perform induction (but do not prove the cases).
+\item State the preservation theorem for \textbf{ExamLang}.
+State over what structure to perform induction (but do not prove the cases).
+\item Consider the proofs for progress and preservation for \textbf{ExamLang}.  
+We discussed these in class on Dec~1.  Answer these two questions:
+\begin{itemize}
+\item In which theorem, and in which proof case do we need to apply the substitution lemma?
+\item In which theorem, and in which proof case do we need to apply the canonical forms lemma?
+\end{itemize}
+\end{itemize}
+
+\paragraph{Proof Task 2 (25 Points):}
+
+Suppose that we extend \textbf{ExamLang} with let-bound variables,
+extending its abstract syntax with a new such form:
+
+\[\begin{array}{ccll}
+\textrm{Expressions}  & e & ::= & \cdots ~|~ \texttt{let}~x~\texttt{=}~e_1~\texttt{in}~e_2
+\end{array}
+\]
+
+\paragraph{Subtasks:}
+Your task is to update the definition and theorems for
+\textbf{ExamLang} to account for this new language construct for~\texttt{let}.
+
+\begin{itemize}
+\item \textbf{Statics}: Extend the definition of $\Gamma \vdash e : \tau$ with one or more new rules.
+
+\item \textbf{Dynamics}: Extend the definition of $e \stepsto e_2$ with one or more new rules.
+
+\item \textbf{Canonical forms}: Does the canonical forms lemma (or its proof) need to
+  change? If so, give the changes. If not, explain why not.
+
+\item \textbf{Substitution}: Does the substitution lemma statement
+  need to change? If so, give the changes. If not, explain why not.
+  (Do not prove any new cases).
+
+\item \textbf{Progress}: Give the \emph{new} case(s) of the proof.
+
+\item \textbf{Preservation}: Give the \emph{new} case(s) of the proof.
+\end{itemize}
+
+
+\paragraph{Proof Task 3 (35 Points):}
+
+Suppose that we further extend our language with lazy computations,
+also known as thunks.
+%
+We extend the syntax with new forms, as follows:
+
+\[\begin{array}{ccll}
+\textrm{Expressions}  & e & ::= & \cdots ~|~ \texttt{thunk}~e ~|~ \texttt{force}~e
+\\
+\textrm{Types}     & \tau & ::= & \cdots ~|~ \textsf{thunk}(\tau)
+\end{array}
+\]
+
+For some intuition, recall that in homework \#4, you use ``stream
+thunks'' to represent the ``rest of the stream'' in the tail position
+of each \texttt{Cons} cell.  Recall that in that OCaml code, we
+represent these ``stream thunks'' as functions of type \texttt{unit ->
+  stream}.  These functions accept the unit value as an argument and
+they compute a stream value.  To ``force'' these thunks to compute, we
+need only apply them to the unit value~\texttt{()} of unit type~\texttt{unit}.
+
+More generally, thunks are values that represent suspended
+computations.  When forced, thunks evaluate their suspended
+computation and produce another value.
+
+To make this informal intuition of thunks precise \emph{without
+  encoding them as functions}, we extend the typing relation
+(statics), value relation and stepping relation (dynamics) with the
+following additional rules:
+%
+\\[2mm]
+\fbox{$\Gamma \vdash e : \tau$} 
+``Under $\Gamma$, expression~$e$ has type~$\tau$''
+\begin{mathpar}
+\inferrule*[right=S-thunk]
+{ \Gamma \vdash e : \tau }
+{ \Gamma \vdash \texttt{thunk}~e : \textsf{thunk}(\tau) }
+\and
+\inferrule*[right=S-force]
+{ \Gamma \vdash e : \textsf{thunk}(\tau) }
+{ \Gamma \vdash \texttt{force}~e : \tau }
+\end{mathpar}
+
+
+\fbox{$e~\textsf{val}$} 
+``Expression~$e$ is a value''
+\begin{mathpar}
+\inferrule*[right=V-thunk]
+{  }
+{ \texttt{thunk}~e~~\textsf{val} }
+\end{mathpar}
+
+\fbox{$e \stepsto e'$} 
+``expression~$e$ steps to expression~$e'$''
+\begin{mathpar}
+\inferrule*[right=D-force1]
+{ e \stepsto e' }
+{ \texttt{force}~e \stepsto \texttt{force}~e }
+\and
+\inferrule*[right=D-force2]
+{ }
+{ \texttt{force} (\texttt{thunk}~e) \stepsto e }
+\end{mathpar}
+
+\paragraph{Subtasks:}
+Your task is to update our lemmas, theorems and proofs, by doing all of the following:
+
+\begin{itemize}
+%\item \textbf{Statics}: Extend the definition of $\Gamma \vdash e : \tau$ with one or more new rules.
+%\item \textbf{Dynamics}: Extend the definition of $e \stepsto e_2$ with one or more new rules.
+
+\item \textbf{Canonical forms}: Does the canonical forms lemma (or its proof) need to
+  change? If so, give the changes. If not, explain why not.
+
+\item \textbf{Substitution}: Does the substitution lemma statement
+  \emph{or proof} need to change? If so, give the changes.
+  (\emph{Please give proofs for any new cases}).  If not, explain why
+  not.
+
+\item \textbf{Progress}: Give the \emph{new} case(s) of the proof.
+
+\item \textbf{Preservation}: Give the \emph{new} case(s) of the proof.
+\end{itemize}
+
+%\clearpage
+\section*{Bonus Tasks (35 Points):}
+
+\paragraph{Bonus Task 1 (15 Points):}
+Characterize the asymptotic complexity of each of the following list
+functions, as discussed in class on October 27 (see \texttt{ocaml0.ml}
+on the lecture schedule).
+
+For each, assume the input list(s) are of length $O(n)$.  Your
+characterization should give the asymptotic time complexity, using
+big-$O$ notation, for the number of reduction steps required to
+evaluate each of the following functions on such input lists:
+\begin{itemize}
+\item \texttt{split}
+\item \texttt{filter}
+\item \texttt{sum}
+\item \texttt{append} (assume both lists are of length $O(n)$)
+\item \texttt{reverse} (the version that uses \texttt{append}, internally)
+\item \texttt{reverse'} (the version that \emph{does not} use \texttt{append})
+\item \texttt{BubbleSort.bubble} (the standard bubble-sort algorithm using lists)
+\end{itemize}
+
+\paragraph{Bonus Task 2 (20 Points):}
+Characterize the asymptotic complexity of each of the following stream
+functions, as described in Homework 4 (see \texttt{hw04.ml}), in the
+\texttt{StreamNil} module (defining \emph{finite} streams).
+
+For each function, assume the input streams(s) are finite, and of
+length $O(n)$.  Your characterization should give the asymptotic time
+complexity, using big-$O$ notation, for the number of reduction steps
+required evaluate to each of the following functions on such input
+lists.
+
+\textbf{Important hint:} Unike lists, streams are lazy, since their
+tails consist of stream \emph{thunks}.  
+You should assume that creating a thunk
+requires only $O(1)$ time, regardless of the thunk's suspended computation.
+
+\begin{itemize}
+\item \texttt{singletons}
+\item \texttt{merge}
+\item \texttt{merge\_adjacent}
+\item \texttt{sort\_rec} 
+\item \texttt{sort}
+\end{itemize}
+
+
+\end{document}
