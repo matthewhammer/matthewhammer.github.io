@@ -162,8 +162,7 @@ module StreamNil = struct
 	 match rest1 () with
 	 | Nil -> singleton s1
 	 | Cons(s2, rest2) -> (* Invariant: s2 is sorted *)
-	    Cons( merge lte s1 s2,
-		  fun () -> merge_adjacent (rest2()) )
+	    failwith "TODO: Use Cons, merge, lte, merge_adjacent, and rest2"
     in
     fun xs ->
     let rec sort_rec : ('a stream) stream -> 'a stream =
@@ -174,9 +173,9 @@ module StreamNil = struct
 	 match rest () with
 	 | Nil -> (s: 'a stream) (* Invariant: s is sorted *)
 	 | Cons(_, _) -> 
-	    sort_rec (merge_adjacent ys)
+	    failwith "TODO: Use sort_rec, merge_adjacent and ys"
     in
-    sort_rec (singletons xs)
+    failwith "TODO: Use sort_rec, singletons and xs"
 
   (* Given an ordering for elements, less-than-or-equal-to function
      lte, sort should produce a sorted sequence of the elements from
