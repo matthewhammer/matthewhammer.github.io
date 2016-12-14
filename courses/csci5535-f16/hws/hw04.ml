@@ -5,7 +5,7 @@ Complete each TODO marked below,
 following the instructions marked at each TODO. 
 
 Note: There are no proofs or other on-paper aspects to this homework
-assignment.  It only consists of programming to compelte the TODOs
+assignment.  It only consists of programming to complete the TODOs
 below.
 
 There are three modules for Streams below.  Each is more general than
