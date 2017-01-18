@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>Advanced programming language techniques for incremental computation<br/>(Adapton Course)</title>
+    <meta name="description" content="Adapton Course: Advanced programming language techniques for incremental computation"/>
+    <meta name="keywords" content="Adapton Course: Advanced programming language techniques for incremental computation"/>
+   <link rel="stylesheet" href="ppl.css" type="text/css"/>
+  </head>
+
+  <body>
+    <div id="header">
+    <div id="menu">
+      <a href="#info">Course Information</a>
+      <a href="#desc">Synopsis</a>
+      <a href="#text">Textbook</a>
+      <a href="#requirements">Requirements</a>
+      <a href="#schedule">Schedule</a>
+    </div>
+    </div>
+
+    <div id="content">
+
+    <h1>CSCI 7000 -- Advanced programming language techniques for incremental computation</h1>
+
+    <hr/>
+
+    <div id="info">
+
+      <h2>Course Information</h2>
+
+      <table class="disp">
+	<tr>
+	  <td> Instructor: </td>
+	  <td colspan="2"> <a href="mailto:matthew.hammer@colorado.edu">Matthew A. Hammer</a> </td>
+	</tr>
+	<tr>
+	  <td> Lectures: </td>
+	  <td> ECCR 108</td>
+	  <td> M,W,F 10:00-10:50 </td>
+	</tr>
+	<tr>
+	  <td> Office Hours: </td>
+	  <td> TBA </td>
+	  <td> </td>
+	</tr>
+	<tr>
+	  <td> Slack channels:</td>
+	  <td colspan="2"><a href=""></a></td>
+        </tr>
+	<tr>
+	  <td></td>
+	  <td colspan="2"><a href="">Class Announcements (public channel)</a></td>
+        </tr>
+	<tr>
+	  <td></td>
+	  <td colspan="2"><a href="">Student Discussion (private to class members)</a></td>
+	</tr>
+	<tr><td><br/></td></tr>
+	<tr>
+	  <td colspan="3"><a href="syllabus-statements.html">Standard Syllabus Statements</a></td>
+	</tr>
+      </table>
+   </div>
+
+    <div id="desc">
+      <h2>Description</h2>
+      <p>
+	This course introduces the fundamental principles of
+	programming language design, semantics, and implementation
+	of <a href="http://wikipedia.org"><b>incremental
+	computations</b></a>.
+	
+	<i>
+	  Incremental computations are those that run faster after small
+	  input changes that naive recomputation of the updated output.
+	</i>
+
+	<p>
+	To express incremental computations that are efficient and
+	correct (or sound, meaning consistent with from-scratch
+	evaluation), we will study designs that combine new algorithms
+	and programming language abstractions.
+	</p>
+	
+	<p>
+	  To understand these algorithms and PL abstractions in
+	  practice, we will
+	  use <a href="http://github.com/cuplv/adapton-lab.rust"><b>Adapton
+	  in Rust</b></a>.
+      </p>
+
+      <h3>Course topics</h3>
+      
+      <b>Algorithmic techniques</b> for incremental computing:</br>
+      <ul>
+	<li>Memoization (aka, pure function caching)</li>
+	<li>Hash-consing</li>
+	<li>Persistent data structures</li>
+	<li>Merkle trees</li>	
+	<li>Dependence graphs, and change propagation:
+	  <ul>
+	    <li>Program dependence graph (PDG)</li>
+	    <li>Data dependence graph (DDG)</li>
+	    <li>Demanded computation graph (DCG)</li>
+	  </ul>
+	</li>	
+      </ul>
+
+      <b>Programming language design</b> for incremental computing:</br>
+      <ul>
+	<li>Basic foundations (e.g., from CSCI 5535):</li>
+	    <ul>
+	      <li>Inductive data structures</li>
+	      <li>Inductive proofs (by structural induction, by rule induction)</li>
+	      <li>Functional programming</li>
+	      <li>Operational semantics</li>
+	      <li>Higher-order type systems with algebraic datatypes</li>
+	      <li>Imperative programming abstractions, types and operational semantics</li>
+	    </ul>	      
+	<li>Sub-structural (linear and affine) type systems</li>
+	<li>Refinement type systems, dependent type systems</li>
+	<li>Modal type systems</li>
+	  </ul>
+
+      <h3>Reading List (Tentative)</h3>
+      <ul>
+	<li>Topic: Classics:</li>
+	<ul>
+	  <li></li>
+	  <li></li>
+	</ul>
+
+	<li>Topic: Adapton:</li>
+	<ul>
+	  <li></li>
+	  <li></li>
+	</ul>
+	
+	<li>Topic: Self-adjusting computation:</li>
+	<ul>
+	  <li></li>
+	  <li></li>
+	</ul>
+
+	<li>Topic: Domain-specific:</li>
+	<ul>
+	  <li></li>
+	  <li></li>
+	</ul>
+
+	<li>Topic: Reactive programming, and FRP:</li>
+	<ul>
+	  <li></li>
+	  <li></li>
+	</ul>
+	
+      </ul>      
+
+   </div>
+
+    <div id="schedule">
+      <h2>Schedule: Readings and programming tasks</h2>
+      <p>
+	Please see the <a href="schedule.html">schedule of lectures</a> for the
+	lecture topics and links to the readings and assignments.
+      </p>
+    </div>
+
+    <div id="requirements">
+      <h2>Course requirements</h2>
+      <p>
+	The primary sources of information, and the students'
+	responsibilities for this course, consist of:
+	<ul>
+	  <li> <b>attend all lectures and class meetings</b>, </li>
+	  <li> having attempted (ideally, having completed) the <b>readings</b> and associated <b>programming assignments</b>,</li>
+	  <li> actively participate in <b>class discussion</b> (both online, and in class
+	meetings), </li>
+	  <li> and complete a <b>course project</b> (to begin in the later part of the course)</li>
+	</ul>
+	<b>Participation requirement</b>.  Your grade in this class
+	will largely be a subjective measure of your level of class
+	participation during lecture, class discussions about readings
+	and programming tasks.  This grade will reflect the
+	instructor's subjective impression of your contributions.
+        <i>To earn a good grade, you are required to attend lecture,
+	and to participate in class discussions (on Slack).  To earn
+	an <b>excellent</b> grade, you are required to challenge
+	yourself (this is an individual metric, and is thus
+	subjective).
+	</i>
+      </p>
+
+    </div>
+
+    <h2>Course Project</h2>
+    
+    Roughly half-way through the course, students will begin to work
+    in pairs (or independently, with permission from the professor) on
+    a course project.  This project will consist of a combination of
+    implementation work, theoretical work, and a literature survey.
+    The final meetings of the class will consist of project teams
+    giving oral presentations about their project.  Additionally, each
+    project team is required to submit a written report.  See
+    the <a href="proj.html">course project page</a> for details about
+    the scope of these projects, and the requirements for
+    presentations and reports.
+
+    <h2><a name="grading"></a>Grading</h2> 
+
+    <p> Class participation (discussion about readings and programming
+      tasks) will account for 50% of your grade, and the project the
+      other 50%.  Your final letter grade will be determined in part
+      based on your performance relative to the rest of the class,
+      though we have no pre-determined distribution in mind.
+    </p>
+
+    <p>Late homework assignments will not be accepted or graded.  They
+      count for zero points. If you have a special circumstance that
+      is truly beyond your control which prevents you from completeing
+      your homework on time, contact the instructor <b>before the
+      homework due date</b> to request a special accommodation.
+      Requests made on or after the due date will be categorically
+      ignored.</p>
+
+
+    <div id="text">
+      <h2>Text</h2>
+
+      <p>
+      Robert Harper,
+      <a href="http://www.cambridge.org/us/academic/subjects/computer-science/programming-languages-and-applied-logic/practical-foundations-programming-languages-2nd-edition?format=HB">
+      <cite>Practical Foundations for Programming Languages (Second Edition)</cite></a>.
+      Cambridge University Press, 2016.
+      </p>
+
+      <p>
+      This text is suggested as a general textbook for programming languages.  It is not required to complete this seminar course on incremental computation, but may be helpful for general background material on programming languages.
+      </br>
+      The author has made a <a href="http://www.cs.cmu.edu/~rwh/pfpl/2nded.pdf">preview version</a> available online.
+      </p>
+
+    </div>
+
+    <div id="software">
+
+      <h2>Software</h2>
+      <p>
+	The programming languages we study and use in this course will
+	be closely related
+	to <a href="https://en.wikipedia.org/wiki/ML_(programming_language)">ML</a>.
+	Specifically, we will use
+	the <a href="http://rust-lang.org/">Rust</a> implementation for
+	homeworks that involve programming assignments.
+      </p>
+
+    </div>
+
+    <!-- <div id="communication"> -->
+
+    <!--     <h2>Communication</h2> -->
+
+    <!--     <p> -->
+    <!--     Post all questions for the professor on -->
+    <!--     the <a href="https://moodle.cs.colorado.edu/course/view.php?id=53">Discussion -->
+    <!--     Forum</a> on Moodle.  However, it is <b>not</b> appropriate to -->
+    <!--     post solutions to homework problems publically, for the -->
+    <!--     obvious reasons, so if your question is about your own -->
+    <!--     solution, please post privately to the professor only. -->
+    <!--    </p> -->
+    <!-- </div> -->
+
+    <!-- <div id="help"> -->
+
+    <!--   <h2>Where to go for help</h2> -->
+
+    <!--   <p> -->
+    <!--   The <a href="https://moodle.cs.colorado.edu/course/view.php?id=53">Moodle -->
+    <!--   Discussion Forum</a> is the first place to look for answers to -->
+    <!--   your questions, and to post questions of your own. -->
+    <!--   </p> -->
+
+    <!--   <p> -->
+    <!--   The second place to look for help is to visit the professor -->
+    <!--   during office hours.  These times are intended to help you with -->
+    <!--   homework and answer any questions you may have about the course -->
+    <!--   material. -->
+    <!--   </p> -->
+    <!-- </div> -->
+
+    <div id="rules">
+
+      <h2><a name="integrity"></a>Academic Integrity</h2>
+      <p>
+	As a condition for taking this course, you are responsible for
+	compliance with the <a href="http://www.colorado.edu/policies/academic-integrity-policy">University
+	Policy on Academic Integrity and Plagiarism</a>.
+      </p>
+
+      <p>
+      In this course, you are authorized to use the books and notes linked
+      from this Web site, as well as any other sources specifically allowed by
+      the course staff.  Any other source is unauthorized.
+      </p>
+
+      <p> You are allowed to discuss homework assignments with other students.
+      However, in order to ensure that the work you submit is still your own, we
+      insist that you adhere to a <em>whiteboard policy</em> regarding these
+      discussions: you are not allowed to take any notes, files, or other
+      records away from the discussion.  For example, you may work on the
+      homework at the whiteboard with another student, but then you must erase
+      the whiteboard, go home, and write up your solution individually.  We take
+      your ability to recreate the solution independently as proof that you
+      understand the work that you submit.
+      </p>
+
+      <p> This policy is our attempt to balance the tension between
+      the benefits of group work and the benefits of individual work.
+      We ask that you obey the spirit of the policy, as well as the
+      letter: ensure that all work you submit is your own and that you
+      fully understand the solution.  This is in your best interest:
+      the exam constitutes a significant part of your final grade and
+      it will draw heavily on the terminology, concepts, and
+      techniques that are exercised in in the homework.  It is
+      unlikely that you will be able to do well on the exam if you do
+      not take full advantage of the learning opportunity afforded by
+      the homework assignments.
+      </p>
+
+      <!-- <h2>No Recording Permitted</h2> -->
+
+      <!-- <p> No student may record or tape any classroom activity without the -->
+      <!-- express written consent of Prof. Robert Harper.  If a student believes -->
+      <!-- that he/she is disabled and needs to record or tape classroom activities, -->
+      <!-- he/she should contact the <a href="http://hr.web.cmu.edu/dsrg/">Office of -->
+      <!-- Disability Resources</a> to request an appropriate accommodation.  </p> -->
+
+    </div>
+    
+    <hr/>
+    
+    <!-- <h2>Acknowledgements</h2> -->
+    <!-- <div id="Acknowledgments">The materials for this course are, for -->
+    <!-- the large part, derivatives of material -->
+    <!-- from <a href="http://www.cs.cmu.edu/~rwh/courses/ppl/">15-312 at -->
+    <!-- CMU</a>, as taught by <a href="http://www.cs.cmu.edu/~rwh/">Prof -->
+    <!-- Robert Harper</a>, the author of our textbook. -->
+    <!-- </div> -->
+
+
+   <div id="modified">
+     <!--<address><a href="mailto:matthew.hammer@colorado.edu">Matthew A. Hammer</a></address>-->
+     <p>
+	<a href="http://validator.w3.org/check?uri=referer"><img
+          src="http://www.w3.org/Icons/valid-xhtml10"
+          alt="Valid XHTML 1.0!" height="31" width="88" /></a>
+      </p>
+    </div>
+
+    </div>
+
+  </body>
+</html>
