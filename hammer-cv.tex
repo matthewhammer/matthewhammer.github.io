@@ -1,0 +1,572 @@
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{charter}
+
+% Fonts
+%\usepackage[T1]{fontenc}
+%\usepackage[urw-garamond]{mathdesign}
+
+% Set your name here
+\def\name{Matthew A. Hammer}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+  colorlinks = true,
+  urlcolor = blue,
+  pdfauthor = {\name},
+  pdftitle = {\name: Curriculum Vitae},
+  pdfsubject = {Curriculum Vitae},
+  pdfpagemode = UseNone
+}
+
+\geometry{
+  body={6.5in, 9.0in},
+  left=1.0in,
+  top=1.0in
+}
+
+% Customize page headers
+\pagestyle{myheadings}
+\markright{\name}
+\thispagestyle{empty}
+
+% Custom section fonts
+\usepackage{sectsty}
+\sectionfont{\rmfamily\mdseries\Large}
+\subsectionfont{\rmfamily\mdseries\itshape\large}
+
+% Other possible font commands include:
+% \ttfamily for teletype,
+% \sffamily for sans serif,
+% \bfseries for bold,
+% \scshape for small caps,
+% \normalsize, \large, \Large, \LARGE sizes.
+
+% Don't indent paragraphs.
+\setlength\parindent{0em}
+
+% Make lists without bullets and compact spacing
+\renewenvironment{itemize}{
+  \begin{list}{}{
+    \setlength{\leftmargin}{1.5em}
+    \setlength{\itemsep}{0.25em}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0.25em}
+  }
+}{
+  \end{list}
+}
+
+\newenvironment{resexperience}[4]{
+\item #1 (#3--#4) \\
+\emph{#2}
+}{
+}
+
+
+\begin{document}
+
+% Place name at left
+{{\huge \name}
+\\
+Assistant Professor
+}
+
+% Alternatively, print name centered and bold:
+%\centerline{\huge \bf \name}
+
+\bigskip
+
+\begin{minipage}[t]{0.495\textwidth}
+Computer Science Department\\
+University of Colorado\\
+1111 Engineering Dr, Boulder, CO 80309
+\end{minipage}
+\begin{minipage}[t]{0.495\textwidth}
+  Email: \href{mailto:matthew.hammer@colorado.edu}{Matthew.Hammer@Colorado.Edu} \\
+%  Homepage: \href{http://cs.colorado.edu/~maha2973}{http://cs.colorado.edu/{\textasciitilde}maha2973}
+  Homepage: \href{http://matthewhammer.org}{http://matthewhammer.org}
+\end{minipage}
+
+\section*{Education}
+
+\begin{tabular}[t]{@{}l l l@{}}
+PhD (Computer Science) & University of Chicago & 2012 \\
+MS  (Computer Science) & Toyota Technological Institute at Chicago & 2007 \\
+BS  (Computer Science) & University of Wisconsin & 2005 \\
+\end{tabular}
+
+%% \begin{itemize}
+%%   \item Ph.D. Computer Science, University of Chicago, 2012.
+
+%%   \item M.S. Computer Science, Toyota Technological Institute at Chicago, 2007.
+
+%%   \item B.S. Computer Science, University of Wisconsin, 2005.
+%% \end{itemize}
+
+\section*{Publications}
+\begin{itemize}
+
+\item
+\href{https://arxiv.org/abs/1607.04180}{\textit{Hazelnut: A Bidirectionally Typed Structure Editor Calculus}}
+\\
+Cyrus Omar, Ian Voysey, Michael Hilton, Jonathan Aldrich, \underline{Matthew A. Hammer}.
+\\
+Principles of Programming Languages (\textbf{POPL 2017}).
+\\
+Paris, France. January 2017.
+
+\item
+\href{https://arxiv.org/abs/1608.06012}{\textit{A Vision for Online Verification-Validation}}
+\\
+\underline{Matthew A. Hammer}, Bor-Yuh Evan Chang, David Van Horn
+\\
+Generative Programming: Concepts \& Experience (\textbf{GPCE 2016}).
+\\
+Amsterdam, Netherlands. October 2016.
+
+\item
+\href{https://arxiv.org/abs/1608.06009}{\textit{The Random Access Zipper: Simple, Purely-Functional Sequences}}
+\\
+Kyle Headley, \underline{Matthew A. Hammer}.
+\\
+Trends in Functional Programming (\textbf{TFP 2016}).
+\\
+College Park, Maryland. June 2016. 
+
+\item
+\href{http://arxiv.org/abs/1503.07792}
+{\textit{Incremental Computation with Names}}
+\\
+\underline{Matthew A. Hammer}, Joshua Dunfield, Kyle Headley, Nicholas Labich,
+Jeffrey S. Foster and Michael Hicks.
+\\
+Object-Oriented Programming, Systems, Languages, and Applications
+(\textbf{OOPSLA 2015}).
+\\
+Pittsburgh, USA. October 2015.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/adapton}
+{\textit{\textsc{Adapton}: Composable, Demand-driven Incremental Computation}}
+\\
+\underline{Matthew A. Hammer}, Yit Phang Khoo, Michael Hicks and Jeffrey S. Foster.
+\\
+Programming Language Design and Implementation (\textbf{PLDI 2014}).
+\\
+Edinburgh, Scotland. June 2014.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/oakland2014}
+{\textit{\textsc{Wysteria}: A Programming Language for Generic, Mixed-Mode Multiparty Computations}}
+\\
+Aseem Rastogi, \underline{Matthew A. Hammer} and Michael Hicks.
+\\
+35th IEEE Symposium on Security and Privacy (\textbf{IEEE~S\&P~2014})
+\\
+San Jose, California USA. May 2014.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/jfp2014}
+{\textit{Implicit Self-Adjusting Computation for Purely Functional Programs}}
+\\
+Yan Chen, Joshua Dunfield, \underline{Matthew A. Hammer} and Umut A. Acar.
+\\
+Journal of Functional Programming 2014 (\textbf{JFP 2014}).
+
+\item
+\href{http://www.cs.umd.edu/~hammer/plas2013}
+{\textit{Knowledge Inference for Optimizing Secure Multi-party Computation}}
+\\
+Aseem Rastogi, Piotr Mardziel, \underline{Matthew A. Hammer} and Michael Hicks.
+\\
+Programming Languages and Analysis for Security (\textbf{PLAS 2013}).
+\\
+Seattle, Washington USA. June 2013.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/oopsla11}
+{\textit{Self-Adjusting Stack Machines}}
+\\
+\underline{Matthew A. Hammer}, Georg Neis, Yan Chen and Umut A. Acar 
+\\
+Object-Oriented Programming, Systems, Languages, and Applications
+(\textbf{OOPSLA 2011}).
+\\
+Portland, Oregon USA. October 2011.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/icfp11}
+{\textit{Implicit Self-Adjusting Computation for Purely Functional Programs}}
+\\
+Yan Chen, Joshua Dunfield, \underline{Matthew A. Hammer} and Umut A. Acar 
+\\
+International Conference on Functional Programming (\textbf{ICFP 2011}).
+\\
+Tokyo, Japan. September 2011
+
+\item
+\href{http://www.cs.umd.edu/~hammer/pldi09}
+{\textit{\textsc{Ceal}: A C-Based Language for Self-Adjusting Computation}}
+\\
+\underline{Matthew A. Hammer}, Umut A. Acar and Yan Chen.
+\\
+Programming Language Design and Implementation (\textbf{PLDI 2009}).
+\\
+Dublin, Ireland. June 2009.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/ismm08}
+{\textit{Memory Management for Self-Adjusting Computation}}
+\\
+\underline{Matthew A. Hammer} and Umut A. Acar.
+\\
+International Symposium on Memory Management (\textbf{ISMM 2008}).
+\\
+Tuscon, Arizona. June 2008.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/papers/damp07.pdf}
+{\textit{A Proposal for Parallel Self-Adjusting Computation}}
+\\
+\underline{Matthew Hammer}, Umut A. Acar, Mohan Rajagopalan, Anwar Ghuloum
+\\
+Workshop on Declarative Aspects of Multicore Programming (\textbf{DAMP 2007}).
+\\
+Nice, France. January 2007.
+
+\item
+\href{http://www.cs.umd.edu/~hammer/papers/ibmsj06quake.pdf}
+{\textit{Running Quake II on a grid}}
+\\
+G. Deen, \underline{M. Hammer}, J. Bethencourt, I. Eiron, J. Thomas, and J. H. Kaufman.
+\\
+IBM Systems Journal 2006.
+
+\end{itemize}
+
+\section*{Theses}
+
+\begin{itemize}
+\item
+\href{http://www.cs.umd.edu/~hammer/selfadjmachines}
+{\textit{Self-Adjusting Machines}}
+%\\
+%Matthew A. Hammer
+\\
+University of Chicago, December 2012.
+\\
+Committee:
+\begin{itemize}
+\item John Reppy (\textit{Chair})
+\item Umut A. Acar (\textit{PhD Advisor})
+\item David MacQueen
+\item Rupak Majumdar
+\end{itemize}
+\end{itemize}
+
+\section*{Patents}
+
+\begin{itemize}
+
+%% \item 
+%%   Viktors Berstis, John Bethencourt, Kevin Damm, Glenn Deen, Matthew A. Hammer, James H Kaufman, Toby Lehman
+%%   \\
+%%   \textit{Method for distributing and geographically load balancing location aware communication device client-proxy applications}
+%%   \\
+%%   \textbf{US Patent 7,702,784}
+%%   %US Patent 7,428,588
+  
+\item
+\textit{Distributing and geographically load balancing location aware communication device client-proxy applications}
+\\
+  Viktors Berstis, John Bethencourt, Kevin Damm, Glenn Deen, Matthew A. Hammer, James H Kaufman, Toby Lehman
+\\
+\textbf{US Patent 7,702,784}
+%US Patent 7,428,588  ???
+
+\item
+\textit{Handling of players and objects in massive multi-player on-line games}
+\\
+  Viktors Berstis, John Bethencourt, Kevin Damm, Glenn Deen, Matthew A. Hammer, James H Kaufman, Toby Lehman
+\\
+\textbf{US Patent 8,057,307}
+
+\item
+\textit{Concurrent Management of Adaptive Programs}
+\\
+Matthew Hammer, Mohan Rajagopalan, Anwar Ghuloum
+\\
+\textbf{US Patent App. 11/750,441}
+
+\end{itemize}
+
+\section*{Funding}
+
+
+\begin{itemize}
+\item Mozilla Research Funding (unrestricted gift, \$90k)
+\end{itemize}
+
+\section*{Students}
+
+\begin{itemize}
+\item Kyle Headley (PhD program, CU Boulder)
+\end{itemize}
+
+\section*{Service}
+
+\begin{itemize}
+
+\item \textbf{Thesis Committees}:
+  Max Russek (CU Undergrad; Spring 2016)
+
+\item \textbf{SRC Judge}: PLDI 2016 Student Research Competition.
+  
+\item \textbf{Program Committee (PC) member}: PLAS 2015
+
+\item \textbf{External Review Committee (ERC) member}: PLDI 2015
+
+\item \textbf{External reviewer}:
+ESOP 2016,  
+IEEE~S\&P~2015,
+POPL~2015, % review: #159C
+OOPSLA~2014, % submissions: i3ql, 187 (incremental object queries)
+PLAS~2014, % submission 4
+SOFSEM~2014, % submission 101
+PLDI~2013, % submission 106: ``Simple and efficient higher-order reactive programming''
+POPL~2012, 
+ICFP~2010, 
+ML~Workshop~2009, 
+PLDI~2008.
+
+\item \textbf{Graduate Student Representative}.  
+  May 2010--October 2011.
+  \\
+  Max Planck Institute for Software Systems.
+
+  
+\end{itemize}
+
+\section*{Teaching}
+
+\begin{itemize}
+
+\item {
+  \href{https://www.cs.colorado.edu/~maha2973/csci5535/f15/}
+  {\textbf{CSCI 5535}: \textbf{Foundations of Programming Languages}}
+  \\
+  University of Colorado, Boulder.  Fall 2015.  
+}
+
+  
+\item {
+  \textbf{CMSC 631}: \textit{Program Analysis and Understanding}.
+  \\
+  University of Maryland, College Park.  Spring 2013.
+  \\
+  Co-instructed with Michael Hicks, Jeffrey S. Foster and Stevie Strickland.
+}
+
+\item { 
+  \textbf{Teaching assistant for CMCS 336}: \textit{Type Systems for Programming Languages}.
+  \\
+  Toyota Technological Institute / University of Chicago.  Winter 2008.
+  \\
+  %
+  Instructors: Umut Acar and Amal Ahmed.
+}
+\end{itemize}
+
+
+\section*{Talks}
+
+\begin{itemize}
+
+ \item
+\href{http://arxiv.org/abs/1503.07792}
+{\textit{Incremental Computation with Names}}
+\\
+\underline{Matthew A. Hammer}, Joshua Dunfield, Kyle Headley, Nicholas Labich,
+Jeffrey S. Foster and Michael Hicks.
+\\
+Object-Oriented Programming, Systems, Languages, and Applications
+(\textbf{OOPSLA 2015}).
+\\
+Pittsburgh, USA. October 2015.
+
+\item
+{\textit{\textsc{Wysteria}: A Programming Language for Generic, Mixed-Mode Multiparty Computations}}
+\\
+\href{http://www.dagstuhl.de/en/program/calendar/semhp/?semnr=14492}
+{\textbf{Dagstuhl seminar 14492}: The synergy between programming languages and cryptography}.
+\\
+Schloss Dagstuhl. Wadern, Germany. December 2014.
+
+\item
+{\textit{\textsc{Adapton}: Composable, Demand-driven Incremental Computation}}
+\\
+Programming Language Design and Implementation (\textbf{PLDI 2014}).
+\\
+Edinbugh, Scotland. June 2014.
+
+\item \textit{Self-Adjusting Stack Machines}
+\\
+Object-Oriented Programming, Systems, Languages, and Applications
+(\textbf{OOPSLA 2011}).
+\\
+Portland, Oregon USA. October 2011.
+
+\item \textit{Self-Adjusting Stack Machines and the CEAL Compiler}
+\\
+Invited talk.  Max Planck Institute for Software Systems
+advisory board visit day.
+\\
+Frankenstein, Rhineland-Palatinate Germany. May 2011.
+
+\item \textit{A Compilation Framework for Self-Adjusting Computation}
+\\
+Dissertation proposal.
+\\
+Chicago, Illinois USA. December 2010.
+
+\item \textit{\textsc{Ceal}: A C-Based Language for Self-Adjusting Computation}
+\\
+Programming Language Design and Implementation (\textbf{PLDI 2009}).
+\\
+Dublin, Ireland. June 2009.
+
+
+\item \textit{Memory Management for Self-Adjusting Computation},
+\\
+International Symposium on Memory Management (\textbf{ISMM 2008}).
+\\
+Tuscon, Arizona. June 2008.
+
+\item \textit{A Proposal for Parallel Self-Adjusting Computation}, 
+\\
+Workshop on Declarative Aspects of Multicore Programming (\textbf{DAMP 2007}).
+\\
+Nice, France. January 2007.
+
+\end{itemize}
+
+
+\section*{Software}
+
+\begin{itemize}
+\item \href{http://www.cs.umd.edu/~hammer/adapton}{\textsc{Adapton}: Composable, Demand-Driven Incremental Computation}.
+  %   
+  \textsc{Adapton} provides library primitives (currently in OCaml and Python)
+  for creating incremental computation (IC).  Unlike prior approaches,
+  \textsc{Adapton} supports demand-driven IC (e.g., computations that use
+  laziness).
+
+\item \href{https://bitbucket.org/aseemr/wysteria/wiki/Home}{\textsc{Wysteria}: A Programming Language for Generic, Mixed-mode Multiparty Computation}.
+  %   
+  \textsc{Wysteria} is a high-level functional programming language for writing mixed-mode secure computations. Such computations interleave local, private computations with secure multiparty computations.
+
+\item \href{http://ceal.mpi-sws.org}{\textsc{Ceal}: A C-based language (compiler and run-time system) for self-adjusting computation}.
+  % 
+  \textsc{Ceal} extends C with a small set of primitives that allow
+  programmers to write self-adjusting computations in a manner similar
+  to conventional C programming.
+\end{itemize}
+
+
+\section*{Student Internships}
+
+\begin{itemize}     
+ 
+  \begin{resexperience}
+    {Intel, Programming Systems Lab at Santa Clara}
+    {Graduate Research Intern}
+    {June 2007}
+    {September 2007}    
+  \end{resexperience}
+
+  \begin{resexperience}
+    {Intel, Programming Systems Lab at Santa Clara}
+    {Graduate Research Intern}
+    {June 2006}
+    {September 2006}    
+  \end{resexperience}
+
+  \begin{resexperience}
+    {IBM, Almaden Research Center}
+    {Research Intern}
+    {May 2005}
+    {September 2005}
+    
+%     \htmladdnormallink[hc] {Healthcare information
+%       management}{http://www.almaden.ibm.com/software/hc/} projects,
+%     including \htmladdnormallink[stem]{Spatiotemporal
+%       Epidemiological Modeler
+%       (STEM)}{http://www.alphaworks.ibm.com/tech/stem} and SynthEHR.
+%     STEM uses a differential model and graphics to create maps
+%     that model national and world health epidemics and help public
+%     administrators create public health policy.  SynthEHR is a
+%     distributed, agent-based simulation used to generate synthetic
+%     health records for related research projects.  Contact: James
+%     Kaufman \emph{kaufman@almaden.ibm.com}
+
+  \end{resexperience}
+  
+  \begin{resexperience}
+    {IBM, Almaden Research Center}
+    {Research Intern}
+    {May 2004}
+    {August 2004} 
+
+%     Worked in IBM's research division on both
+%     grid computing middleware and a system for simulating the
+%     spread of infectious diseases.  The grid system's focus was on
+%     load-balancing a running interactive application, such as an
+%     online game.  The simulation used GIS data for both model
+%     creation and visualization.  Contact: James Kaufman
+%     \emph{kaufman@almaden.ibm.com}
+
+  \end{resexperience}    
+  
+  \begin{resexperience}
+    {IBM, Extreme Blue Program}
+    {Computer Science Intern}
+    {June 2003}
+    {August 2003} 
+
+%     Worked on \emph{GameGrid}, a application of IBM grid technology to
+%     Massively Multiplayer Online Games (MMOGs).  Focused on design and
+%     development of a system deploying Quake II as a proof of concept,
+%     grid-enabled game.  The project was featured on Slashdot,
+%     eWeek.com, and Technology Review and demonstrated at LinuxWorld
+%     2003. Contact: James Kaufman \emph{kaufman@almaden.ibm.com}
+
+  \end{resexperience}
+  
+%   \begin{resexperience}
+%     {\htmladdnormallink[upl]{Undergraduate Projects Lab (UPL)}
+%       {http://www.upl.cs.wisc.edu/}} {Coordinator}{November
+%       2002}{May 2005} Helped with system administration of user
+%     accounts and network systems as well as non-technical
+%     administrative tasks.  Coordinated extra-curricular software
+%     projects both alone and with other students purely for the joy
+%     of creation and cooperation. Contact: UPL Coordinators
+%     \emph{upl@upl.cs.wisc.edu}
+%   \end{resexperience}
+
+\end{itemize}
+
+
+
+\medskip
+
+% Footer
+\begin{center}
+  \begin{small}
+    Last updated: \today
+  \end{small}
+\end{center}
+
+\end{document}
