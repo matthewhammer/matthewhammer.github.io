@@ -5,6 +5,19 @@
 \usepackage{charter}
 
 \newcommand{\BeanCounter}[1]{(Acceptance~Rate:~#1\%)}
+\newcommand{\ReviewItem}[1]{\item #1}
+\newcommand{\ReviewItemsBegin}{\begin{itemize}}
+\newcommand{\ReviewItemsEnd}{\end{itemize}}
+\newcommand{\POPL}[1]{Principles of Programming Languages (POPL)~#1}
+\newcommand{\PLDI}[1]{Programming Language Design and Implementation (PLDI)~#1}
+\newcommand{\OOPSLA}[1]{OOPSLA~#1}
+\newcommand{\PLAS}[1]{PLAS~#1}
+\newcommand{\SOFSEM}[1]{SOFSEM~#1}
+\newcommand{\ICFP}[1]{ICFP~#1}
+\newcommand{\MLWorkshop}[1]{ML Workshop~#1}
+\newcommand{\IEEESP}[1]{IEEE~S\&P~#1}
+\newcommand{\ESOP}[1]{ESOP~#1}
+\newcommand{\GPCE}[1]{GPCE~#1}
 
 % Fonts
 %\usepackage[T1]{fontenc}
@@ -112,6 +125,18 @@ BS  (Computer Science) & University of Wisconsin & 2005 \\
 \begin{itemize}
 
 \item
+\href{https://arxiv.org/abs/1703.05410}
+{\textit{Languages of play: towards semantic foundations for game interfaces}}
+\\
+Chris Martens, \underline{Matthew A. Hammer}
+\\
+Proceedings of the International Conference on the Foundations of Digital Games (\textbf{FDG 2017}).
+\\
+Hyannis, MA. August 2017.
+%\\
+%\BeanCounter{$17/28 \approx 61$}
+
+\item
 \href{http://hazelgrove.org/docs/hazel-vision-tr.pdf}{\textit{Toward a Semantics for Program Editors}}
 \\
 Cyrus Omar, Ian Voysey, Michael Hilton, Joshua Sunshine, Claire Le Goues, Jonathan Aldrich, \underline{Matthew A. Hammer}.
@@ -119,6 +144,7 @@ Cyrus Omar, Ian Voysey, Michael Hilton, Joshua Sunshine, Claire Le Goues, Jonath
 The 2nd Summit on Advances in Programming Languages (\textbf{SNAPL 2017}).
 \\
 Monterey, California. May 2017.
+\\
 \BeanCounter{$17/28 \approx 61$}
 
 \item
@@ -335,12 +361,15 @@ Matthew Hammer, Mohan Rajagopalan, Anwar Ghuloum
 
 \section*{Funding}
 \begin{itemize}
+\item Facebook (unrestricted gift, \$30k)
+
 \item \href{https://www.nsf.gov/awardsearch/showAward?AWD_ID=1619282}
   {NSF Small: Online Verification-Validation (\$310k to CU Boulder)}
+
 \item Mozilla Research Funding (unrestricted gift, \$90k)
 \end{itemize}
 
-\section*{Students}
+\section*{Current Students}
 
 \begin{itemize}
 \item Kyle Headley (PhD program, CU Boulder)
@@ -348,48 +377,106 @@ Matthew Hammer, Mohan Rajagopalan, Anwar Ghuloum
 \item Monal Narasimhamurthy (PhD program, CU Boulder)
 \end{itemize}
 
-\section*{Service}
+\section*{Graduated Students}
+
+\begin{itemize}
+\item Dimitrios Economou (Masters program, CU Boulder)
+\end{itemize}
+
+\section*{CS Department Service}
 
 \begin{itemize}
 
-\item \textbf{Thesis Committees}:
-  Max Russek (CU Undergrad; Spring 2016)
+\item \textbf{Committees}:
+\ReviewItemsBegin
+\ReviewItem{ Graduate Program Committee, Fall 2015---Present}
+\ReviewItem{ Educational Technology Committee, Spring 2017---Present}
+\ReviewItemsEnd
 
-\item \textbf{SRC Judge}:
-  PLDI 2016 Student Research Competition.
+\item Colloquium Chair, Fall 2016---Present
+
+\item \textbf{Thesis Committees}:
+\ReviewItemsBegin
+\ReviewItem{ Bryan XXX (CU Undergrad; Fall--Spring 2017) }
+\ReviewItem{ Max Russek (CU Undergrad; Spring 2016) }
+\ReviewItemsEnd
+
+\end{itemize}
+
+\section*{External Service}
+\begin{itemize}
+
+\item \textbf{Workshop/Seminar Organization}:
+
+\ReviewItemsBegin
+\ReviewItem{
+{\href{https://pldi17.sigplan.org/track/ic-2017-papers}
+{\textbf{1st Incremental Computing (IC) Workshop 2017}}}
+\\
+Co-located with \PLDI{2017}.\\
+Barcelona, Spain. June 2017.
+}
+\ReviewItem{
+{\href{http://drops.dagstuhl.de/opus/volltexte/2017/6949/}
+{\textbf{Dagstuhl seminar 16402}: 
+\\
+Programming Language Techniques for Incremental and Reactive Computing}}
+\\
+Schloss Dagstuhl. Wadern, Germany. October 2016.
+}
+\ReviewItemsEnd
   
 \item \textbf{Program Committee (PC) member}:
-  GPCE 2017,
-  ESOP 2017,
-  PLAS 2015
+\ReviewItemsBegin
+\ReviewItem{\ESOP{2018}}
+\ReviewItem{\GPCE{2017}}
+\ReviewItem{\PLAS{2015}}
+\ReviewItemsEnd
 
-\item \textbf{External Review Committee (ERC) member}: PLDI 2015
+\item \textbf{External Review Committee (ERC) member}: 
+\ReviewItemsBegin
+\ReviewItem{\PLDI{2018}}
+\ReviewItem{\PLDI{2015}}
+\ReviewItemsEnd
+
+\item \textbf{Student Research Competition (SRC) judge}:
+\ReviewItemsBegin
+\ReviewItem{\PLDI{2016}}
+\ReviewItemsEnd
 
 \item \textbf{External reviewer}:
-ESOP 2017,  
-ESOP 2016,  
-IEEE~S\&P~2015,
-POPL~2015, % review: #159C
-OOPSLA~2014, % submissions: i3ql, 187 (incremental object queries)
-PLAS~2014, % submission 4
-SOFSEM~2014, % submission 101
-PLDI~2013, % submission 106: ``Simple and efficient higher-order reactive programming''
-POPL~2012, 
-ICFP~2010, 
-ML~Workshop~2009, 
-PLDI~2008.
+\ReviewItemsBegin
+\ReviewItem{\ESOP{2017}}
+\ReviewItem{\ESOP{2016}} 
+\ReviewItem{\IEEESP{2015}}
+\ReviewItem{\POPL{2015}} % review: #159C
+\ReviewItem{\OOPSLA{2014}} % submissions: i3ql, 187 (incremental object queries)
+\ReviewItem{\PLAS{2014}} % submission 4
+\ReviewItem{\SOFSEM{2014}} % submission 101
+\ReviewItem{\PLDI{2013}} % submission 106: ``Simple and efficient higher-order reactive programming''
+\ReviewItem{\POPL{2012}} 
+\ReviewItem{\ICFP{2010}} 
+\ReviewItem{\MLWorkshop{2009}},
+\ReviewItem{\PLDI{2008}}
+\ReviewItemsEnd
 
 \item \textbf{Graduate Student Representative}.  
   May 2010--October 2011.
   \\
   Max Planck Institute for Software Systems.
-
-  
+ 
 \end{itemize}
 
 \section*{Teaching}
 
 \begin{itemize}
+
+\item {
+  \href{http://csci3155.cs.colorado.edu/f17/}
+  {\textbf{CSCI 3155}: \textbf{Principles of programming languages}}
+  \\
+  University of Colorado, Boulder.  Fall 2017.
+}
 
 \item {
   \href{http://matthewhammer.org/courses/csci7000-s17}
@@ -400,20 +487,20 @@ PLDI~2008.
 
 \item {
   \href{http://matthewhammer.org/courses/csci5535-f16}
-  {\textbf{CSCI 5535}: \textbf{Foundations of Programming Languages}}
+  {\textbf{CSCI 5535}: \textbf{Foundations of programming languages}}
   \\
   University of Colorado, Boulder.  Fall 2016. 
 }
 
 \item {
-  \textbf{CSCI 7000}: \textbf{Programming language design for interfaction}
+  \textbf{CSCI 7000}: \textbf{Programming language design for interaction}
   \\
   University of Colorado, Boulder.  Spring 2016.  
 }
 
 \item {
   \href{https://www.cs.colorado.edu/~maha2973/csci5535/f15/}
-  {\textbf{CSCI 5535}: \textbf{Foundations of Programming Languages}}
+  {\textbf{CSCI 5535}: \textbf{Foundations of programming languages}}
   \\
   University of Colorado, Boulder.  Fall 2015.  
 }
@@ -437,6 +524,19 @@ PLDI~2008.
 }
 \end{itemize}
 
+
+\section*{Invited Talks}
+
+\begin{itemize}
+\item 
+\href{https://drive.google.com/file/d/0B6ZM1oYivK60MFRkVkY1c3J5Rzg/view}
+{{\textit{Incremental Computation with Adapton}}}
+\\
+Facebook, May 2017
+\\
+\href{https://plemm.splashthat.com/}
+{At the 1st \textit{Programming language enthusiasts mind melt (PLEMM) 2017}}
+\end{itemize}
 
 \section*{Talks}
 
