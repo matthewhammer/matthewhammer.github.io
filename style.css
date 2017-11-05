@@ -41,9 +41,16 @@ body
   font-weight: bold;
 }
 
-.parintro
+.parintro1
 {
   max-width: 4in;
+  font-size: 110%;
+ /*text-align:justify;*/
+}
+.parintro2
+{
+  max-width: 4in;
+  font-size: 110%;
  /*text-align:justify;*/
 }
 
