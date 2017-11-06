@@ -9,29 +9,19 @@ body
 
 .pagecontent
 {
-  padding: 2%;
-  margin-left: 10%;
-  margin-right: 10%;
-  margin-top: 2%;
-  margin-bottom: 5%;
-
-  padding: 5px;
-
-/*
-  margin-top: 2%;
-  margin-left: 2%;
-  margin-bottom: 2%;
-  margin-right: auto;
-*/
   float:left;
 
-  background-color: rgb(248,248,248);
-/*  border-style: solid; */
-  border-style: none;
-    
+  padding: 1.5em;
 
+  margin-left: 10%;
+  margin-top: 2%;
+  margin-bottom: 5%;
+  margin-right: auto;
+
+  background-color: rgb(248,248,248);
+  border-style: none;
   border-width: 8px 8px 8px 8px;
-  border-color: rgb(235,235,240);
+  border-color: rgb(245,235,240);
 }
 
 .parhd
@@ -56,15 +46,14 @@ body
 
 .textcolumn 
 {
- max-width: 7.5in;
+ max-width: 8.5in;
  padding: 0px;
  margin: 0px;
 }
 
 .hicolumn
 {
- margin: 10px;
-
+ margin: 0.6em;
  /*text-align:justify;*/
  padding: 0.6em;
  padding-left: 1em;
