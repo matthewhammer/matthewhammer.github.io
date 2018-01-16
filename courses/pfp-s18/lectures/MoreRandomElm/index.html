@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>MoreRandomElm</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="more-random-elm">More Random Elm</h1>
+<p>We will introduce a few features that come in handy when developing larger, more full-featured web applications in Elm: commands, ports, and extensible record types.</p>
+<h2 id="example-random-numbers">Example: Random Numbers</h2>
+<p>Let’s write a simple program to generate and display random numbers. We’ll use the <a href="../IntroMVC/CountMouseClicks.elm">application we wrote</a> (as well as the <a href="elm-package.json">package dependencies</a>) for <a href="../IntroMVC/CountMouseClicks.html">counting the number of mouse clicks</a> as a starting point and then make a few tweaks.</p>
+<p>We’ll have three kinds of messages: <code>MouseClick</code> for mouse clicks, <code>Reset</code> for when the escape key is pressed, and <code>Noop</code> for all other keys.</p>
+<pre><code>type Msg = Noop | Reset | MouseClick</code></pre>
+<p>As in Homework 2, we’ll use the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random"><code>Random.step</code></a> function that uses an input <code>Seed</code> to help generate a value of type <code>a</code> and also a new <code>Seed</code> to be used next time we need to generate a value:</p>
+<pre><code>step : Generator a -&gt; Seed -&gt; (a, Seed)</code></pre>
+<p>Therefore, in addition to the list of random numbers generated so far, our model also needs to keep track of the current <code>Seed</code> to use to generate the next number.</p>
+<pre><code>type alias Model = { seed: Seed, randomNumbers: List Int }</code></pre>
+<p>We need to create an initial <code>Seed</code>, which is what the <code>Random.initialSeed</code> function is for.</p>
+<pre><code>initialModel = { seed = Random.initialSeed 17, randomNumbers = [] }</code></pre>
+<p>The interesting case for <code>update</code> is <code>MouseClick</code>, where we generate and record the new number and seed.</p>
+<pre><code>update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+update msg model =
+  case msg of
+    Noop -&gt; (model, Cmd.none)
+    Reset -&gt; (initialModel, Cmd.none)
+    MouseClick -&gt;
+      let (i, newSeed) = Random.step (Random.int 1 10) model.seed in
+      let randomNumbers = i :: model.randomNumbers in
+      ({ seed = newSeed, randomNumbers = randomNumbers }, Cmd.none)</code></pre>
+<p>Finally, our <code>view</code> function displays the list of numbers.</p>
+<pre><code>view : Model -&gt; Html Msg
+view model =
+  let style = ... in
+  let display =
+    Html.text (&quot;Random Numbers: &quot; ++ toString (List.reverse model.randomNumbers))
+  in
+  Html.div [style] [display]</code></pre>
+<p>If we try out the resulting application <a href="NotSoRandom.html"><code>NotSoRandom.html</code></a>, we see that it is not so random; the same sequence of numbers is generated every time. That’s because we always use the same initial seed (<code>17</code>), and the generation process is deterministic once this seed is chosen. (As suggested by the documentation for <code>Random.initialSeed</code>, we could use the current time (i.e. <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Time"><code>Time.now</code></a>) as a proxy for a random integer. But we will use an alternative and more direct approach below.)</p>
+<h2 id="commands">Commands</h2>
+<p>The <code>Random</code> library provides a different way to generate random values, which does not require explicitly threading seed values around:</p>
+<pre><code>generate : (a -&gt; msg) -&gt; Generator a -&gt; Cmd msg</code></pre>
+<p>Notice the <code>Cmd</code> in the output type; this denotes an outgoing message to do something (in this case, generate a random value of type <code>a</code>) and then wrap the result in a message (in this case, computed by the function of type <code>a -&gt; msg</code>). This something may take a long time to finish, but if and when it does, the resulting message will get fed through the <code>update</code> function as usual. <a href="../IntroMVC/index.html">As previewed before</a>, commands allow programs to send outgoing messages so that they can produce other effects besides just generating HTML output.</p>
+<p>We no longer need to track a seed value.</p>
+<pre><code>type alias Model = { randomNumbers: List Int }</code></pre>
+<p>But now we need a new kind of message, which we call <code>RandomNumber</code>, in addition to <code>MouseClick</code>…</p>
+<pre><code>type Msg = Noop | Reset | MouseClick | RandomNumber Int</code></pre>
+<p>… because <code>MouseClick</code> will initiate the command to generate a random number and <code>RandomNumber</code> will contain the result of that completed command.</p>
+<pre><code>update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+update msg model =
+  case msg of
+    Noop -&gt; (model, Cmd.none)
+    Reset -&gt; (initialModel, Cmd.none)
+    MouseClick -&gt; (model, Random.generate RandomNumber (Random.int 1 10))
+    RandomNumber i -&gt; ({ randomNumbers = i :: model.randomNumbers }, Cmd.none)</code></pre>
+<p>The resulting application <a href="MoreRandom.html"><code>MoreRandom.html</code></a> generates a different sequence every time it is loaded.</p>
+<h2 id="ports">Ports</h2>
+<p>We have now seen how the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random"><code>Random</code></a> library uses outgoing messages (via commands), and earlier we saw how <a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Mouse"><code>Mouse</code></a> and <a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Keyboard"><code>Keyboard</code></a> use several kinds of incoming messages (via subscriptions).</p>
+<p><a href="https://guide.elm-lang.org/interop/javascript.html">Ports</a> allow us to define new kinds of outgoing messages — so that Elm code can call JavaScript code — and new kinds of incoming messages — so that JavaScript code can call Elm code.</p>
+<p>As an example, we will extend our running example so that it remembers the numbers that have been generated across different visits to the HTML page. In particular, we define two JavaScript functions for reading and writing our randomly generated numbers to <a href="https://www.w3schools.com/html/html5_webstorage.asp">HTML5 Local Storage</a> that we want to plug into our Elm application. The value of type <code>List Int</code> in our Elm application will be automatically converted to an array of numbers in JavaScript when crossing the language boundary. In the JavaScript code below, we convert arrays to and from strings so that they can be saved in the local store.</p>
+<pre><code>function loadNums() {
+  var s = localStorage.getItem(&quot;randomNumbers&quot;);
+  var nums = s === null ? [] : JSON.parse(s);
+  return nums;
+}
+
+function saveNums(nums) {
+  var s = JSON.stringify(nums);
+  localStorage.setItem(&quot;randomNumbers&quot;, s);
+}</code></pre>
+<p>To build an application that mixes Elm and JavaScript, first we compile the Elm code (<code>MoreRandomWithMemory.elm</code>) to JavaScript (<code>MoreRandomWithMemory.js</code>) rather than HTML:</p>
+<pre><code>elm-make MoreRandomWithMemory.elm --output=MoreRandomWithMemory.js</code></pre>
+<p>Then we write an HTML file (<code>MoreRandomWithMemory.html</code>) that includes the generated JavaScript (via <code>&lt;script src=&quot;...&quot;&gt;</code>) :</p>
+<pre><code>&lt;body&gt;
+  &lt;div id=&quot;main&quot;&gt;&lt;/div&gt;
+  &lt;script src=&quot;MoreRandomWithMemory.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    var node = document.getElementById(&#39;main&#39;);
+    var app = Elm.MoreRandomWithMemory.embed(node);
+
+    function loadNums() { ... }
+    function saveNums() { ... }
+  &lt;/script&gt;
+&lt;/body&gt;</code></pre>
+<p>This HTML page should behave like the one when generating <code>.html</code> from <code>elm-make</code>, and when using <code>elm-reactor</code>.</p>
+<p>Next, we define ports on the Elm side. We use the keyword <code>port</code> to tell Elm that we are going to define some ports in this module.</p>
+<pre><code>port module MoreRandomWithMemory exposing (main)</code></pre>
+<p>We define several outgoing ports (functions that send values to JavaScript via commands) and incoming ports (functions that take values from JavaScript via subscriptions):</p>
+<pre><code>port requestNumbers : () -&gt; Cmd msg
+port receiveNumbers : (List Int -&gt; msg) -&gt; Sub msg
+
+port clearNumbers : () -&gt; Cmd msg
+
+port saveNumbers : List Int -&gt; Cmd msg</code></pre>
+<p>These port signatures are organized into three logical operations for interacting with local storage: (1) loading the saved numbers, (2) clearing the save numbers, and (3) updating the saved numbers. Notice how the first operation is defined as a pair of ports, one to initiate the request and one to receive the result.</p>
+<p>We add a new kind of <code>Msg</code> called <code>LoadNumbers</code> to describe the new incoming message…</p>
+<pre><code>type Msg = Noop | Reset | MouseClick | RandomNumber Int | LoadNumbers (List Int)</code></pre>
+<p>… and hook it up to the new incoming port:</p>
+<pre><code>subscriptions : Model -&gt; Sub Msg
+subscriptions =
+  Sub.batch
+    [ Mouse.clicks (always MouseClick)
+    , Keyboard.downs (\keyCode -&gt; if keyCode == 27 then Reset else Noop)
+    , receiveNumbers LoadNumbers
+    ]</code></pre>
+<p>We issue commands on the three outgoing ports in <code>init</code> and <code>update</code>:</p>
+<pre><code>init : (Model, Cmd Msg)
+init = (initialModel, requestNumbers ())
+
+update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+update msg model =
+  case msg of
+    Noop -&gt; (model, Cmd.none)
+    Reset -&gt; (initialModel, clearNumbers ())
+    LoadNumbers nums -&gt; ({ randomNumbers = nums }, Cmd.none)
+    MouseClick -&gt; (model, Random.generate RandomNumber (Random.int 1 10))
+    RandomNumber n -&gt;
+      let nums = n :: model.randomNumbers in
+      ({ randomNumbers = nums }, saveNumbers nums)</code></pre>
+<p>Finally, we define JavaScript event handlers to listen (i.e. <code>subscribe</code>) to the three Elm outgoing ports (which are incoming from the perspective of the JavaScript code). And we <code>send</code> the <code>nums</code> from local storage to the Elm incoming port (which is outgoing from the perspective of the JavaScript):</p>
+<pre><code>  &lt;script&gt;
+    ...
+
+    app.ports.clearNumbers.subscribe(function() {
+      saveNums([]);
+    });
+
+    app.ports.saveNumbers.subscribe(function(nums) {
+      saveNums(nums);
+    });
+
+    app.ports.requestNumbers.subscribe(function() {
+      var nums = loadNums();
+      app.ports.receiveNumbers.send(nums);
+    });
+
+    ...
+  &lt;/script&gt;</code></pre>
+<p>All the pieces work together in <a href="MoreRandomWithMemory.html"><code>MoreRandomWithMemory.html</code></a> (you may want to view the page source).</p>
+<h2 id="refactoring">Refactoring</h2>
+<p>If you’ve been following along by copying each of the versions above to start the next iteration (starting with <code>NotSoRandom</code>, adding the use of commands in <code>MoreRandom</code>, then adding the use of ports in <code>MoreRandomWithMemory</code>), then you’ve probably noticed, well, the amount of copied code. Let’s use this opportunity to refactor the three versions to eliminate much of the cloning.</p>
+<p>What are the biggest opportunities for code reuse? The <code>view</code> function is exactly the same for all three. Several <code>Msg</code> data constructors (<code>MouseClick</code>, <code>Reset</code>, and <code>Noop</code>) are shared by all. And two of the subscriptions (for mouse clicks and keyboard presses) are shared by all.</p>
+<h4 id="model-and-view-via-extensible-record-types">Model and View (via Extensible Record Types)</h4>
+<p>We don’t want to use the same <code>Model</code> for all, because only the first version needed a <code>Seed</code>. We can define the following <a href="http://elm-lang.org/docs/records#record-types">extensible record type</a> that allows us to describe only the fields that <code>view</code> depends on (namely, <code>randomNumbers</code>, which is displayed in the HTML output).</p>
+<pre><code>type alias Model_ a = { a | randomNumbers : List Int }</code></pre>
+<p>The type variable <code>a</code> can be instantiated with <em>any</em> set of field names and types. In other words, the type variable in the definition says “forall <code>a</code>. such that <code>a</code> is a record type.” For example, the different types of models can be defined as:</p>
+<pre><code>type alias Model = Model_ { seed: Seed }
+
+type alias Model = Model_ {}</code></pre>
+<p>Now the type of the <code>view</code> function can be made more general so that it can be “mixed in” to each of the three applications.</p>
+<pre><code>view : Model_ a -&gt; Html msg</code></pre>
+<h4 id="controller-messages-update-and-subscriptions">Controller (Messages, Update, and Subscriptions)</h4>
+<p>Although there are three <code>Message</code> names common to all versions, their handling in <code>update</code> is not always the same. Let’s have each application define their own <code>Msg</code> type and <code>update</code> function independently.</p>
+<p>Having separate <code>Msg</code> types for each application complicates <code>subscriptions</code> a bit, since we need to know how to “wrap” the mouse clicks and keyboard presses. So, we take these three messages in as arguments. We also take an argument that allows each application to add any additional subscriptions.</p>
+<pre><code>makeSubscriptions : (msg, msg, msg) -&gt; List (Sub msg) -&gt; model -&gt; Sub msg
+makeSubscriptions (mouseClick, reset, noop) moreSubscriptions _ =
+  Sub.batch &lt;|
+    [ Mouse.clicks (always mouseClick)
+    , Keyboard.downs (\keyCode -&gt; if keyCode == 27 then reset else noop)
+    ] ++ moreSubscriptions</code></pre>
+<h4 id="main-putting-it-all-together">Main (Putting It All Together)</h4>
+<p>We define the following function to put the pieces together:</p>
+<pre><code>makeProgram : (Model_ a, Cmd msg)
+           -&gt; (msg -&gt; Model_ a -&gt; (Model_ a, Cmd msg))
+           -&gt; (msg, msg, msg)
+           -&gt; List (Sub msg)
+           -&gt; Program Never (Model_ a) msg
+makeProgram init update commonMessages moreSubscriptions =
+  Html.program
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = makeSubscriptions commonMessages moreSubscriptions
+    }</code></pre>
+<p>Check out the refactored versions: <a href="RandomNumbersUI.elm"><code>RandomNumbersUI.elm</code></a>, <a href="NotSoRandom.elm"><code>NotSoRandom.elm</code></a>, <a href="MoreRandom.elm"><code>MoreRandom.elm</code></a>, and <a href="MoreRandomWithMemory.elm"><code>MoreRandomWithMemory.elm</code></a>. Much less copied code! (As an exercise, you may want to look for ways to factor the common parts among <code>Msg</code> and <code>update</code>, and then determine whether you think the abstraction is profitable.)</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="recommended">Recommended</h3>
+<ul>
+<li><a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random">Random</a></li>
+<li><a href="http://elm-lang.org/docs/records">Records</a></li>
+<li><a href="https://guide.elm-lang.org/interop/javascript.html">Ports</a></li>
+<li><a href="https://guide.elm-lang.org/architecture/effects/">Full Elm Architecture</a></li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

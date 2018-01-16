@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>AmortizedAnalysis</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="a-few-words-on-amortized-analysis">A Few Words on Amortized Analysis</h1>
+<p>See Chapter 5.1 of the Okasaki textbook for a summary of two approaches to amortized analysis, the banker’s method and the physicist’s method. Here, we will say just a few extra words about the accounting for the <a href="../Queues/FastQueue.elm"><code>FastQueue</code></a> implementation from before.</p>
+<p>Recall that when evaluating the running times of functions, we often use symbolic constants instead of concrete units (such as seconds) in order to abstract away from low-level, incidental, and variable characteristics of an execution environment. And because Big-O analysis, furthermore, abstracts away the particular constants of a function, symbolic constants (such as <em>k</em>) are often replaced by particular small constants (such as <em>1</em>).</p>
+<p>Once comfortable with such reasoning, we can often jump directly to saying things like “the amortized cost of <code>enqueue</code> is <em>2</em>” and “the amortized cost of <code>dequeue</code> is <em>1</em>”. In the meantime, let us spend the extra effort to explicitly account for the actual (symbolic) costs of operations before reducing them to their asymptotic characteristics.</p>
+<h2 id="actual-costs-ti">Actual Costs (<em>t<sub>i</sub></em>)</h2>
+<p>To avoid confusion with the notation <em>c</em> for credits from the textbook, here we will use the metavariable <em>k</em> to range over constants. Let the following constants stand for actual costs of the various operations on a <code>Queue</code> that contains <em>m</em> elements in the <code>back</code> list:</p>
+<ul>
+<li><em>k<sub>1</sub></em> is the cost of <code>enqueue</code>;</li>
+<li><em>k<sub>2</sub></em> is the cost of <code>peek</code>;</li>
+<li><em>k<sub>3</sub></em> is the cost of <code>dequeue</code> when <code>List.reverse</code> is not called (the cheap case); and</li>
+<li><em>k<sub>4</sub>m + k<sub>5</sub></em> is the cost of <code>dequeue</code> when <code>List.reverse</code> is called (the expensive case).</li>
+</ul>
+<p>Notice the actual cost of <code>dequeue</code> in the expensive case is linear in the size of the <code>back</code> list.</p>
+<h2 id="amortized-costs-ai">Amortized Costs (<em>a<sub>i</sub></em>)</h2>
+<p>We now revisit the amortized analyses from the textbook using the symbolic costs above.</p>
+<h3 id="bankers-method-ai-ti-ci---ci">Banker’s Method (<em>a<sub>i</sub> = t<sub>i</sub> + c<sub>i</sub> - <span style="text-decoration:overline">c<sub>i</sub></span></em>)</h3>
+<p>We allocate <em>k<sub>4</sub></em> credits for each element added to the <code>back</code>, where <em>k<sub>4</sub></em> was the cost for <code>List.reverse</code> to process one element.</p>
+<ul>
+<li><code>enqueue</code>: <em>k<sub>1</sub> + k<sub>4</sub> - 0 = k<sub>1</sub> + k<sub>4</sub></em></li>
+<li><code>peek</code>: <em>k<sub>2</sub> + 0 - 0 = k<sub>2</sub></em></li>
+<li><code>dequeue</code> (cheap): <em>k<sub>3</sub> + 0 - 0 = k<sub>3</sub></em></li>
+<li><code>dequeue</code> (expensive): <em>(k<sub>4</sub>m + k<sub>5</sub>) + 0 - k<sub>4</sub>m = k<sub>5</sub></em></li>
+</ul>
+<p>Thus, all of the operations run in <em>O(1)</em> amortized time.</p>
+<h3 id="physicists-method-ai-ti-φdi---φdi-1">Physicist’s Method (<em>a<sub>i</sub> = t<sub>i</sub> + Φ(d<sub>i</sub>) - Φ(d<sub>i-1</sub></em>))</h3>
+<p>We define the potential to be <em>k<sub>4</sub>m</em> where <em>m</em> is the length of the <code>back</code>.</p>
+<ul>
+<li><code>enqueue</code>: <em>k<sub>1</sub> + k<sub>4</sub>(m+1) - k<sub>4</sub>m = k<sub>1</sub> + k<sub>4</sub></em></li>
+<li><code>peek</code>: <em>k<sub>2</sub> + k<sub>4</sub>m - k<sub>4</sub>m = k<sub>2</sub></em></li>
+<li><code>dequeue</code> (cheap): <em>k<sub>3</sub> + k<sub>4</sub>m - k<sub>4</sub>m = k<sub>3</sub></em></li>
+<li><code>dequeue</code> (expensive): <em>(k<sub>4</sub>m + k<sub>5</sub>) + k<sub>4</sub>0 - k<sub>4</sub>m = k<sub>5</sub></em></li>
+</ul>
+<p>Thus, all of the operations run in <em>O(1)</em> amortized time.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 5.1 and 5.6</li>
+</ul>
+<h3 id="optional">Optional</h3>
+<ul>
+<li>Okasaki, Chapter 5.3 (<code>BinomialHeap.insert</code> runs in <em>O(1)</em> amortized time.)</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

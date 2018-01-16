@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Overview</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="course-overview">Course Overview</h1>
+<h2 id="q-what-will-we-study-in-this-course">Q: What will we study in this course?</h2>
+<p>There will be two primary themes:</p>
+<ol type="1">
+<li><p>Implementing and analyzing efficient data structures, particularly in the context of functional programming languages.</p></li>
+<li><p>Functional programming for interactive web applications.</p></li>
+</ol>
+<p>Why? Well, because all of you have seen at least one functional programming language before (Racket in 151 or Haskell in 161, and perhaps Standard ML in 221 or 226x), there’s an implicit “Advanced” or “Topics in” that prefixes the “Functional Programming” name of this course. So, we need to choose <em>some</em> topics to study.</p>
+<p>There’s certainly plenty of interesting and important topics related to data structures, some of which you may have seen in other courses. But probably few of you have seen <em>all</em> of the data structures and analysis techniques we will cover, and fewer still will have spent much time with them in the context of a purely functional language. That’s one good topic.</p>
+<p>And it turns out there’s a new, exciting, functional programming language that makes it easy to write reliable code that compiles to JavaScript and runs in the browser. It’s not quite mainstream yet, but it’s a great example of how functional programming can be useful in the real world. That makes for another good topic.</p>
+<h2 id="q-what-language-will-we-use">Q: What language will we use?</h2>
+<p><img height=130px align="right" src="../../static/images/Elm.png"/></p>
+<p>The vehicle we will use for programming is <a href="http://elm-lang.org/">Elm</a>, an exciting, new-kid-on-the-block language that features typed, functional programming with mechanisms for event handling that makes writing interactive web applications sane. I sometimes describe Elm as a <strong>small</strong> dialect of <strong>ML</strong>.</p>
+<h3 id="machine-learning-huh">Machine Learning… huh?</h3>
+<p>No, not <em>that</em> ML. In our world, <a href="http://en.wikipedia.org/wiki/ML_%28programming_language%29">ML</a> refers to a family of functional programming languages, developed since the 1970s, which has served as seminal work for decades of programming language design and engineering work.</p>
+<p>I like to think of ML as kind of sitting halfway between Racket and Haskell for several reasons.</p>
+<h4 id="evaluation-strategy">Evaluation Strategy</h4>
+<p>Like Racket and pretty much every language you may know besides Haskell, Elm is <em>eager</em> — expressions will be evaluated even when their resulting values are not immediately, or ever, needed elsewhere in the program.</p>
+<p>Interestingly, however, we will see that <em>lazy</em> evaluation is actually crucial to building efficient data structures in purely functional languages (i.e. without mutable variables).</p>
+<p>To bridge this gap, Elm (and most other ML dialects) do provide mechanisms for lazy evaluation on top of the eager semantics.</p>
+<h4 id="types">Types</h4>
+<p>Unlike Racket but like Haskell, ML has a static type system that rejects programs that might possibly (but not necessarily) fail with certain kinds of run-time errors.</p>
+<p>ML type systems feature a bunch of really neat and powerful features — such as parametric polymorphism and automatic type inference — but generally do not employ mechanisms like Haskell’s type classes.</p>
+<p>Note: there is a statically typed dialect of Racket called <a href="http://docs.racket-lang.org/ts-guide/">Typed Racket</a>. In fact, designing typed dialects of “dynamic” languages like Racket, JavaScript, Python, etc. is an active area of programming languages research.</p>
+<h4 id="side-effects">Side Effects</h4>
+<p>Even when functional programming languages do offer imperative (or <em>impure</em>) features such as mutable variables, their use is discouraged and typically used in small, local ways.</p>
+<p>Although both ML and Haskell languages do have features that produce side effects, their type systems track such features in very different ways. Such effects typically “go outside” an ML type system, whereas in Haskell effects are recorded in types. Functions of type <code>Int -&gt; String</code> in ML may possibly perform I/O with the user, but in Haskell they cannot. Instead, such functions would have type <code>IO (Int -&gt; String)</code> in Haskell.</p>
+<p>Although Elm does not offer mutable variables, we will see other mechanisms that it provides which break out of the purely functional paradigm.</p>
+<h3 id="what-makes-elm-a-small-dialect">What makes Elm a “small” dialect?</h3>
+<p>Practical languages that build on an ML core typically have many additional features — such as objects, modules, threads, exceptions, laziness, and many forms of syntactic sugar — that help with real-world programming. Popular full-fledged ML dialects include <a href="http://sml-family.org/">Standard ML</a>, <a href="https://ocaml.org/">OCaml</a>, and <a href="http://fsharp.org/">F#</a>. In comparison to these languages, Elm is, by design, much smaller but provides an effect system at its core that does great for event-based programming.</p>
+<h2 id="q-what-else-should-i-know">Q: What else should I know?</h2>
+<p>This course will feature usual things like homeworks, exams, grades, TAs, etc. See the <a href="../../courseinfo.html">Course Info</a> page for details.</p>
+<p>If you like programming and math (in other words, if you like computer science), I think you will like this course.</p>
+<p>If you like only courses that are super-polished, however, then perhaps this course is not for you. I will occasionally choose to cover topics that I will be grokking for the first time. (I like learning, too!) In addition, although the Elm language, libraries, and tools are really coming along nicely, it is still a small language with a small (but helpful!) community. As a result of these factors, there may be times during the course when you will have to get your hands a bit dirty. That said, I think we’ll have some fun.</p>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

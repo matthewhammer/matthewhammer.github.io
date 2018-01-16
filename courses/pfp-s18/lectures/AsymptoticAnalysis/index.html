@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>AsymptoticAnalysis</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="crash-course-in-asymptotic-analysis">Crash Course in Asymptotic Analysis</h1>
+<p>Let us review the basic mathematical techniques for describing the time- and space-efficiency of algorithms. The “costs” of algorithmic operations are typically specified as functions of (properties of) their inputs. As a result, tools are required to “compare” functions.</p>
+<h2 id="big-o-notation">Big-O Notation</h2>
+<!-- TODO use mathjax -->
+<!-- *&exist;* -->
+<p><em>f(n)</em> is <em>O(g(n))</em> if there exist constants <em>c &gt; 0</em> and <em>N &gt; 0</em> such that for all <em>n ≥ N</em>, <em>f(n) ≤ c·g(n)</em>. This is read “<em>f(n)</em> is Big-O of <em>g(n)</em>”. Definitions sometimes vary in their uses of <em>&gt;, ≥, &lt;, and ≤</em>, but these differences do not matter much.</p>
+<p><strong>Example</strong></p>
+<!-- * *g(n) = n* -->
+<ul>
+<li><em>f<sub>1</sub>(n) = n/100</em></li>
+<li><em>f<sub>2</sub>(n) = 100n</em></li>
+<li><em>f<sub>3</sub>(n) = 100n + 23</em></li>
+</ul>
+<p><em>f<sub>1</sub>(n) is O(n)</em> because</p>
+<ul>
+<li><em>f<sub>1</sub>(n) ≤ n</em> for all <em>n ≥ 0</em>.</li>
+</ul>
+<p><em>f<sub>2</sub>(n) is O(n)</em> because</p>
+<ul>
+<li><em>f<sub>2</sub>(n) ≤ 100·n</em> for all <em>n ≥ 0</em>.</li>
+</ul>
+<p><em>f<sub>3</sub>(n) is O(n)</em> because</p>
+<ul>
+<li><em>f<sub>3</sub>(n) ≤ 101·n</em> for all <em>n ≥ 23</em>, or</li>
+<li><em>f<sub>3</sub>(n) ≤ 102·n</em> for all <em>n ≥ 12</em>, or</li>
+<li><em>f<sub>3</sub>(n) ≤ 111·n</em> for all <em>n ≥ 3</em>, or</li>
+<li><em>f<sub>3</sub>(n) ≤ 200·n</em> for all <em>n ≥ 0</em>, or …</li>
+</ul>
+<h4 id="terminology">Terminology</h4>
+<p>In computer science settings, <em>g(n)</em> is often referred to as Big-Omega of <em>f(n)</em> (written <em>g(n)</em> is <em>Ω(f(n))</em>) if <em>f(n)</em> is <em>O(g(n))</em>. However, this definition conflicts with <a href="http://en.wikipedia.org/wiki/Big_O_notation#Related_asymptotic_notations">other definitions of Big-Omega</a>.</p>
+<h4 id="tight-bounds">Tight Bounds</h4>
+<p>A Big-O relationship specifies an asymptotic upper bound but provides no information about how “tight” the bound is. For example, <em>n<sup>2</sup></em> is <em>O(n<sup>4</sup>)</em>, but this bound is not as informative as other valid upper bounds.</p>
+<p>It is often useful to establish a lower bound <em>L(n)</em> for a function <em>f(n)</em> (such that <em>L(n)</em> is <em>O(f(n))</em>) in addition to an upper bound <em>U(n)</em> (such that <em>f(n)</em> is <em>O(U(n))</em>). When <em>L = U</em>, the bound is referred to as tight.</p>
+<p>Tight bounds are described by Big-Theta notation. That is, <em>f(n)</em> is <em>Θ(g(n))</em> if <em>f(n)</em> is <em>O(g(n))</em> and <em>g(n)</em> is <em>O(f(n))</em>.</p>
+<p><strong>Optional Exercise</strong> — Prove that for all <em>i</em> and <em>j</em>, <em>log<sub>i</sub>(n)</em> is <em>O(log<sub>j</sub>(n))</em>. Hint: for all <em>b</em>, <em>log<sub>b</sub>(x) = (ln x) / (ln b)</em>.</p>
+<p>Unless otherwise noted, we write <em>O(log(n))</em> as shorthand for <em>O(log<sub>2</sub>(n))</em>. Considering the fact above, this convention is justified with respect to asymptotic growth rates.</p>
+<p><strong>Optional Exercise</strong> — Define an ordering <em>[f<sub>1</sub>, f<sub>2</sub>, f<sub>3,</sub>…]</em> of the functions below such that for all <em>i</em> and <em>j</em>, <em>i &lt; j</em> implies <em>f<sub>i</sub></em> is <em>O(f<sub>j</sub>)</em>.</p>
+<ul>
+<li><em>2<sup>n</sup></em></li>
+<li><em>n</em></li>
+<li><em>4</em></li>
+<li><em>sqrt(n)</em></li>
+<li><em>n<sup>2</sup>+3n</em></li>
+<li><em>log(n)</em></li>
+<li><em>n·log(n)</em></li>
+<li><em>n!</em></li>
+<li><em>n<sup>5</sup> - n<sup>4</sup></em></li>
+<li><em>1.5<sup>n</sup></em></li>
+</ul>
+<h2 id="recurrence-relations">Recurrence Relations</h2>
+<p>We will consider a couple simple algorithms that traverse data structures looking for a particular element.</p>
+<h4 id="lookup-in-lists">Lookup in Lists</h4>
+<p>Here is a simple <code>find</code> function that traverses the list <code>xs</code>:</p>
+<pre><code>find x xs = case xs of
+  []      -&gt; False
+  y::rest -&gt; if x == y then True else find x rest</code></pre>
+<p>We want to define a function <em>T(n)</em> to describe the time cost of <code>find</code>, where <em>n</em> is the size of (i.e. number of elements in) the <code>xs</code> list.</p>
+<p>There are three cases to consider:</p>
+<ul>
+<li><p>If <code>xs</code> is <code>[]</code>, then <code>find</code> returns after some constant <em>c1</em> amount of work for the pattern matching. So, <em>T(n) = c1</em>.</p></li>
+<li><p>If the head <code>y</code> of the list equals <code>x</code>, then <code>find</code> returns after some constant <em>c2</em> amount of work for the pattern matching and equality test (note that we are assuming that <code>(==)</code> is a constant-time operation, which may not always be a reasonable assumption). So, <em>T(n) = c2</em>.</p></li>
+<li><p>Otherwise, <code>find</code> performs some constant <em>c3</em> amount of work for the pattern matching and comparison <em>and</em> also recursively calls <code>find</code> with the <code>rest</code> of the list. So, <em>T(n) = c3 + T(n-1)</em>.</p></li>
+</ul>
+<p>To compute an upper bound on the running time of <code>find</code>, we must consider the worst case, which means traversing the entire list without finding the desired element <code>x</code>. By unrolling the three cases above for the entire list, we obtain the following recurrence relation below:</p>
+<pre><code>  T(n) = c3 + T(n-1)
+T(n-1) = c3 + T(n-2)
+T(n-2) = c3 + T(n-3)
+      ...
+  T(1) = c3 + T(0)
+  T(0) = c1</code></pre>
+<p>To compute a closed form solution for <em>T(n)</em>, we sum the system of equations and obtain:</p>
+<pre><code>  T(n) = n*c3 + c1</code></pre>
+<p>Because, <em>T(n)</em> is <em>O(n)</em>, we say that <code>find</code> runs in worst-case <em>O(n)</em> time. <!--
+It is hardly more work to show that *T(n)* is *&Theta;(n)*, which is the kind
+of tight bound that we are usually interested in. However, it is common to
+informally refer to Big-O even when a Big-Theta bound is known.
+--></p>
+<p>What about the running time of <code>find</code> if the input list <code>xs</code> is sorted? Even so, the worst case for the function is that <code>x</code> is absent from the list, and the only way to be sure is to traverse all of its elements.</p>
+<p>Note that this <em>linear search</em> algorithm is guided by the constraint that, in a purely functional language, only the <em>head</em> of a list can be accessed at once. In a language with pointers or references, <em>arbitrary</em> elements of a list can be accessed in constant-time (such lists are usually called arrays). The cost of the <em>binary search</em> algorithm on arrays has a much smaller asymptotic growth rate. (Later, we will see how purely functional languages typically provide an array data structure.)</p>
+<h4 id="lookup-in-binary-trees">Lookup in Binary Trees</h4>
+<p>An analogous lookup function on binary trees:</p>
+<pre><code>type Tree a = Empty | Node a (Tree a) (Tree a)
+
+findBT x t = case t of
+  Empty             -&gt; False
+  Node y left right -&gt; x == y || findBT x left || findBT x right</code></pre>
+<p>Without knowing anything about the structure of the tree, <code>findBT</code> must search the entire tree, by recursively traversing the <code>left</code> and <code>right</code> subtrees in the worst case. If the size of <code>t</code> = <code>Node y left right</code> is <em>n</em>, then the combined size of <code>left</code> and <code>right</code> is <em>n-1</em>. Therefore, making both recursive calls takes time <em>T(n-1)</em> in total. This leads to the following recurrence relation, where we make use of constants <em>c</em> and <em>c’</em> for operations involved in the worst (requiring both recursive calls) and best (inspecting the <code>Empty</code> tree) cases, respectively.</p>
+<pre><code>  T(n) = c + T(n-1)
+T(n-1) = c + T(n-2)
+T(n-2) = c + T(n-3)
+      ...
+  T(1) = c + T(0)
+  T(0) = c&#39;
+-------------------
+  T(n) = n*c + c&#39;</code></pre>
+<p>As a result, <code>findBT</code> runs in worst-case <em>O(n)</em> time. <!--
+(in fact, in *&Theta;(n)* time).
+--></p>
+<h4 id="lookup-in-binary-search-trees">Lookup in Binary Search Trees</h4>
+<p>A binary tree satisfies the <em>binary search order</em> property if for every subtree of the form <code>Node x left right</code>, all <code>Node</code>s in <code>left</code> store values <code>y</code> such that <code>y &lt; x</code> and all <code>Node</code>s in <code>right</code> store values <code>y</code> such that <code>x &lt; y</code>.</p>
+<p>Assuming that <code>t</code> satisfies this ordering property, <code>findBST</code> is defined to look <em>only</em> in the subtree that contains the desired element <code>x</code>:</p>
+<pre><code>findBST x t = case t of
+  Empty -&gt; False
+  Node y left right -&gt;
+    if x == y then      True
+    else if x &lt; y then  findBST x left
+    else {- x &gt; y -}    findBST x right</code></pre>
+<p>The recurrence relation for <code>findBST</code>, however, looks just like the one for <code>findBT</code>; even though only one recursive call is made in the worst case (either to <code>left</code> or <code>right</code>), the worst case size of the traversed subtree is <em>n-1</em>. Therefore, <code>findBST</code> runs in <em>O(n)</em> time.</p>
+<h4 id="lookup-in-balanced-binary-search-trees">Lookup in Balanced Binary Search Trees</h4>
+<p>If a binary-search ordered tree is also <em>balanced</em>, where every subtree’s children are roughly the same size (there are various reasonable definitions, as we will see later in the course), then the recurrence relation for <code>findBST</code> is:</p>
+<pre><code>  T(n) = c + T(n/2)
+T(n/2) = c + T(n/4)
+T(n/4) = c + T(n/8)
+      ...
+  T(1) = c + T(0)
+  T(0) = c&#39;
+-----------------------
+  T(n) = (log n)*c + c&#39;</code></pre>
+<p>As opposed to <em>n</em> recursive calls in the worst case before, there are now at most <em>log<sub>2</sub>(n)</em> recursive calls, because each child tree is (roughly) half the size. Therefore, <code>findBST</code> runs in worst-case <em>O(log<sub>2</sub>(n))</em> time when the tree is balanced.</p>
+<p>Notice that we are not being thorough in tracking exactly what the sizes of subtrees are, and we are simply taking them to be half the size of the entire tree. Although this can and should be rigorously worked out, in the end it does not matter, because of the wiggle room provided by the constants and inequalities in the definitions of rates of growth. If you are not already comfortable with this material, you may wish to read more background on these topics.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h4 id="optional">Optional</h4>
+<ul>
+<li><p>A more long-winded primer on asymptotic analysis and recurrence relations (using Java programming examples) can be found in Chapters 7 and 8 of <a href="http://people.cs.uchicago.edu/~rchugh/static/classes/introhwandsw.pdf">these notes</a>.</p></li>
+<li><p>A comprehensive presentation of these topics can be found in the classic <a href="http://mitpress.mit.edu/books/introduction-algorithms">CLRS textbook</a>.</p></li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TestingAndBeyond</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="testing-and-beyond">Testing and Beyond</h1>
+<p>To wrap up, we will talk about a few mechanisms for testing programs, which is, of course, a crucial part of software development in the large. We will use our <a href="../RedBlackTrees/RedBlackTree.elm"><code>RedBlackTree.elm</code></a> module from before (the original version with membership and insertion but not deletion) as a case study.</p>
+<!--
+## Specifications
+-->
+<h2 id="random-testing">Random Testing</h2>
+<p><a href="http://package.elm-lang.org/packages/elm-community/elm-test/3.1.0"><code>elm-test</code></a> is a library for writing tests that is equipped with support for <em>fuzzing</em>, namely, the use of randomness to help generate large numbers of relevant test cases. (Note: We will be using version 3.1.0 of <code>elm-test</code> rather than 4.0.0.). The <a href="http://package.elm-lang.org/packages/elm-community/elm-test/3.1.0/Test"><code>Test</code></a> module provides an API for defining tests, which comprise <code>Expectation</code>s (defined in <a href="http://package.elm-lang.org/packages/elm-community/elm-test/3.1.0/Expect"><code>Expect</code></a>) about the results of computations.</p>
+<p>We will use the <a href="https://github.com/rtfeldman/html-test-runner/"><code>html-test-runner</code></a> package by Richard Feldman for running tests as a browser application; there are also ways to run tests as a standalone command-line application. Our test runner is defined in <a href="TestRedBlackTree.elm"><code>TestRedBlackTree.elm</code></a>. To try it out:</p>
+<pre><code>% git clone https://github.com/rtfeldman/html-test-runner.git
+% cd html-test-runnner
+% git checkout aabeebe4ff266c94700e475151a1e14c6609578f
+% mv /PATH/TO/TestRedBlackTree.elm example/
+% cd example
+% elm-reactor</code></pre>
+<!--
+You will
+also need to download
+[`LICENSE`](LICENSE),
+[`elm-package.json`](elm-package.json),
+[`Test/Runner/Html.elm`](Test/Runner/Html.elm), and
+[`Test/Runner/Html/App.elm`](Test/Runner/Html/App.elm)
+&mdash; all of these files are from Richard Feldman's
+`html-test-runner` project.
+-->
+<h3 id="external-invariants-for-red-black-tree-insertion">External Invariants for Red-Black Tree Insertion</h3>
+<p>Recall that we defined Boolean predicates to identify valid red-black trees:</p>
+<pre><code>rb t = bso t &amp;&amp; noRedRed t &amp;&amp; okBlackHeight t</code></pre>
+<p>Our approach for testing our red-black tree implementation — <code>insert</code> in particular — will be to insert a bunch of elements, perform an in-order traversal of the resulting tree, and compare the resulting list of elements to the sorted list that we expect; this will check the binary search order property. We will also test that the <code>noRedRed</code> and <code>okBlackHeight</code> properties hold.</p>
+<p>We start by defining functions to convert between a list of elements and a tree:</p>
+<pre><code>toList : Tree a -&gt; List a
+toList t = case t of
+  E                -&gt; []
+  T _ left x right -&gt; toList left ++ [x] ++ toList right
+
+fromList : List comparable -&gt; Tree comparable
+fromList xs = List.foldl insert empty xs</code></pre>
+<p>Then we define a testing function:</p>
+<pre><code>testSort : List comparable -&gt; Test
+testSort xs =
+  test (&quot;sort: &quot; ++ toString xs) &lt;| \() -&gt;
+    let tree = fromList xs in
+    let result = toList tree in
+    let expected = List.sort xs in
+    let errorMessage = 
+      String.join &quot;\n\n&quot; &lt;|
+        [ &quot;toList &lt;| &quot; ++ toString tree
+        , &quot; == &quot; ++ toString result
+        , &quot; /= &quot; ++ toString expected
+        ]
+    in
+    result
+      |&gt; Expect.equal expected
+      |&gt; Expect.onFail errorMessage</code></pre>
+<p>We define a single test case in <code>main</code>:</p>
+<pre><code>main : Test.Runner.Html.TestProgram
+main =
+  [ testSort (List.range 1 100) ]
+  |&gt; concat
+  |&gt; Test.Runner.Html.run</code></pre>
+<p>We can open the resulting application in <code>elm-reactor</code> to see whether the test case passes or fails.</p>
+<!--
+then turn it into a function
+
+then put error message separately to make the cascading nicer
+
+and then wrap in thunk (even though this particular error message is quick to
+evaluate)
+
+then make testSort
+-->
+<p>Now let’s extend the function to also test the <code>noRedRed</code> and <code>okBlackHeight</code> properties:</p>
+<pre><code>testAllProperties : List comparable -&gt; Test
+testAllProperties xs =
+  let tree = fromList xs in
+  let testSortedElements =
+    test &quot;bso&quot; &lt;| \() -&gt;
+      let result = toList tree in
+      let expected = List.sort xs in
+      let errorMessage = 
+        String.join &quot;\n\n&quot; &lt;|
+          [ &quot;toList &lt;| &quot; ++ toString tree
+          , &quot; == &quot; ++ toString result
+          , &quot; /= &quot; ++ toString expected
+          ]
+      in
+      result
+        |&gt; Expect.equal expected
+        |&gt; Expect.onFail errorMessage
+  in
+  let testHeight =
+    test &quot;h &lt;= 2*bh + 1&quot; &lt;| \() -&gt;
+      case blackHeight tree of
+        Nothing -&gt; Expect.pass
+        Just bh -&gt;
+          let h = height tree in
+          let errorMessage = 
+            String.join &quot;\n\n&quot; &lt;|
+              [ toString tree, &quot; h = &quot; ++ toString h, &quot; bh = &quot; ++ toString bh ]
+          in
+          h |&gt; Expect.atMost (2 * bh + 1)
+            |&gt; Expect.onFail errorMessage
+  in
+  let testNoRedRed =
+    let errorMessage = toString tree in
+    test &quot;noRedRed&quot; &lt;| \() -&gt;
+      noRedRed tree
+        |&gt; Expect.equal True
+        |&gt; Expect.onFail errorMessage
+  in
+  describe (&quot;test all properties of tree with: &quot; ++ toString xs) &lt;|
+    [ testSortedElements
+    , testHeight
+    , testNoRedRed
+    ]</code></pre>
+<p>Notice how</p>
+<pre><code>describe : String -&gt; List Test -&gt; Test</code></pre>
+<p>turns a list of <code>Test</code>s into a single <code>Test</code>.</p>
+<pre><code>main : Test.Runner.Html.TestProgram
+main =
+  [ testSort (List.range 1 100)
+  , testAllProperties (List.range 1 100)
+  ]
+  |&gt; concat
+  |&gt; Test.Runner.Html.run</code></pre>
+<p>To automatically generate many more test cases, we use</p>
+<pre><code>fuzzWith
+    :  FuzzOptions
+    -&gt; Fuzzer a
+    -&gt; String
+    -&gt; (a -&gt; Expectation)
+    -&gt; Test
+
+type alias FuzzOptions = { runs : Int }</code></pre>
+<p>The <a href="http://package.elm-lang.org/packages/elm-community/elm-test/3.1.0/Fuzz"><code>Fuzz</code></a> library provides many useful primitives for generating values of different types, such as:</p>
+<pre><code>string : Fuzzer String
+int : Fuzzer Int
+intRange : Int -&gt; Int -&gt; Fuzzer Int
+list : Fuzzer a -&gt; Fuzzer (List a)
+maybe : Fuzzer a -&gt; Fuzzer (Maybe a)</code></pre>
+<p>We will use <code>Fuzz.list Fuzz.int</code> and <code>Fuzz.list (Fuzz.intRange -10000 10000)</code> to generate random lists of integers. Then we need a <code>(List Int -&gt; Expectation)</code> function. Our <code>testAllProperties</code> function, however, returned a <code>Test</code>. We can rework that function to return the underlying <code>Expectation</code>s instead (and also use our new <code>sortAndRemoveDupes</code>):</p>
+<pre><code>insertThenCheckTree xs =
+  let tree = fromList xs in
+  let checkSortedElements =
+    let result = toList tree in
+    let expected = List.sort xs in
+    let errorMessage = 
+      String.join &quot;\n\n&quot; &lt;|
+        [ &quot;Checking that all elements are found and in sorted order&quot;
+        , &quot;toList &lt;| &quot; ++ toString tree
+        , &quot; == &quot; ++ toString result
+        , &quot; /= &quot; ++ toString expected
+        ]
+    in
+    result
+      |&gt; Expect.equal expected
+      |&gt; Expect.onFail errorMessage
+  in
+  let checkHeight =
+    case blackHeight tree of
+      Nothing -&gt; Expect.pass
+      Just bh -&gt;
+        let h = height tree in
+        let errorMessage = 
+          String.join &quot;\n\n&quot; &lt;|
+            [ &quot;Checking that h &lt;= 2*bh + 1&quot;
+            , toString tree
+            , &quot; h = &quot; ++ toString h
+            , &quot; bh = &quot; ++ toString bh
+            ]
+        in
+        h |&gt; Expect.atMost (2 * bh + 1)
+          |&gt; Expect.onFail errorMessage
+  in
+  let checkNoRedRed =
+    let errorMessage =
+      String.join &quot;\n\n&quot; &lt;|
+        [ &quot;Checking no red-red violations&quot;, toString tree ]
+    in
+    noRedRed tree
+      |&gt; Expect.equal True
+      |&gt; Expect.onFail errorMessage
+  in
+  Expect.all
+    (List.map always [ checkSortedElements
+                     , checkHeight
+                     , checkNoRedRed
+                     ]) ()</code></pre>
+<p>Now:</p>
+<pre><code>main : Test.Runner.Html.TestProgram
+main =
+  [ fuzzWith { runs = 1000 } (list int)
+      &quot;1,000 randomly generated trees&quot;
+      insertThenCheckTree
+  , fuzzWith { runs = 1000 } (list (intRange -10000 10000))
+      &quot;1,000 more randomly generated trees&quot;
+      insertThenCheckTree
+  ]
+  |&gt; concat
+  |&gt; Test.Runner.Html.run</code></pre>
+<p>If we run this, we see that we get a counterexample. Ah, our implementation disallowed duplicate elements. So, rather than simply using <code>List.sort</code>, we need to also remove duplicates.</p>
+<pre><code>sortAndRemoveDupes : List comparable -&gt; List comparable
+sortAndRemoveDupes =
+  let removeDupes xs =
+    case xs of
+      []         -&gt; []
+      [x]        -&gt; [x]
+      x::y::rest -&gt; if x == y
+                    then removeDupes (y::rest)
+                    else x :: removeDupes (y::rest)
+  in
+  List.sort &gt;&gt; removeDupes
+
+insertThenCheckTree xs =
+  ...
+    let expected = sortAndRemoveDupes xs in
+  ...</code></pre>
+<p>Great, we can now quickly verify that, for a large number of examples, our resulting red-black trees are well-formed.</p>
+<p><strong>Exercise</strong>: Write some tests for other data structures we have implemented.</p>
+<p>So far, we have tested the external interface for <code>insert</code> on a set of examples. There are two remaining questions we might ask.</p>
+<p>First: What about additional internal invariants for the <code>insert</code>, <code>ins</code>, and <code>balance</code> functions? In particular, there are temporary, single red-red violations that get threaded through, and resolved by, these functions. To test these, we could write a simple <code>Fuzzer Tree</code> and then filter the ones that don’t satisfy the pre-conditions for a function. But this is unlikely to be very effective, because most randomly generated <code>Tree</code>s will not satisfy the invariants. Instead, we could write a smarter <code>Fuzzer Tree</code> that actually uses the internal invariants to generate <code>Tree</code>s. You may wish to try this out as an exercise.</p>
+<!--
+
+for ins, the input tree is a rb-tree except that it may have a single
+red-red violation at the root. the output is a rb-tree (that also contains the
+new element)
+
+for insert, the input tree is a rb-tree except that it may have a single
+red-red violation at the root.
+
+same goes for balance
+-->
+<p>Second: What about inputs that are not exercised by the test cases? We could keep testing (forever) or augment our methodology with one of the following two approaches.</p>
+<h2 id="contracts-run-time-testing">Contracts (Run-Time Testing)</h2>
+<p>We can turn every run-time observation (i.e. function call) into a test. This will impose significant performance overhead, but it may be worth it during developing and debugging, and perhaps even in a deployment setting.</p>
+<p>The idea is to augment input types with pre-conditions that the function assumes of its arguments (it is the responsibility of callers to ensure them) and augment output types with post-conditions that the function guarantees will hold (callers of the function get to assume them).</p>
+<p>We can systematically decorate all function types with pre- and post-conditions.</p>
+<pre><code>foo
+  : S  -- pre-condition:  foo_pre x == True,  where foo_pre : S -&gt; Bool
+ -&gt; T  -- post-condition: foo_post e == True, where foo_post : T -&gt; Bool
+foo x =
+  e</code></pre>
+<p>Better yet, post-conditions can <em>depend</em> on input values:</p>
+<pre><code>foo
+  : S  -- pre-condition:  foo_pre x == True,    where foo_pre : S -&gt; Bool
+ -&gt; T  -- post-condition: foo_post x e == True, where foo_post : S -&gt; T -&gt; Bool
+foo x =
+  e</code></pre>
+<p>Pre- and post-conditions are then checked upon every function call:</p>
+<pre><code>foo x =
+  if foo_pre x == False
+  then violation &quot;foo&quot; &quot;argument&quot; x
+  else
+    let ret = e in
+    if foo_post x ret == False
+    then violation &quot;foo&quot; &quot;return value&quot; (x, ret)
+    else ret
+
+violation func name values =
+  Debug.crash &lt;|
+    String.join &quot;\n&quot;
+      [ &quot;&quot;
+      , func
+      , &quot;assertion violation for: &quot; ++ name
+      , toString values
+      ]</code></pre>
+<p>This approach to run-time checking of invariants is often referred to as <em>contract checking</em>.</p>
+<p>Writing all of our functions in this style is tedious. We can define a helper function to help:</p>
+<pre><code>monitor : String -&gt; (a -&gt; Bool) -&gt; (a -&gt; b -&gt; Bool) -&gt; (a -&gt; b) -&gt; (a -&gt; b)
+monitor f pre post foo =
+  \x -&gt;
+    if pre x == False then violation f &quot;1st arg&quot; x
+    else
+      let ret = foo x in
+      if post x ret == False
+      then violation f &quot;return value&quot; (x, ret)
+      else ret</code></pre>
+<p>And then:</p>
+<pre><code>foo = monitor &quot;foo&quot; foo_pre foo_post &lt;| \x -&gt;
+  e</code></pre>
+<p>We can also define another helper function…</p>
+<pre><code>maybeMonitor flag f pre post foo =
+  if flag then monitor f pre post foo else foo</code></pre>
+<p>… to make it quick to toggle contract checking on and off:</p>
+<pre><code>foo = maybeMonitor True &quot;foo&quot; foo_pre foo_post &lt;| \x -&gt;
+  e</code></pre>
+<p>What about “multiple argument” (i.e. curried) functions? <a href="Contracts.elm"><code>Contracts.elm</code></a> defines a few helpers to avoid writing deeply nested calls to the general <code>monitor</code> function. Another option, if applicable, is to write functions in an uncurried style so that “all” arguments are packed into a single tuple.</p>
+<p>One thing to note about our definitions of contracts is that they don’t play nicely with <code>elm-test</code> because they <code>Debug.crash</code> (exceptions should be <a href="https://github.com/rtfeldman/node-test-runner/issues/69">handled in a newer version of <code>elm-test</code></a>). But at least we can check the console to see the first test that crashed, if any.</p>
+<h3 id="internal-invariants-for-red-black-tree-insertion">Internal Invariants for Red-Black Tree Insertion</h3>
+<p><a href="RedBlackTreeContracts.elm"><code>RedBlackTreeContracts.elm</code></a></p>
+<p>Analogs to <code>rb</code> and <code>noRedRed</code> to describe temporary red-red violations:</p>
+<pre><code>rbExceptMaybeRoot t = bso t &amp;&amp; maybeOneRedRed t &amp;&amp; okBlackHeight t
+
+maybeOneRedRed t = oneRedRed t || noRedRed t
+
+oneRedRed t = case t of
+  E                             -&gt; False
+  T R (T R _ _ _) _ (T R _ _ _) -&gt; False
+  T R (T R l1 _ r1) _ r         -&gt; noRedRed l1 &amp;&amp; noRedRed r1 &amp;&amp; noRedRed r
+  T R l _ (T R l2 _ r2)         -&gt; noRedRed l &amp;&amp; noRedRed l2 &amp;&amp; noRedRed r2
+  T _ l _ r                     -&gt; False</code></pre>
+<p>The input and output trees for <code>insert</code> should be valid red-black trees:</p>
+<pre><code>insert : comparable -&gt; Tree comparable -&gt; Tree comparable
+insert =
+  maybeMonitor.two &quot;insert&quot;
+      (\x -&gt; True)
+      (\_ t -&gt; rb t)
+      (\_ _ ret -&gt; rb ret) &lt;|
+  \x t -&gt;
+    ...</code></pre>
+<p>Although not necessary for specifying and checking well-formedness of red-black trees, we can, furthermore, state an invariant relating the black heights of the trees:</p>
+<pre><code>      ...
+      (\_ t ret -&gt; rb ret &amp;&amp; (bh ret == bh t || bh ret == 1 + bh t)) &lt;|
+      ...</code></pre>
+<p>In contrast to <code>insert</code>, the output of <code>ins</code> is almost a red-black tree; there may be a single red-red violation at the root. We can also specify an invariant about its black height.</p>
+<pre><code>ins : comparable -&gt; Tree comparable -&gt; Tree comparable
+ins =
+  maybeMonitor.two &quot;ins&quot;
+      (\x -&gt; True)
+      (\_ t -&gt; rb t)
+      (\_ t ret -&gt; rbExceptMaybeRoot ret &amp;&amp; bh t == bh ret) &lt;|
+  \x t -&gt;
+    ...</code></pre>
+<p>One possible contract for the <code>balance</code> function says that the left and right subtrees of the input tree and the entire output tree may have a red-red violation at their roots:</p>
+<pre><code>balance : Color -&gt; Tree comparable -&gt; comparable -&gt; Tree comparable -&gt; Tree comparable
+balance =
+  maybeMonitor.four &quot;balance&quot;
+      (\c -&gt; True)
+      (\c l -&gt; rbExceptMaybeRoot l)
+      (\c l val -&gt; True)
+      (\c l val r -&gt; rbExceptMaybeRoot r)
+      (\c l val r ret -&gt; rbExceptMaybeRoot ret) &lt;|
+  \c l val r -&gt;
+    ...</code></pre>
+<p>We can state stronger invariants: that the function is called with at most one red-red violation among the left and right subtrees, and that the function produces either an <code>rb</code> or <code>rbExceptMaybeRoot</code> depending on the arguments:</p>
+<pre><code>balance =
+  maybeMonitor.four &quot;balance&quot;
+      (\c -&gt; True)
+      (\c l -&gt; rbExceptMaybeRoot l)
+      (\c l val -&gt; True)
+      (\c l val r -&gt; if oneRedRed l then rb r else rbExceptMaybeRoot r)
+      (\c l val r ret -&gt; if oneRedRed (T c l val r)
+                         then rbExceptMaybeRoot ret
+                         else rb ret) &lt;|
+  \c l val r -&gt;
+    ...</code></pre>
+<!--
+the contract for balance could say almostRB separately for
+left and right
+
+    maybeMonitor.four true almostRB true almostRB almostRB <| \c l val r ->
+
+, but there's actually a stronger dependency
+
+    maybeMonitor.four true almostRB true (\_ left _ ->
+      if oneRedRed left then rb right else almostRB right) almostRB <| \c l val r ->
+
+this is not needed to verify the correctness at callers. so perhaps
+it's worth documenting this additional invariant, perhaps not.
+
+similarly, we could strenghten the return type...
+
+not enough for dependent contracts, need arguments at same time
+
+  (\_ left _ right ret -> 
+    if noRedRed left && noRedRed right
+      then rb ret
+      else almostRB ret)
+
+could do nested maybeMonitor...
+
+TODO think about doing all predicate checks on last argument
+
+TODO think about uncurried function so that all arguments packed into
+a single tuple
+
+or, could make the functions uncurried (single argument) and then
+the single precondition predicate has all. this doesn't help
+with the return type though. that needs to take the argument
+into account.
+
+
+
+      (\c l val r ret -> if oneRedRed (T c l val r)
+                           then almostRB ret
+                           else rb ret) <|
+
+and more information: bh preservation by ins, possible increment by insert
+-->
+<p>We can run our random test cases (much more slowly now) and verify that all of these invariants are satisfied by the observed test cases.</p>
+<p>Programming with contracts in this style is tedious, however, and the error messages are really primitive when an assertion is violated. Many languages — <a href="https://docs.racket-lang.org/guide/contracts.html">Racket</a>, <a href="https://msdn.microsoft.com/en-us/library/dd264808(v=vs.110).aspx">C#</a>, <a href="https://en.wikipedia.org/wiki/Design_by_contract">Eiffel</a>, and others — provide automated support for contracts.</p>
+<p>The syntax varies, but the following is one reasonable option, where the base types of the language are <em>refined</em> with <code>Bool</code>ean-valued predicates (written in the same programming language):</p>
+<pre><code>foo : x:{ S | foo_pre x == True } -&gt; ret:{ T | foo_post ret == True }
+foo x =
+  e</code></pre>
+<p>Using this syntax that streamlines base types and fine-grained predicates, we might rewrite our assertions as:</p>
+<pre><code>insert
+    : x: comparable
+   -&gt; t: { Tree comparable | rb t }
+   -&gt; ret: { Tree comparable | rb ret &amp;&amp; (bh ret == bh t || bh ret == 1 + bh t) }
+insert x t =
+  ...
+
+ins : x: comparable
+   -&gt; t: { Tree comparable | rb t }
+   -&gt; ret: { Tree comparable | rbExceptMaybeRoot ret &amp;&amp; bh t == bh ret }
+ins x t =
+  ...
+
+balance
+    : c: Color
+   -&gt; l: { Tree comparable | rbExceptMaybeRoot l }
+   -&gt; val: comparable
+   -&gt; r: { Tree comparable | if oneRedRed l then rb r else rbExceptMaybeRoot r }
+   -&gt; ret: { Tree comparable | if oneRedRed (T c l val r)
+                               then rbExceptMaybeRoot ret
+                               else rb ret }
+balance c l val r ret =
+  ...</code></pre>
+<p>In addition to systematically translating functions and function calls like we did manually, and tracking better stack traces for good error messages, contract systems must perform more sophisticated program transformations when dealing with additional language features — such as mutable references, objects, and exceptions — and also to reduce the performance overhead imposed by pervasive dynamic checking.</p>
+<p><strong>Exercise</strong>: Define contract predicates for the different external and internal functions of other data structures we have implemented. Then create and run tests using contracts to develop confidence that the internal invariants that we intend are indeed correct.</p>
+<h2 id="static-verification">Static Verification</h2>
+<p>Tests are nice because they build confidence about correctness before deployment without slowing down our programs. Contracts are nice because they are integrated within the programs themselves, so that the testing is always on, but they impose significant performance penalties. When possible, it is desirable to statically verify that the pre- and post-conditions are true for <em>all</em> inputs.</p>
+<p>A variety of advanced type systems permit static verification of the kinds of data structure properties we have considered, well beyond just the relatively simple type and data structure properties tracked by a system like Elm, or OCaml, or Haskell. (These languages have incredibly useful type systems, but they are “simple” relative to the kinds of precise predicates we want to describe.) No matter how fancy the type or verification system, however, there will always be properties that are beyond the reach of static reasoning. So, we always need to test, but the question is where to draw the boundary.</p>
+<p>There is a long history of progress on static software verification; recent efforts that bring these techniques to bear in the context of functional programming languages include:</p>
+<ul>
+<li><a href="https://coq.inria.fr/">Coq</a> (a good starting point is <a href="https://deepspec.org/page/SF/">Software Foundations</a>, which includes a volume on <a href="http://www.cs.princeton.edu/~appel/vfa/">Verified Functional Algorithms</a>),</li>
+<li><a href="https://www.cl.cam.ac.uk/research/hvg/Isabelle/">Isabelle</a>,</li>
+<li><a href="https://github.com/agda/agda">Agda</a> (see <a href="https://www.amazon.com/Verified-Functional-Programming-Agda-Books/dp/1970001240">Verified Functional Programming in Agda</a>),</li>
+<li><a href="https://www.idris-lang.org/">Idris</a> (see <a href="https://www.amazon.com/Type-driven-Development-Idris-Edwin-Brady/dp/1617293024">Type-Driven Development with Idris</a>),</li>
+<li><a href="https://arxiv.org/abs/1610.07978">Dependently Typed Haskell</a>,</li>
+<li><a href="https://ucsd-progsys.github.io/liquidhaskell-blog/">Liquid Haskell</a> (see <a href="http://ucsd-progsys.github.io/liquidhaskell-tutorial/">this tutorial</a>), and</li>
+<li>… many more.</li>
+</ul>
+<!--
+One thing to note is that, compared to the contracts we wrote above,
+some of the red-black tree invariants can be stated *inductively* as
+part of the data type definition as opposed to a standalone predicate.
+For example, the following tree type definition &mdash; roughly in the
+*refinement type* style of Liquid Haskell &mdash; specifies the binary
+search order property within the tree node constructor, whereas
+`noRedRed` and `okBlackHeight` are off to the side:
+
+    type Tree a
+      = E
+      | T { c     :: Col
+          , val   :: a
+          , left  :: Tree v:{ a | v < key }
+          , right :: Tree v:{ a | key < a }
+
+    type alias RBTree a = t:{ Tree a | noRedRed t && okBlackHeight t }
+-->
+<!--
+first write sorted or bso property as result of entire insertions
+
+    insert : x:comparable
+          -> t1:{ Tree comparable | toList t1 = List.sort (toList t1) }
+          -> t2:{ Tree comparable | toList t2 = List.sort (toList t2) && toList t2 == List.sort (x :: toList t1) }
+    insert x tree = ...
+
+
+these type definition "locally" says that all the values in the left subtree
+or less than the value `val` of the root, and greater than for the right
+subtree. this implies that the implementation of toList satisfies the sorted
+property...
+
+    toList ...
+
+and thus, the implementation of insert has the simpler definition
+
+    insert : x:comparable
+          -> t1:{ Tree comparable | True }
+          -> t2:{ Tree comparable | toList t2 == List.sort (x :: toList t1) }
+    insert x tree = ...
+-->
+<!--
+
+<br>
+
+# Reading
+
+### Optional
+
+* Pierce
+
+-->
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

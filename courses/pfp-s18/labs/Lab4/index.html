@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab4</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-4-140-points">Lab 4 (140 points)</h1>
+<p>The goal of this assignment is to develop further experience with the heap data structures in Chapter 3 of the Okasaki textbook. Download the skeleton files <a href="THeaps.elm"><code>THeaps.elm</code></a>, <a href="LHeaps.elm"><code>LHeaps.elm</code></a>, <a href="BHeaps.elm"><code>BHeaps.elm</code></a>, and <a href="ExplicitMin.elm"><code>ExplicitMin.elm</code></a>, and use them as a starting point for the following problems. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions. Once you are done, follow the submission instructions below.</p>
+<h2 id="problem-0-heaps-as-complete-binary-trees">Problem 0: Heaps as Complete Binary Trees</h2>
+<p>We saw how to implement min-heaps using the <code>Array</code> library in the <a href="../../lectures/Heaps/index.html">Heaps</a> lecture. Now, you’ll implement the same complete binary tree approach using trees directly, rather than <code>Array</code>s.</p>
+<p>Download the skeleton file <a href="THeaps.elm"><code>THeaps.elm</code></a> and use it as a starting point for this problem. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions.</p>
+<p>We’ll use the same definition of <code>Tree</code> from before:</p>
+<pre><code>type Tree a = Empty | Node a (Tree a) (Tree a)</code></pre>
+<p>A heap will be represented as a complete binary <code>Tree</code> along with its size (the number of <code>Node</code>s in the <code>Tree</code>):</p>
+<pre><code>type Heap a = Heap (Int, Tree a)</code></pre>
+<p>You will implement all operations of the min-heap abstraction except for <code>merge</code>.</p>
+<h3 id="helper-functions">Helper Functions</h3>
+<p>Recall the modular arithmetic used to traverse between parent and child nodes:</p>
+<pre><code>parentIndex i = (i-1) // 2
+
+leftIndex i   = (2*i) + 1
+rightIndex i  = (2*i) + 2</code></pre>
+<p>To help factor the algorithms below, we first define the notion of a path from the root of a <code>Tree</code> to the subtree at position <code>i</code> (according to the 0-based, breadth-first indexing scheme from <a href="../../lectures/Heaps/index.html">Heaps</a>):</p>
+<pre><code>type Dir = Left | Right
+
+pathTo : Int -&gt; List Dir
+pathTo =
+  let foo i =
+    if i == 0 then []
+    else if rem i 2 == 1 then Left :: foo (parentIndex i)
+    else Right :: foo (parentIndex i)
+  in
+  List.reverse &lt;&lt; foo</code></pre>
+<p>For example:</p>
+<pre><code>&gt; import THeaps exposing (..)
+
+&gt; pathTo 0
+[] : List THeaps.Dir
+
+&gt; pathTo 1
+[Left] : List THeaps.Dir
+
+&gt; pathTo 2
+[Right] : List THeaps.Dir
+
+&gt; pathTo 3
+[Left,Left] : List THeaps.Dir
+
+&gt; pathTo 10
+[Left,Right,Right] : List THeaps.Dir
+
+&gt; pathTo 58
+[Right,Right,Left,Right,Right] : List THeaps.Dir</code></pre>
+<h4 id="basic-operations-10-points">4.0.1 — Basic Operations (10 points)</h4>
+<p>First, implement the following <code>Heap</code> operations:</p>
+<pre><code>empty : Heap comparable
+isEmpty : Heap comparble -&gt; Bool
+findMin : Heap comparable -&gt; Maybe comparable</code></pre>
+<h4 id="insertion-20-points">4.0.2 — Insertion (20 points)</h4>
+<p>Next, implement the <code>insert</code> operation:</p>
+<pre><code>insert : comparable -&gt; Heap comparable -&gt; Heap comparable</code></pre>
+<p>You may consider using the helper functions above, but you are free to implement <code>insert</code> however you wish.</p>
+<p><strong>Spoiler Alert:</strong> There are <a href="#hints">hints</a> below.</p>
+<h4 id="deletion-20-points">4.0.3 — Deletion (20 points)</h4>
+<p>Finally, implement the <code>deleteMin</code> operation:</p>
+<pre><code>deleteMin : Heap comparable -&gt; Maybe (comparable, Heap comparable)</code></pre>
+<p>Again, you may consider using the helper functions above, but you are free to implement <code>insert</code> however you wish.</p>
+<p><strong>Spoiler Alert:</strong> There are more <a href="#hints">hints</a> below.</p>
+<h2 id="problem-1-leftist-heaps">Problem 1: Leftist Heaps</h2>
+<h4 id="okasaki-exercise-3.3-30-points">3.1.1 — Okasaki, Exercise 3.3 (30 points)</h4>
+<p>Define</p>
+<pre><code>fromList : List comparable -&gt; Heap comparable</code></pre>
+<p>such that <code>fromList xs</code> turns an unordered list <code>xs</code> into a <code>Heap</code> by making <em>O(log n)</em> passes over the list <code>xs</code>, pairwise merging adjacent elements. In comments, explain why your solution runs in <em>O(n)</em> time, where <em>n</em> is the length of <code>xs</code>.</p>
+<p>Hint: one strategy is to factor the solution into two helper functions</p>
+<pre><code>mergePairs : List (Heap comparable) -&gt; List (Heap comparable)
+makePass   : List (Heap comparable) -&gt; List (Heap comparable)</code></pre>
+<p>where <code>mergePairs</code> calls <code>merge</code> on adjacent pairs of elements, and <code>makePass</code> makes another pass over the list to merge pairs if necessary and otherwise returns the final result.</p>
+<p>To analyze the worst-case running time for such an implementation, define two recurrence relations such that</p>
+<ul>
+<li><em>S(n,m)</em> is the time that <code>mergePairs hs</code> takes, where <em>n</em> is the length of <code>hs</code> and <em>m</em> is the size of the largest heap in <code>hs</code>, and</li>
+<li><em>T(n,m)</em> is the time that <code>makePass hs</code> takes, where <em>n</em> is the length of <code>hs</code> and <em>m</em> is the size of the largest heap in <code>hs</code>.</li>
+</ul>
+<h2 id="problem-2-binomial-heaps">Problem 2: Binomial Heaps</h2>
+<h4 id="okasaki-exercise-3.6-30-points">3.2.1 — Okasaki, Exercise 3.6 (30 points)</h4>
+<p>This problem proposes an alternative representation of binomial heaps that eliminates redundant rank information. Reimplement binomial heaps with this new representation in <a href="BHeaps.elm"><code>BHeaps.elm</code></a>, so that the operations have the same running times as in the original implementation.</p>
+<h4 id="okasaki-exercise-3.7-30-points">3.2.2 — Okasaki, Exercise 3.7 (30 points)</h4>
+<p>The implementation of binomial heaps we have seen provides <em>O(log n)</em> access to the minimum element rather than <em>O(1)</em> time as for leftist heaps. In this problem, you will implement a “wrapper” module <code>ExplicitMin</code> that imports an implementation of the heap abstraction and exports an implementation of the heap abstraction that provides <em>O(1)</em> time access to the minimum element.</p>
+<p>The problem in the textbook uses ML functors to abstract this pattern in order to work with any implementation of heaps (not just binomial heaps). Because Elm does not support ML-style modules or Haskell-style type clases, we will hard-code our solution to work with binomial heaps.</p>
+<p>Implement the heap abstraction in <a href="ExplicitMin.elm"><code>ExplicitMin.elm</code></a> so that <code>findMin</code> runs in <em>O(1)</em> time and the remaining operations have the same <em>O(log n)</em> running times as those in <a href="../../lectures/BinomialHeaps/BinomialHeap.elm"><code>BinomialHeap.elm</code></a> from class.</p>
+<p>While you are developing and testing your code, you will need to place <a href="../../lectures/BinomialHeaps/BinomialHeap.elm"><code>BinomialHeap.elm</code></a> in the same directory as your solution (but you will not submit it).</p>
+<!--
+## Problem 3: Red-Black Trees
+
+#### 3.1 --- Okasaki, Exercises 3.9 (XX points)
+-->
+<p><br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Submit the four files <a href="THeaps.elm"><code>THeaps.elm</code></a>, <a href="LHeaps.elm"><code>LHeaps.elm</code></a>, <a href="BHeaps.elm"><code>BHeaps.elm</code></a>, and <a href="ExplicitMin.elm"><code>ExplicitMin.elm</code></a> updated with your changes. You are free to modify these files as you wish, as long as you do <strong>not</strong> change any type signatures that are provided.</p>
+<p>Your solution will be graded using a combination of automated grading scripts and manual review. It is a good idea for you to design some test cases of your own to exercise more sample behaviors than just the ones provided in the writeup. We also reserve the right to take into account the organization and style of your code when assigning grades.</p>
+<p>If you are not able to finish all parts of the assignment, make sure that all of your submitted files compile successfully. If not, you risk getting <strong>zero points</strong> for the assignment. In particular, for each file <code>Foo.elm</code>, make sure that it can be loaded into the Elm REPL</p>
+<pre><code>% elm-repl
+&gt; import Foo
+&gt;</code></pre>
+<p>and that it can be compiled to a standalone HTML file:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Successfully generated Foo.html</code></pre>
+<h3 id="submitting-your-code">Submitting Your Code</h3>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% svn mkdir hw4
+% cd hw4
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/THeaps.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/LHeaps.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/BHeaps.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/ExplicitMin.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add THeaps.elm
+% svn add LHeaps.elm
+% svn add BHeaps.elm
+% svn add ExplicitMin.elm</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw4 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+<p><br> <br></p>
+<p><a name="hints"></a></p>
+<h1 id="hints">Hints</h1>
+<h4 id="and-4.0.3">4.0.2 and 4.0.3</h4>
+<p>One option for <code>insert</code> is to start with the following and define the helper function <code>insertAndBubbleUp</code>.</p>
+<pre><code>insert x (Heap (n, t)) =
+  if n == 0
+  then Heap (1, Node x Empty Empty)
+  else Heap (1 + n, insertAndBubbleUp x (pathTo (parentIndex n)) t)
+
+insertAndBubbleUp : comparable -&gt; List Dir -&gt; Tree comparable -&gt; Tree comparable</code></pre>
+<p>One option for <code>deleteMin</code> is to start with the following and define the helper functions <code>removeElement</code> and <code>bubbleDown</code>.</p>
+<pre><code>deleteMin (Heap (n, t)) =
+  case t of
+    Empty -&gt; Nothing
+    Node x Empty Empty -&gt; Just (x, empty)
+    Node x _ _ -&gt; 
+      let (lastElement, newTree) = removeElement (pathTo (n-1)) t in
+      case newTree of
+        Empty -&gt; Debug.crash &quot;deleteMin: impossible&quot;
+        Node _ left right -&gt;
+          Just (x, Heap (n - 1, bubbleDown (Node lastElement left right)))
+
+removeElement : List Dir -&gt; Tree comparable -&gt; (comparable, Tree comparable)
+
+bubbleDown : Tree comparable -&gt; Tree comparable</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

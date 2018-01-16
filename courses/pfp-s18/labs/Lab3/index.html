@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab3</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-3-110-points">Lab 3 (110 points)</h1>
+<p>Download the skeleton file <a href="ListsAndTrees.elm"><code>ListsAndTrees.elm</code></a> and use it as a starting point for the following problems. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions. Once you are done, follow the submission instructions below.</p>
+<h2 id="problem-1-lists">Problem 1: Lists</h2>
+<h4 id="okasaki-exercise-2.1-10-points">3.1.1 — Okasaki, Exercise 2.1 (10 points)</h4>
+<p>Implement the function</p>
+<pre><code>suffixes : List a -&gt; List (List a)</code></pre>
+<p>so that it returns a list of all suffixes of the input in decreasing order of length. Then, in comments, argue why your implementation runs in <em>O(n)</em> time and can be represented in <em>O(n)</em> space.</p>
+<p>Once you have implemented the function, you should get the following behavior at the Elm REPL:</p>
+<pre><code>&gt; import ListsAndTrees exposing (..)
+
+&gt; suffixes (List.range 1 4)
+[[1,2,3,4],[2,3,4],[3,4],[4],[]] : List (List number)</code></pre>
+<h2 id="problem-2-binary-trees">Problem 2: Binary Trees</h2>
+<p>In this problem, you will define several functions that operate on binary trees of integers represented by the type:</p>
+<pre><code>type Tree a = Empty | Node a (Tree a) (Tree a)</code></pre>
+<h4 id="okasaki-exercise-2.2-20-points">3.2.1 — Okasaki, Exercise 2.2 (20 points)</h4>
+<p>Write a function</p>
+<pre><code>mem : comparable -&gt; Tree comparable -&gt; Bool</code></pre>
+<p>such that <code>mem x t</code> determines whether <code>x</code> is contained in the binary search tree <code>t</code>, using at most <em>h+1</em> comparisons where <em>h</em> is the height of <code>t</code>. Each of the following functions constitutes one comparison: <code>(==)</code>, <code>(/=)</code>, <code>(&lt;=)</code>, <code>(&lt;)</code>, <code>(&gt;=)</code>, <code>(&gt;)</code>.</p>
+<h4 id="okasaki-exercise-2.5a-10-points">3.2.2 — Okasaki, Exercise 2.5a (10 points)</h4>
+<p>Write a function</p>
+<pre><code>fullTree : a -&gt; Int -&gt; Tree a</code></pre>
+<p>such that <code>fullTree x h</code> produces a completely full tree of height <code>h</code> where every node stores the element <code>x</code>. Your function should return the empty tree whenever <code>h</code> is less than or equal to zero. This function should run in <em>O(<code>h</code>)</em> time.</p>
+<p>For example:</p>
+<pre><code>&gt; fullTree 0 0
+Empty : ListsAndTrees.Tree
+
+&gt; fullTree 0 1
+Node 0 Empty Empty : ListsAndTrees.Tree
+
+&gt; fullTree 0 2
+Node 0 (Node 0 Empty Empty) (Node 0 Empty Empty) : ListsAndTrees.Tree</code></pre>
+<h4 id="okasaki-exercise-2.5b-20-points">3.2.3 — Okasaki, Exercise 2.5b (20 points)</h4>
+<p>The <em>size</em> of a tree is the number of (non-empty) nodes it contains. We will say a tree <em>t</em> is <em>size-balanced</em> if for any given node <em>n</em> in <em>t</em>, the two subtrees of <em>n</em> differ in size by at most one.</p>
+<p>Write a function</p>
+<pre><code>balancedTree : a -&gt; Int -&gt; Tree a</code></pre>
+<p>such that <code>balancedTree x n</code> returns <strong>some</strong> balanced tree of size <code>n</code>, where the element <code>x</code> is stored at all nodes. This function should run in <em>O(log <code>n</code>)</em> time.</p>
+<p>Hint: Use a helper function <code>create2</code> that, given a size <code>m</code>, creates a pair of trees, one of size <code>m</code> and one of size <code>m+1</code>.</p>
+<h4 id="points">3.2.4 (20 points)</h4>
+<p>Write a function</p>
+<pre><code>balancedTrees : a -&gt; Int -&gt; List (Tree a)</code></pre>
+<p>such that <code>balancedTrees x n</code> returns <strong>all</strong> balanced trees of size <code>n</code>, where the element <code>x</code> is stored at all nodes.</p>
+<p>The following is a sanity check:</p>
+<pre><code>&gt; List.map (List.length &lt;&lt; balancedTrees 0) (List.range 0 20)
+[1,1,2,1,4,4,4,1,8,16,32,16,32,16,8,1,16,64,256,256,1024] : List Int</code></pre>
+<h4 id="points-1">3.2.5 (20 points)</h4>
+<p>A <em>complete tree</em> is <a href="http://en.wikipedia.org/wiki/Binary_tree#complete">typically defined</a> to be a tree where every level except possibly the last is completely full and the nodes in the last level are as far left as possible.</p>
+<p>Write a function</p>
+<pre><code>completeTrees : a -&gt; Int -&gt; List (Tree a)</code></pre>
+<p>such that <code>completeTrees x h</code> returns all complete trees of height <code>h</code> where <code>x</code> is stored at every node.</p>
+<p>The following is a sanity check:</p>
+<pre><code>&gt; List.map (List.length &lt;&lt; completeTrees 0) (List.range 0 5)
+[1,1,2,4,8,16] : List Int</code></pre>
+<p>One strategy for this problem is based on how breadth-first order can be used to index the nodes of a complete binary tree. For example:</p>
+<pre><code>    Level 1              1
+
+    Level 2        2           3
+
+    Level 3     4     5     6     7
+
+               . .   . .   . .   . .</code></pre>
+<p>Using this observation, you can implement <code>completeTrees</code> by computing a full tree of height <code>h-1</code> (think <code>fullTree</code>) and then adding “all valid rows for level <code>h</code>” to it (think <code>suffixes</code>). The key is to define a function that “adds” a row to the bottom level of an existing tree.</p>
+<h4 id="points-2">3.2.6 (10 points)</h4>
+<p>We will say that a tree is <em>almost complete</em> if all levels except possibly the last are completely full; we impose no constraints on the last level of an almost complete tree.</p>
+<p>Write a function</p>
+<pre><code>almostCompleteTrees : a -&gt; Int -&gt; List (Tree a)</code></pre>
+<p>such that <code>almostCompleteTrees x h</code> returns all almost complete trees of height <code>h</code> where <code>x</code> is stored at every node.</p>
+<p>Think about how to refactor your solution to the previous problem so that much of it can be reused for this one. Hint: You can use <code>subsequences</code> in a similar way to how <code>suffixes</code> was used.</p>
+<p>The following is a sanity check:</p>
+<pre><code>&gt; List.map (List.length &lt;&lt; almostCompleteTrees 0) (List.range 0 5)
+[1,1,3,15,255,65535] : List Int</code></pre>
+<p><br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Submit the following file:</p>
+<ul>
+<li>The file <a href="ListsAndTrees.elm"><code>ListsAndTrees.elm</code></a> updated with your changes. You are free to modify this file as you wish, as long as you do <strong>not</strong> change any type signatures that are provided.</li>
+</ul>
+<p>Your solution will be graded using a combination of automated grading scripts and manual review. It is a good idea for you to design some test cases of your own to exercise more sample behaviors than just the ones provided in the writeup. We also reserve the right to take into account the organization and style of your code when assigning grades.</p>
+<p>If you are not able to finish all parts of the assignment, make sure that all of your submitted files compile successfully. If not, you risk getting <strong>zero points</strong> for the assignment. In particular, for each file <code>Foo.elm</code>, make sure that it can be loaded into the Elm REPL</p>
+<pre><code>% elm-repl
+&gt; import Foo
+&gt;</code></pre>
+<p>and that it can be compiled to a standalone HTML file:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Successfully generated Foo.html</code></pre>
+<h3 id="submitting-your-code">Submitting Your Code</h3>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% svn mkdir hw3
+% cd hw3
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw3/ListsAndTrees.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add ListsAndTrees.elm</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw3 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

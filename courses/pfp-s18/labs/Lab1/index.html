@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab1</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-1-50-points">Lab 1 (50 points)</h1>
+<p>Download the skeleton file <a href="FPWarmup.elm"><code>FPWarmup.elm</code></a> and use it as a starting point for the following problems. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions. Once you are done, follow the submission instructions below.</p>
+<h2 id="problem-1-fp-warmup">Problem 1: FP Warmup</h2>
+<p>The goal of this problem is to develop experience with basic functional programming tasks in Elm.</p>
+<h4 id="points">1.1.1 (10 points)</h4>
+<p>Write a function</p>
+<pre><code>digitsOfInt : Int -&gt; List Int</code></pre>
+<p>such that <code>digitsOfInt n</code> returns <code>[]</code> if <code>n</code> is less than zero, and returns the list of digits of <code>n</code> in the order in which they appear. Once you have implemented the function, you should get the following behavior at the Elm REPL:</p>
+<pre><code>&gt; import FPWarmup exposing (..)
+
+&gt; digitsOfInt 3124
+[3,1,2,4] : List Int
+
+&gt; digitsOfInt 352663
+[3,5,2,6,6,3] : List Int
+
+&gt; digitsOfInt 0
+[0] : List Int</code></pre>
+<h4 id="points-1">1.1.2 (15 points)</h4>
+<p>Consider the process of taking a number, adding its digits, then adding the digits of the number derived from it, etc., until the remaining number has only one digit. The number of additions required to obtain a single digit from a number <code>n</code> is called the <em>additive persistence</em> of <code>n</code>, and the digit obtained is called the <em>digital root</em> of n. For example, the sequence obtained from the starting number <code>9876</code> is <code>9876</code>, <code>30</code>, <code>3</code>, so <code>9876</code> has an additive persistence of <code>2</code> and a digital root of <code>3</code>.</p>
+<p>Write two Elm functions</p>
+<pre><code>additivePersistence : Int -&gt; Int
+digitalRoot : Int -&gt; Int </code></pre>
+<p>that take positive integer arguments <code>n</code> and, respectively, return the additive persistence and the digital root of <code>n</code>. Once you have implemented the functions, you should get the following behavior at the Elm REPL:</p>
+<pre><code>&gt; additivePersistence 9876
+2 : Int
+
+&gt; digitalRoot 9876
+3 : Int</code></pre>
+<p>Think about how you can factor the implementations of these two functions into common, reusable parts.</p>
+<h4 id="points-2">1.1.3 (15 points)</h4>
+<p><span style="color: red;">NOTE: Minor changes in sample output below, as discussed on Piazza.</a></p>
+<p>Write a function</p>
+<pre><code>subsequences : List a -&gt; List (List a)</code></pre>
+<p>that computes all subsequences of a list. This function is analogous to the <em>powerset</em> of a set. Your implementation may return subsequences in any order. For example, the following are two answers, among others, that are correct:</p>
+<pre><code>&gt; subsequences (List.range 1 3)
+[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]] : List (List Int)
+
+&gt; subsequences (List.range 1 3)
+[[1,2,3],[2,3],[1,3],[3],[1,2],[2],[1],[]] : List (List Int)</code></pre>
+<h4 id="points-3">1.1.4 (10 points)</h4>
+<p>The <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/List"><code>List</code> library</a> function includes a <code>take</code> such that <code>take k xs</code> returns the first <code>k</code> elements of <code>xs</code>. If <code>k</code> is negative or if there are not enough elements in <code>xs</code>, <code>take</code> quietly succeeds anyway.</p>
+<p>In this problem, you will write a version of <code>take</code> that differentiates between the success and error cases using the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result"><code>Result</code></a> type. Implement the function</p>
+<pre><code>take : Int -&gt; List a -&gt; Result String (List a)</code></pre>
+<p>so that it returns the error strings <code>&quot;not enough elements&quot;</code> and “<code>negative index</code>” in the corresponding error cases. For example:</p>
+<pre><code>&gt; take 0 (List.range 1 9)
+Ok [] : Result.Result String (List Int)
+
+&gt; take 5 (List.range 1 9)
+Ok [1,2,3,4,5] : Result.Result String (List Int)
+
+&gt; take 10 (List.range 1 9)
+Err &quot;not enough elements&quot; : Result.Result String (List Int)
+
+&gt; take (-10) (List.range 1 9)
+Err &quot;negative index&quot; : Result.Result String (List Int)</code></pre>
+<p><br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Submit the following one file:</p>
+<ul>
+<li>The file <a href="FPWarmup.elm"><code>FPWarmup.elm</code></a> updated with your changes. You are free to modify these files as you wish, as long as you do <strong>not</strong> change any type signatures that are provided.</li>
+</ul>
+<p>Your solution will be graded using a combination of automated grading scripts and manual review. It is a good idea for you to design some test cases of your own to exercise more sample behaviors than just the ones provided in the writeup. We also reserve the right to take into account the organization and style of your code when assigning grades.</p>
+<p>If you are not able to finish all parts of the assignment, make sure that all of your submitted files compile successfully. If not, you risk getting <strong>zero points</strong> for the assignment. In particular, for each file <code>Foo.elm</code>, make sure that it can be loaded into the Elm REPL</p>
+<pre><code>% elm-repl
+&gt; import Foo
+&gt;</code></pre>
+<p>and that it can be compiled to a standalone HTML file:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Successfully generated Foo.html</code></pre>
+<h3 id="submitting-your-code">Submitting Your Code</h3>
+<p>We will use the <a href="https://phoenixforge.cs.uchicago.edu/projects/cs223-spr-17"><code>cs223-spr-17</code> Subversion repository on PhoenixForge</a>. You should have done <a href="../hw0/index.html">this</a> by now.</p>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% cd USER-cs223-spr-17
+% svn mkdir hw1
+% cd hw1
+% wget http://www.classes.cs.uchicago.edu/current/assignments/hw1/FPWarmup.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add FPWarmup.elm</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw1 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

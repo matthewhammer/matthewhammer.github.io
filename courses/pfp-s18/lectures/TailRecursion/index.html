@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TailRecursion</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="tail-recursion">Tail Recursion</h1>
+<p>Consider a simple recursive function that <code>sum</code>s the first <code>n</code> positive integers (<a href="TailRecursion.elm"><code>TailRecursion.elm</code></a>):</p>
+<pre><code>sum n =
+  if n &lt;= 0
+    then 0
+    else n + sum (n-1)</code></pre>
+<p>For example:</p>
+<pre><code>&gt; sum 100
+5050 : number
+
+&gt; sum 1000
+500500 : number
+
+&gt; sum 10000
+50005000 : number
+
+&gt; sum 100000
+RangeError: Maximum call stack size exceeded</code></pre>
+<p><code>100000</code> isn’t very large, and yet we still ran out of “call stack” space.</p>
+<p>The number <code>100000</code> itself isn’t the problem…</p>
+<pre><code>&gt; 1000000
+1000000 : number</code></pre>
+<p>nor is a list with <code>1000000</code> (or more) numbers…</p>
+<pre><code>&gt; List.range 1 100000
+[ ... ] : List Int
+
+&gt; List.range 1 1000000
+[ ... ] : List Int
+
+&gt; List.range 1 10000000
+[ ... ] : List Int
+
+&gt; List.range 1 100000000
+FATAL ERROR: JS Allocation failed - process out of memory</code></pre>
+<p>Okay, well eventually it is. But it is reasonable that at some point (between the last two sample interactions) that the list of numbers may require more memory (also known as “heap” space, though unrelated to the heap data structures we have studied) than we can, or are allowed to, use.</p>
+<p>But the call stack error is something very different than this heap error. The call stack is used to track, well, the stack of currently executing functions. The call stack grows and shrinks as the program executes. The relative size of the memory dedicated to the call stack is, in general, much less than that dedicated to the heap. This makes sense because the code for a computation is typically far smaller than the data it operates on.</p>
+<p>So a call stack error means that we have too many “outstanding” function calls, which are waiting for their callee functions to return before continuing. Recursively defined functions, naturally, pile up a lot of “stack frames,” so running out of stack space is a serious concern, especially in functional languages that encourage (or force, in the case of purely functional languages) programmers to use recursion heavily.</p>
+<p>The way that languages (especially functional ones) deal with this issue is to make the following pact: if the programmer writes a recursive function that is <em>tail recursive</em>, then the language compiler promises to evaluate the function in constant stack space (rather than linear in the number of recursive calls).</p>
+<h2 id="programmers-obligation-defining-tail-recursive-functions">Programmer’s Obligation: Defining Tail Recursive Functions</h2>
+<p>A function <code>f</code> is tail recursive if all recursve calls to <code>f</code> (if any) appear in tail position, meaning the last thing that the current function invocation does is simply to return the result of the recursive invocation.</p>
+<p>Many recursive functions, but not all, can be re-written to be tail recursive by defining a helper function to take an extra argument that will store the “accumulated” or “running” result, to be updated in each recursive call. The value of this extra argument is then returned as the final result when no more recursive calls are required.</p>
+<p>For example, consider the following tail recursive helper function to sum the first <code>n</code> positive numbers.</p>
+<pre><code>sum_tr_ : Int -&gt; Int -&gt; Int
+sum_tr_ acc n =
+  if n &lt;= 0
+    then acc
+    else sum_tr_ (n+acc) (n-1)</code></pre>
+<p>The last thing to do is implement a function that kicks off the recursion by supplying the initial value of the accumulating result.</p>
+<pre><code>sum_tr = sum_tr_ 0</code></pre>
+<h2 id="compilers-obligation-translating-tail-recursion-to-loops">Compiler’s Obligation: Translating Tail Recursion to Loops</h2>
+<p>Languages that enter into such pacts do so because a tail recursive function can be translated into a loop in a target language with imperative features.</p>
+<p>For example, assuming a target language that contains support for mutable variables or references (created by <code>var</code>), dereferencing variables (denoted by the <code>!</code> operator), updating mutable variables (denoted by the <code>:=</code> operator), and loops, the <code>sum_tr_</code> function above might be translated to something that resembles the following.</p>
+<pre><code>sum_tr_ acc n =
+  var i   := n;
+  var res := acc;
+  while (not (!i &lt;= 0)) {
+    res := !i + !res;
+    i   := !i - 1;
+  }
+  !res</code></pre>
+<p>Notice that the mutable variables <code>i</code> and <code>res</code> are initialized with the (immutable) values <code>n</code> and <code>acc</code>, respectively, and the <code>while</code> loop iteratively updates these variables as long as the current value of <code>i</code> is non-negative. Executing a loop does not add any frames to the call stack, so the translated version does not suffer the possibility of running out of stack space to keep track of outstanding recursive calls.</p>
+<p>Tail call elimination is crucial to most functional programming languages.</p>
+<pre><code>&gt; sum_tr 1000000
+500000500000 : Int
+
+&gt; sum_tr 10000000
+50000005000000 : Int
+
+&gt; sum_tr 100000000
+5000000050000000 : Int</code></pre>
+<h2 id="recursion-on-lists">Recursion on Lists</h2>
+<p>The following is a canonical definition for defining folding from the left in many functional programming languages.</p>
+<pre><code>foldl : (a -&gt; b -&gt; b) -&gt; b -&gt; List a -&gt; b
+foldl f acc xs = case xs of
+  []     -&gt; acc
+  x::xs_ -&gt; foldl f (f x acc) xs_</code></pre>
+<p>Because <code>foldl</code> is tail recursive, languages that perform tail call elimination would rewrite it to something that resembles the following.</p>
+<pre><code>foldl f acc xs =
+  var ys  := xs;
+  var res := acc;
+  while (not (!ys = [])) {
+    let (x::xs_) = !ys in
+      res := f x !res;
+      ys  := xs_;
+  }
+  !res</code></pre>
+<p>For example:</p>
+<pre><code>&gt; foldl (+) 0 (List.range 1 1000)
+500500 : Int
+
+&gt; foldl (+) 0 (List.range 1 10000)
+50005000 : Int
+
+&gt; foldl (+) 0 (List.range 1 100000)
+5000050000 : Int
+
+&gt; foldl (+) 0 (List.range 1 1000000)
+500000500000 : Int
+
+&gt; foldl (+) 0 (List.range 1 10000000)
+50000005000000 : Int</code></pre>
+<p>So, is the library function <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/List"><code>List.foldl</code></a> a tail recursive Elm function?</p>
+<pre><code>&gt; List.foldl (+) 0 (List.range 1 10000000)
+50000050000000 : Int</code></pre>
+<p>Check out the implementation in <a href="https://github.com/elm-lang/core/blob/5.1.1/src/List.elm#L148-L155"><code>List.elm</code></a>.</p>
+<h3 id="folding-from-the-right">Folding from the Right</h3>
+<p>The following canonical definition of the <code>foldr</code> function is not tail recursive.</p>
+<pre><code>foldr : (a -&gt; b -&gt; b) -&gt; b -&gt; List a -&gt; b
+foldr f acc xs = case xs of
+  []     -&gt; acc
+  x::xs_ -&gt; f x (foldr f acc xs_)</code></pre>
+<p>For example:</p>
+<pre><code>&gt; foldr (+) 0 (List.range 1 100)
+5050 : number
+
+&gt; foldr (+) 0 (List.range 1 1000)
+500500 : number
+
+&gt; foldr (+) 0 (List.range 1 10000)
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>Wait, but:</p>
+<pre><code>&gt; List.foldr (+) 0 (List.range 1 10000)
+50005000 : Int</code></pre>
+<p>It turns out that <code>List.foldr</code> is implemented (in <a href="https://github.com/elm-lang/core/blob/5.1.1/src/List.elm#L162-L164"><code>List.elm</code></a>) as a native JavaScript function (defined in <a href="https://github.com/elm-lang/core/blob/5.1.1/src/Native/List.js#L33-L42"><code>List.js</code></a>) that, not surprisingly, uses a loop!</p>
+<p><strong>Optional Exercise</strong> — Write a version of <code>foldr</code> (in Elm) such that any recursion within runs in constant stack space by making use of <code>foldl</code>.</p>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

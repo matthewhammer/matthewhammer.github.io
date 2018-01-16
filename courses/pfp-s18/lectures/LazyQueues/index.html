@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LazyQueues</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lazy-queues">Lazy Queues</h1>
+<p>Recall the <a href="../Queues/FastQueue.elm"><code>FastQueue.elm</code></a> implementation (referred to in the textbook as the “batched queue” implementation) that has <em>O(1)</em> amortized cost for each of the operations, including <code>dequeue</code>, which has an <em>O(n)</em> worst-case cost. The amortized analysis, however, assumes that no <code>Queue</code> object is used as the input for more than one <code>Queue</code> operation. We will now see queue implementations that employ laziness in order to achieve <em>O(1)</em> amortized bounds despite the possibility that each queue is used persistently.</p>
+<p>Consider the following example from the textbook, where <code>q_0</code> is a queue whose <code>front</code> and <code>back</code> lists have equal length <code>m</code>.</p>
+<pre><code>q_0         =  ...             -- |front| = |back| = m
+q_1         =  dequeue q_0
+q_2         =  dequeue q_1
+           ... 
+q_m         =  dequeue q_m_minus_1
+q_m_plus_1  =  dequeue q_m</code></pre>
+<p>Using the <code>FastQueue</code> implementation, the operation <code>dequeue q_m_minus_1</code> triggers a call to <code>List.reverse</code>, which runs in <em>O(<code>m</code>)</em> time; all other calls to <code>dequeue</code> run in <em>O(1)</em> time. In the absence of persistence, the amortized analysis is able to reason that this <em>expensive</em> operation happens infrequently compared to the <em>cheap</em> ones and that any sequence of <em>n</em> <code>FastQueue</code> operations takes <em>O(n)</em> time overall.</p>
+<h2 id="a-naive-approach-lazybatchedqueue.elmlazybatchedqueuefile">A Naive Approach — <span style="text-transform: capitalize;"><a href="../LazyLists/LazyBatchedQueue.elm"><code>LazyBatchedQueue.elm</code></a></span></h2>
+<p>As a first attempt, we might port the <code>FastQueue</code> implementation so that it uses <a href="../LazyLists/LazyList.elm"><code>LazyList</code>s</a> (a.k.a streams) and memoizes the computation that involves the expensive call to <code>List.reverse</code>.</p>
+<p>We start by defining <code>front</code> and <code>back</code> to be <code>LazyList</code>s rather than <code>List</code>s.</p>
+<pre><code>type Queue a = Q { front : LazyList a, back : LazyList a }</code></pre>
+<p>The <code>empty</code> queue contains two empty <code>LazyList</code>s.</p>
+<pre><code>empty = mkQ nil nil
+
+nil = lazy (\_ -&gt; Nil)</code></pre>
+<p>Just like in <code>FastQueue</code>, we will maintain the invariant that <code>front</code> is empty only if <code>back</code> is. As a result, we check whether a <code>Queue</code> is empty by forcing <code>front</code> to evaluate to a <code>LazyListCell</code> and then checking whether it is <code>Nil</code> or not.</p>
+<pre><code>isEmpty (Q {front, back}) =
+  case force front of
+    Nil -&gt; True
+    _   -&gt; False</code></pre>
+<p>Note: Why is it not a good idea to define <code>isEmpty = (==) empty</code>?</p>
+<p>The implementations of <code>enqueue</code>, <code>dequeue</code>, and <code>peek</code> are similar to before, except that <code>LazyListCell</code>s are created and pattern matched rather than typical <code>List</code> cells.</p>
+<pre><code>enqueue x (Q {front, back}) =
+  checkFront front (lazy (\_ -&gt; Cons x back))
+
+dequeue (Q {front, back}) = case force front of
+  Nil       -&gt; Nothing
+  Cons _ f_ -&gt; Just (checkFront f_ back)
+
+peek (Q {front, back}) = case force front of
+  Nil      -&gt; Nothing
+  Cons x _ -&gt; Just x</code></pre>
+<p>Recall that the <code>checkFront</code> function enforces and reestablishes, if necessary, the invariant that <code>front</code> is empty only if <code>back</code> is. A first option is the following.</p>
+<pre><code>checkFront f b = case force f of
+  Nil -&gt; mkQ (reverse b) nil
+  _   -&gt; mkQ f b</code></pre>
+<p>However, this version forces the (monolithic) <code>reverse</code> function to process the entire <code>LazyList</code> right away; there are no suspensions. The expensive <code>reverse</code> operation will be performed every time the expensive operation <code>dequeue q_m_minus_1</code> is evaluated.</p>
+<!--
+, even if there are no more
+`dequeue` or `peek` operations that require this result.
+Even worse,
+the expensive `reverse` operation will be performed every time the
+expensive operation `dequeue q_m_minus_1` is evaluated.
+-->
+<p>Another option is to suspend the <code>reverse</code> computation as follows.</p>
+<pre><code>checkFront f b = case force f of
+  Nil -&gt; mkQ (lazy (\_ -&gt; force (reverse b))) nil
+  _   -&gt; mkQ f b</code></pre>
+<p>This delays the <code>reverse</code> until the resulting <code>LazyList</code> is actually needed (i.e. <code>dequeue q_m</code>) and memoizes the result in case the expensive operation is evaluated again. A downside is that <code>peek</code> no longer runs in worst-case O(1) time.</p>
+<p>And in any case, if the operation <code>dequeue q_m_minus_1</code> is evaluated again, a completely different <code>reverse</code> suspension is created, so laziness and memoization cannot help amortize the cost. So this naive translation of <code>FastQueue</code> does not address the challenge of using arbitrary versions of a <code>Queue</code> persistently.</p>
+<!--
+Note: You may want to `diff` or `vimdiff`
+[`FastQueue.elm`][FastQueueFile] and
+[`LazyBatchedQueue.elm`][LazyBatchedQueueFile]
+to see the changes required for adding laziness.
+-->
+<h2 id="a-clever-approach-bankersqueue.elmbankersqueuefile">A Clever Approach — <span style="text-transform: capitalize;"><a href="../LazyLists/BankersQueue.elm"><code>BankersQueue.elm</code></a></span></h2>
+<p>A more clever approach is based on the idea of having <code>dequeue q_0</code> create a suspension involving the <code>reverse</code> that is not forced until the <code>dequeue q_m</code> operation. Separating the creation and evaluation of the suspension allows <em>O(m)</em> time to pay for the expensive <em>O(m)</em> cost of the <code>reverse</code>.</p>
+<p>To realize this strategy, we do not wait until the <code>front</code> list is about to become empty before reversing the <code>back</code> list. Instead, the <code>back</code> list is <code>reverse</code>d as soon as it becomes longer than the <code>front</code> and is then <code>append</code>ed to the <code>front</code> in order to maintain the correct order of elements in the <code>Queue</code>. The key is that the <code>LazyList</code> defined by</p>
+<pre><code>front +++ reverse back       -- where (+++) = append</code></pre>
+<p>does not immediately perform the monolithic call to <code>reverse</code> because <code>append</code> is an incremental function. Only after sufficient calls to <code>dequeue</code> exhaust the <code>front</code> list is <code>back</code> reversed. Let’s go through the implementation of this strategy, and then discuss how it fares with respect to the problematic sequence of operations above.</p>
+<p>The representation maintains the explict <code>Int</code>eger sizes of the <code>front</code> and <code>back</code> streams.</p>
+<pre><code>type Queue a = Q Int (LazyList a) Int (LazyList a)</code></pre>
+<p>Describing the <code>empty</code> queue is straightforward.</p>
+<pre><code>nil = lazy (\_ -&gt; Nil)
+
+empty = Q 0 nil 0 nil
+
+isEmpty (Q i _ _ _) = i == 0</code></pre>
+<p>When the size of the <code>front</code> stream is greater than <code>0</code>, <code>peek</code> calls the <a href="../LazyLists/LazyList.elm"><code>LazyList</code></a> <code>head</code> operation, which <code>force</code>s the evaluation of the <code>LazyListCell</code> and returns the first element of the resulting <code>Cons</code> value.</p>
+<pre><code>peek (Q i front j back) =
+  if i == 0
+    then Nothing
+    else Just (head front)</code></pre>
+<p>If the <code>back</code> stream is strictly smaller than the <code>front</code>, then <code>enqueue</code> (lazily) adds the new element <code>x</code> to the <code>back</code>. Otherwise, the <code>back</code> is <code>reverse</code>d and (lazily) <code>append</code>ed to the <code>front</code>, updating the size counts appropriately.</p>
+<pre><code>enqueue x (Q i front j back) =
+  if j &lt; i
+    then Q i front (j+1) (lazy (\_ -&gt; Cons x back))
+    else Q (i+j+1) (front +++ reverse back) 0 nil</code></pre>
+<p>Similarly, <code>dequeue</code> checks whether the operation results in the <code>back</code> stream being longer than the new <code>front</code>, in which case the <code>back</code> is <code>reverse</code>d and appended to the new <code>front</code>. Recall that the <a href="../LazyLists/LazyList.elm"><code>LazyList</code></a> <code>tail</code> operation <code>force</code>s its argument and returns the second element of the resulting <code>Cons</code> value.</p>
+<pre><code>dequeue (Q i front j back) =
+  if i == 0 then Nothing
+  else if i == j then Just (Q (i+j-1) (tail front +++ reverse back) 0 nil)
+  else Just (Q (i-1) (tail front) j back)</code></pre>
+<p>These two operations can be refactored to use a common <code>check</code> function that enforces the invariant that the <code>rear</code> is never longer than the <code>front</code>.</p>
+<pre><code>enqueue x (Q i front j back) =
+  check i front (j+1) (lazy (\_ -&gt; Cons x back))
+
+dequeue (Q i front j back) =
+  if i == 0
+    then Nothing
+    else Just (check (i-1) (tail front) j back)
+
+check i front j back =
+  if j &gt; i
+    then Q (i+j) (front +++ reverse back) 0 nil
+    else Q i front j back</code></pre>
+<p>To see how this approach fares well even with persistent data structures, consider the sequence of <em>m</em> <code>dequeue</code> operations from before. The first one, <code>dequeue q_0</code>, creates a suspension involving <code>reverse</code> that is forced by the <code>dequeue q_m</code> operation. No other operation in the sequence creates a suspension. Therefore, to force another expensive call to <code>reverse</code> requires another call to <code>dequeue q_0</code> followed by <em>m-1</em> calls to <code>dequeue</code>. So, the <em>O(m)</em> cost of the <code>reverse</code> can be amortized over the sequence of <em>O(m)</em> operations that must precede it.</p>
+<p>Sections 6.1, 6.2, and 6.3 of the textbook show how to formalize this argument by adapting the banker’s method to account for lazy evaluation.</p>
+<h2 id="another-clever-approach-physicistsqueue.elmphysicistsqueuefile">Another Clever Approach — <span style="text-transform: capitalize;"><a href="../LazyLists/PhysicistsQueue.elm"><code>PhysicistsQueue.elm</code></a></span></h2>
+<p>The textbook describes another way to implement a strategy similar to the one employed by <code>BankersQueue</code>. In that version, the (incremental) <code>append</code> function waits until <code>front</code> becomes empty before applying the (monolithic) <code>reverse</code> function to <code>back</code>.</p>
+<p>Because the <code>back</code> list is only ever processed by monolithic functions, there is no need for it to be represented using a <code>LazyList</code>. Thus, one change to the representation is to use an ordinary <code>List</code> for <code>back</code>.</p>
+<pre><code>type Queue a = Q Int (LazyList a) Int (List a)</code></pre>
+<p>Using this representation, the key operation from before becomes</p>
+<pre><code>front ++++ List.reverse back</code></pre>
+<p>assuming that</p>
+<pre><code>(++++) : LazyList a -&gt; List a -&gt; LazyList a</code></pre>
+<p>is an incremental function. (<strong>Exercise</strong> — Implement <code>(++++)</code>.)</p>
+<p>Because this <code>(++++)</code> function, like <code>append</code>, is incremental, the resulting list is not entirely evaluated right away. As it turns out, the amortized analysis can be made to work even if this concatenation is performed eagerly. Thus, a second change to the representation is to store <code>front</code> as a <code>Lazy List</code> (an ordinary <code>List</code> that is suspended) rather than a <code>LazyList</code> (a stream).</p>
+<pre><code>type Queue a = Q Int (Lazy (List a)) Int (List a)</code></pre>
+<p>Using this representation, the key operation from before becomes:</p>
+<pre><code>force front ++ List.reverse back</code></pre>
+<p>A consequence of this representation is that <code>peek</code> and <code>dequeue</code> must <code>force</code> the entire suspended <code>front</code> list. To reduce the costs of these operations, the final change to the representation is to keep an additional (evaluated) <code>List</code> called <code>pre</code> that is a prefix of (the suspended <code>List</code>) <code>front</code> to facilitate fast access to the front of <code>front</code>.</p>
+<pre><code>type Queue a = Q (List a) Int (Lazy (List a)) Int (List a)</code></pre>
+<p>Like in the <code>BankersQueue</code>, the size of the <code>back</code> is never allowed to become larger than the <code>front</code>. In addition, <code>pre</code> is allowed to be empty only if <code>front</code> is empty. The <code>check</code> and <code>checkPre</code> functions enforce these invariants.</p>
+<pre><code>check pre i front j back =
+  if j &lt;= i then checkPre pre i front j back
+  else
+    let front_ = lazy (\_ -&gt; force front ++ List.reverse back) in
+    checkPre pre (i+j) front_ 0 []
+
+checkPre pre i front j back =
+  case pre of
+    [] -&gt; Q (force front) i front j back
+    _  -&gt; Q pre i front j back</code></pre>
+<p>Emptiness:</p>
+<pre><code>empty = Q [] 0 (lazy (\_ -&gt; [])) 0 []
+
+isEmpty (Q _ i _ _ _) = i == 0</code></pre>
+<p>The <code>enqueue</code> operation adds to the <code>back</code> and <code>peek</code> pulls from <code>pre</code>, the partially evaluated front of the <code>front</code>.</p>
+<pre><code>enqueue x (Q pre i front j back) = check pre i front (j+1) (x::back)
+
+peek (Q pre _ _ _ _) = List.head pre</code></pre>
+<p>Notice that <code>dequeue</code> uses <code>tail</code> to update both <code>pre</code> and <code>front</code>.</p>
+<pre><code>dequeue (Q pre i front j back) =
+  if i == 0 then Nothing
+  else
+    let pre_   = tail pre in
+    let front_ = lazy (\_ -&gt; tail (force front)) in
+    Just (check pre_ (i-1) front_ j back)
+
+tail = fromJust &lt;&lt; List.tail</code></pre>
+<p>Section 6.4 of the textbook shows how to adapt the physicist’s method to account for lazy evaluation and use to argue that this implementation, like the <code>BankersQueue</code>, has <em>O(1)</em> amortized costs even in the face of persistent access.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="optional">Optional</h3>
+<ul>
+<li>Okasaki, Chapter 6.1—6.4. Although we will not cover the accounting techniques in this class, you are encouraged to read through this material a few times to help understand the basic mechanisms.</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

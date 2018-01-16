@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Laziness</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="laziness">Laziness</h1>
+<p>Most mainstream functional languages employ an <em>eager</em> (a.k.a. <em>strict</em>) evaluation strategy, where an expression is evaluated entirely even if its resulting value is not needed or only parts of it are needed. As we will see, there are sometimes advantages in <em>lazily</em> evaluating certain expressions. There are two important aspects of lazy evaluation:</p>
+<ol type="1">
+<li><p><em>suspending</em> (a.k.a <em>delaying</em>) a computation until its result is actually needed (a.k.a <em>demanded</em> or <em>forced</em>); and</p></li>
+<li><p><em>memoizing</em> (a.k.a <em>caching</em>) the result of a suspended computation in case its value is demanded again.</p></li>
+</ol>
+<p>Many eager languages, including Elm, offer additional language constructs for selectively introducing laziness. We will work through two example encodings — natural numbers and streams — that motivate and illustrate lazy evaluation.</p>
+<h2 id="natural-numbers">Natural Numbers</h2>
+<p>We will work through a few encodings of natural numbers and define some simple operations on them.</p>
+<h3 id="first-version-nat.elmnatfile">First Version — <span style="text-transform: capitalize;"><a href="Nat.elm"><code>Nat.elm</code></a></span></h3>
+<p>We start by inductively defining <code>Nat</code>ural numbers to be either <code>Z</code>ero or the <code>S</code>uccessor of some other <code>Nat</code>ural number.</p>
+<pre><code>type Nat = Z | S Nat</code></pre>
+<p>Next, let’s define functions <code>toInt</code> and <code>fromInt</code> to convert <code>Nat</code>ural numbers to and from <code>Int</code>egers.</p>
+<pre><code>fromInt : Int -&gt; Nat
+fromInt n =
+  if n &lt;= 0
+    then Z
+    else S (fromInt (n-1))</code></pre>
+<p>If we take <code>fromInt</code> for a spin, we see that it busts the stack rather quickly.</p>
+<pre><code>&gt; fromInt 0
+Z : Nat.Nat
+
+&gt; fromInt 1
+S Z : Nat.Nat
+
+&gt; fromInt 10
+S (S (S (S (S (S (S (S (S (S Z))))))))) : Nat.Nat
+
+&gt; fromInt 10000
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>Ah, right, we should define it tail-recursively so that it runs in constant stack space.</p>
+<pre><code>fromInt n =
+  let foo acc n =
+    if n &lt;= 0
+      then acc
+      else foo (S acc) (n-1)
+  in foo Z n</code></pre>
+<p>That should do the trick…</p>
+<pre><code>&gt; fromInt 10000
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>Or not. Okay, it’s time for a little more investigative journalism. We could fire up Elm Reactor to start debugging. Or we can be lazy (pun intended) and continue to poke around at the REPL.</p>
+<pre><code>&gt; let _ = fromInt 10000 in ()
+() : ()</code></pre>
+<p>That’s interesting. The call to <code>fromInt</code> was not the problem. So the act of printing the resulting <code>Nat</code> causes the stack overflow? Let’s write our own tail-recursive printing function to test this hypothesis.</p>
+<pre><code>strNat : Nat -&gt; String
+strNat n =
+  let foo acc n = case n of
+    Z    -&gt; acc
+    S n_ -&gt; foo (&quot;S&quot; ++ acc) n_
+  in foo &quot;Z&quot; n</code></pre>
+<p>Sure enough, that does the trick…</p>
+<pre><code>&gt; fromInt 10000 |&gt; strNat
+&quot; ... SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSZ&quot; : String
+
+&gt; fromInt 10000000 |&gt; strNat
+&quot; ... SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSZ&quot; : String</code></pre>
+<p>… until we run out of heap space, that is.</p>
+<pre><code>&gt; fromInt 100000000 |&gt; strNat
+FATAL ERROR: JS Allocation failed - process out of memory</code></pre>
+<p>Okay, now that we have sorted out our call stack and heap space concerns, let’s return to the task of programming with <code>Nat</code>s. First, a bit of refactoring:</p>
+<pre><code>foldl : (b -&gt; b) -&gt; b -&gt; Nat -&gt; b
+foldl f acc n =
+  case n of
+    Z    -&gt; acc
+    S n_ -&gt; foldl f (f acc) n_
+
+strNat = foldl ((++) &quot;S&quot;) &quot;Z&quot;</code></pre>
+<p>And a function to convert <code>Nat</code>s to <code>Int</code>s:</p>
+<pre><code>toInt : Nat -&gt; Int
+toInt = foldl ((+) 1) 0</code></pre>
+<p>We can add two <code>Nat</code>s together by peeling <code>S</code>uccessor labels off of <code>y</code> one at a time and wrapping them around <code>x</code>.</p>
+<pre><code>plus : Nat -&gt; Nat -&gt; Nat
+plus x y =
+  let foo acc n = case n of
+    Z    -&gt; acc
+    S n_ -&gt; foo (S acc) n_
+  in foo x y</code></pre>
+<p>Or:</p>
+<pre><code>plus x y = foldl S y x</code></pre>
+<p>Or:</p>
+<pre><code>plus x y = foldl S x y</code></pre>
+<p>Or, better yet:</p>
+<pre><code>plus = foldl S</code></pre>
+<p>This <code>plus</code> function encodes the usual notion of addition for our <code>Nat</code> type.</p>
+<pre><code>&gt; plus (fromInt 0) (fromInt 0) |&gt; strNat
+&quot;Z&quot; : String
+
+&gt; plus (fromInt 0) (fromInt 2) |&gt; strNat
+&quot;SSZ&quot; : String
+
+&gt; plus (fromInt 10) (fromInt 2) |&gt; strNat
+&quot;SSSSSSSSSSSSZ&quot; : String
+
+&gt; plus (fromInt 10) (fromInt 2) |&gt; toInt
+12 : Int</code></pre>
+<p>We can define <code>eq</code>uality for <code>Nat</code>s by peeling off one data constructor at a time.</p>
+<pre><code>eqNat : Nat -&gt; Nat -&gt; Bool
+eqNat x y =
+  let foo x y = case (x, y) of
+    (Z, Z)       -&gt; True
+    (S x_, S y_) -&gt; foo x_ y_
+    _            -&gt; False
+  in foo x y</code></pre>
+<p>This seems to work just fine…</p>
+<pre><code>&gt; eqNat (fromInt 0) (fromInt 0)
+True : Bool
+
+&gt; eqNat (fromInt 0) (fromInt 2)
+False : Bool
+
+&gt; eqNat (fromInt 10) (fromInt 2)
+False : Bool</code></pre>
+<p>… but it is really slow for some comparisons that seem like they should be easy to decide quickly.</p>
+<pre><code>&gt; eqNat (fromInt 10000) (fromInt 10000000)
+False : Bool
+
+&gt; eqNat (fromInt 0) (fromInt 10000000)
+False : Bool</code></pre>
+<p>The problem is that, under eager evaluation, both <code>Nat</code>ural numbers are evaluated completely before calling <code>eqNat</code>, which then very quickly decides the last two disequalities.</p>
+<h3 id="delaying-evaluation-with-thunks-thunknat.elmthunknatfile">Delaying Evaluation with Thunks — <span style="text-transform: capitalize;"><a href="ThunkNat.elm"><code>ThunkNat.elm</code></a></span></h3>
+<p>A common approach to delaying the evaluation of an expression <code>e</code> of type <code>a</code> in an eager language is to define a function <code>\() -&gt; e</code>, called a <em>thunk</em>, that waits for a dummy argument before evaluating the expression.</p>
+<p>We will port the implementations above in order to delay computing the representations of natural numbers. In our new representation of <code>Nat</code>s, a <code>S</code>uccessor value stores the delayed computation of the <code>Nat</code> that it succeeds. The <code>force</code> function is used to evaluate a suspended computation.</p>
+<pre><code>type Nat = Z | S (Thunk Nat)
+
+type alias Thunk a = () -&gt; a
+
+force : Thunk a -&gt; a
+force thunk = thunk ()</code></pre>
+<p>Note that implementing a function like the following is <em>not</em> a good idea, because a call to <code>delay</code> will force its argument to be evaluated!</p>
+<pre><code>delay : a -&gt; Thunk a
+delay e = \() -&gt; e</code></pre>
+<p>To implement <code>fromInt</code>, we no longer need to implement a (tail-recursive) helper function because there are no direct recursive calls; instead, the latter case immediately returns a <code>S</code>uccessor value (which may some time later lead to a call to <code>fromInt</code>).</p>
+<pre><code>fromInt n =
+  if n &lt;= 0
+    then Z
+    else S (\_ -&gt; fromInt (n-1))</code></pre>
+<p>Notice that our new representation of non-<code>Z</code>ero numbers is quite different from before:</p>
+<pre><code>&gt; import Nat as N
+&gt; import ThunkNat exposing (..)
+
+&gt; N.fromInt 10
+S (S (S (S (S (S (S (S (S (S Z))))))))) : Nat.Nat
+
+&gt; fromInt 10
+S &lt;function&gt; : ThunkNat.Nat</code></pre>
+<p>Unlike <code>fromInt</code>, <code>toInt</code> <em>does</em> need to make recursive calls immediately, because the resulting type (<code>Int</code>) does not have the notion of delayed computation built in to its representation. Therefore, we will want to employ the tail-recursive helper strategy.</p>
+<pre><code>toInt n =
+  let foo acc n = case n of
+    Z    -&gt; acc
+    S n_ -&gt; foo (1 + acc) (force n_)
+  in foo 0 n</code></pre>
+<p>As before, <code>fromInt</code> and <code>toInt</code> are inverses:</p>
+<pre><code>&gt; fromInt 100000000 |&gt; toInt
+100000000 : Int</code></pre>
+<p>Notice how <code>toInt</code> uses <code>force</code> to evaluate all of the nested suspensions that are stored within a <code>Nat</code>. A function like this is called <em>monolithic</em>, whereas a function like <code>fromInt</code> is called <em>incremental</em> because it does not trigger the evaluation of all nested suspensions.</p>
+<p>Another example of a monolithic function is <code>strNat</code>.</p>
+<pre><code>strNat n =
+  let foo acc n = case n of
+    Z    -&gt; acc
+    S n_ -&gt; foo (&quot;S&quot; ++ acc) (force n_)
+  in foo &quot;Z&quot; n</code></pre>
+<p>However, this function is no longer needed for its original purpose above, because printing the representation of a <code>S</code>uccessor value is now very quick.</p>
+<pre><code>&gt; fromInt 10000
+S &lt;function&gt; : ThunkNat.Nat
+
+&gt; fromInt 10000 |&gt; strNat
+&quot; ... SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSZ&quot; : String</code></pre>
+<p>We can now return to our motivation for delaying the evaluation of <code>Nat</code>s.</p>
+<pre><code>eqNat x y =
+  let foo x y = case (x, y) of
+    (Z, Z)       -&gt; True
+    (S x_, S y_) -&gt; foo (force x_) (force y_)
+    (_, _)       -&gt; False
+  in foo x y</code></pre>
+<p>When <code>x</code> and <code>y</code> represent the same number, <code>eqNat</code> evaluates all of the nested suspensions in both <code>x</code> and <code>y</code>. Otherwise, it evaluates only enough of their delayed representations in order to demonstrate a difference in corresponding data constructors. As a result, all of the following comparisons run quickly, unlike with our original <a href="Nat.elm"><code>Nat.elm</code></a> implementation.</p>
+<pre><code>&gt; eqNat (fromInt 0) (fromInt 0)
+True : Bool
+
+&gt; eqNat (fromInt 0) (fromInt 2)
+False : Bool
+
+&gt; eqNat (fromInt 10) (fromInt 2)
+False : Bool
+
+&gt; eqNat (fromInt 10000) (fromInt 10000000)
+False : Bool
+
+&gt; eqNat (fromInt 0) (fromInt 10000000)
+False : Bool</code></pre>
+<p>We finish porting the original module with the following incremental implementation of <code>plus</code>.</p>
+<pre><code>plus x y = case y of
+  Z    -&gt; x
+  S y_ -&gt; S (\_ -&gt; plus x (force y_))</code></pre>
+<p>As a result, the following comparison evaluates quickly.</p>
+<pre><code>&gt; eqNat (fromInt 0) (plus (fromInt 10000000) (fromInt 10000000))
+False : Bool</code></pre>
+<h4 id="digression">Digression</h4>
+<p>What happens if we ask Elm to compare <code>Nat</code>s using built-in equality?</p>
+<pre><code>&gt; fromInt 0 == fromInt 0
+True : Bool
+
+&gt; fromInt 0 == fromInt 1
+False : Bool
+
+&gt; fromInt 1 == fromInt 2
+Error: Trying to use `(==)` on functions. There is no way to know if
+functions are &quot;the same&quot; in the Elm sense.</code></pre>
+<p>Elm throws a run-time error when trying to compare two different function values. Fair enough. Notice that “physical equality” between function values is supported, however.</p>
+<pre><code>&gt; fromInt 1 == fromInt 1
+Error: Trying to use `(==)` on functions. There is no way to know if
+functions are &quot;the same&quot; in the Elm sense.
+
+&gt; let foo = fromInt 1 in foo == foo
+True : Bool</code></pre>
+<h3 id="memoizing-thunks-lazynat.elmlazynatfile">Memoizing Thunks — <span style="text-transform: capitalize;"><a href="LazyNat.elm"><code>LazyNat.elm</code></a></span></h3>
+<p>Defining suspensions and incremental functions can be really valuable techniques, but there’s no free lunch. The representation of a thunk is a <em>closure</em>, which is a function to evaluate along with bindings for all free variables referred to by the function. Delaying computations willy nilly, then, can lead to a huge number of these closures building up. So one should restrict the use of thunks to situations where the benefits of being able to define incremental functions outweighs the overheads associated with delayed computations.</p>
+<p>Another concern is that the same delayed computation may be demanded more than once. If the computation takes significant resources to evaluate, then redoing the work every time is undesirable. In a pure language with only strict evaluation, there is no recourse: every time a thunk is forced, it must be re-evaluated. As a result, many strict languages offer special-purpose constructs for manipulating delayed computations with the guarantee that the result of forcing a delayed computation is cached in case it is forced again in the future. The term <em>lazy evaluation</em> is often used to describe support for delayed computations with the guarantee of evaluating any such computation at most once.</p>
+<p>In Elm, the <a href="http://package.elm-lang.org/packages/elm-lang/lazy/2.0.0/Lazy"><code>Lazy</code></a> library provides support for lazy evaluation. (<code>Lazy</code> is a community library, so an <a href="elm-package.json"><code>elm-package.json</code></a> file is required to declare this dependency.) The <code>lazy</code> function turns a <code>Thunk a</code> into a <code>Lazy a</code> value, which <code>force</code> evaluates, reusing the result of any previous call to <code>force</code>.</p>
+<pre><code>lazy  : (() -&gt; a) -&gt; Lazy a
+force : Lazy a -&gt; a</code></pre>
+<p>The <a href="https://github.com/elm-lang/lazy/blob/2.0.0/src/Native/Lazy.js">native JavaScript implementation</a> of <code>lazy</code> uses a mutable variable (called <code>isForced</code>) to track whether the particular thunk has been evaluated and a mutable variable (called <code>value</code>) to store this result.</p>
+<p>It is simple to port <a href="ThunkNat.elm"><code>ThunkNat.elm</code></a> to use the <code>Lazy</code> library in order to obtain the benefits of memoization. First, we redefine the type of <code>Nat</code> as follows.</p>
+<pre><code>type Nat = Z | S (Lazy Nat)</code></pre>
+<p>Then, we sprinkle a call to <code>lazy</code> in front of every thunked value. The resulting implementation can be found in <a href="LazyNat.elm"><code>LazyNat.elm</code></a>. (Use <code>diff</code> or <code>vimdiff</code> to see how similar the two files are.)</p>
+<p>Using this implementation, we now expect that <code>force</code>-ing an expensive suspension for the second time should be practically instantaneous. As we discussed above, the worst case for <code>eqNat</code> is when both its arguments are equal. So let’s use a call to <code>eqNat</code> as an example of a slow computation.</p>
+<pre><code>&gt; import LazyNat exposing (..)
+
+&gt; foo i = eqNat (fromInt i) (fromInt i)
+&lt;function&gt; : Int -&gt; Bool
+
+&gt; foo 100000
+True : Bool
+
+&gt; foo 1000000
+True : Bool</code></pre>
+<p>The last operation above is quite slow. So, we should be able to delay its evaluation, <code>force</code> and memoize its result, and reevaluate it a second time nearly instantaneously. But the second <code>force</code> is just as slow as the first!</p>
+<pre><code>&gt; import Lazy exposing (..)
+
+&gt; slow = lazy (\_ -&gt; foo 1000000)
+Lazy &lt;function&gt; : Lazy.Lazy Bool
+
+&gt; force slow
+True : Bool
+
+&gt; force slow   -- still slow... :-(
+True : Bool</code></pre>
+<p>Good thing we still have our investigative journalist hats on.</p>
+<pre><code>&gt; force slow
+True : Bool
+
+&gt; (force slow, force slow, force slow, force slow, force slow)
+(True,True,True,True,True) : ( Bool, Bool, Bool, Bool, Bool )</code></pre>
+<p>These two expressions require about the same amount of time to evaluate, which suggests that caching is kicking in for the latter case. So it appears that the native memo tables do not persist across REPL operations.</p>
+<p><strong>Optional Exercise</strong> — Write an Elm program that measures the time it takes to evaluate the previous two expressions (for example, using <code>Time</code>).</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 4.1</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab0</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="elm-v0.18-installation">Elm v0.18 Installation</h1>
+<p>The <a href="http://elm-lang.org/Install.elm">Elm installation page</a> provides installers for Mac and Windows and sources to build on Linux systems. We will be using v0.18, so make sure you see <code>0-18</code> somewhere in the name of the installer you choose. Language versions are <em>not</em> compatible in general.</p>
+<p>The Elm tools should also be available on <code>linux.cs.uchicago.edu</code>.</p>
+<h2 id="online-editor">Online Editor</h2>
+<p>The <a href="http://elm-lang.org/try">live editor</a> is a useful tool for trying out small bits of code on the go and for experiment with the <a href="http://elm-lang.org/Examples.elm">Examples</a>. But you certainly will not want to rely on it as part of your development workflow in this course.</p>
+<h2 id="repl">REPL</h2>
+<p>The Elm Platform installation comes with a Read-Eval-Print-Loop (REPL) that will be very useful for developing and testing code that does not require HTML integration.</p>
+<pre><code>% elm-repl
+---- elm repl 0.18.0 -----------------------------------------------------------
+ :help for help, :exit to exit, more at &lt;https://github.com/elm-lang/elm-repl&gt;
+--------------------------------------------------------------------------------</code></pre>
+<blockquote>
+<p>“Hello, world!” “Hello, world!” : String</p>
+</blockquote>
+<p>If you run into some weird behavior that you think may be a bug, try the age-old trick of quitting (<code>:exit</code> or <code>Ctrl+D</code>) and restarting. You can also take a look at the <a href="https://groups.google.com/forum/#!forum/elm-discuss">Elm mailing list</a> to see if any related <a href="https://github.com/elm-lang/elm-repl/issues">bug reports</a> have been opened.</p>
+<h2 id="building-standalone-html">Building Standalone HTML</h2>
+<p>You will use <code>elm-make</code> to compile Elm programs into HTML and JavaScript. Before running <code>elm-make</code> in any project directory, you will be asked to download and install the core libraries. Give your blessings when asked.</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Some new packages are needed. Here is the upgrade plan.
+
+  Install:
+    elm-lang/core 5.1.1
+    elm-lang/html 2.0.0
+    elm-lang/virtual-dom 2.0.4
+
+Do you approve of this plan? [Y/n] y
+Starting downloads...
+
+  ● elm-lang/html 2.0.0
+  ● elm-lang/virtual-dom 2.0.4
+  ● elm-lang/core 5.1.1
+
+Packages configured successfully!
+Success! Compiled 38 modules.
+Successfully generated Foo.html</code></pre>
+<p>Subsequent builds:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Success! Compiled 0 modules.
+Successfully generated Foo.html</code></pre>
+<p>Notice that 5.1.1 is the version of the core Elm libraries used in v0.18 of the Elm Platform. When you are browsing the documentation and source code for the core libraries, make sure you are viewing the correct version.</p>
+<p>Take a look at the <code>elm-package.json</code> file and <code>elm-stuff/</code> directory that are created in your working directory. The former declares the libraries required by your program and the latter contains snapshots of them all. If you ever need or want to install the libraries a particular project, you can simply delete the <code>elm-stuff/</code> folder in that project directory.</p>
+<h2 id="reactor">Reactor</h2>
+<p>The installation also includes <a href="https://github.com/elm-lang/elm-reactor">Elm Reactor</a>, an interactive development environment. Run <code>elm-reactor</code> from a directory that contains <code>*.elm</code> files you are working on:</p>
+<pre><code>% elm-reactor
+elm reactor 0.18.0
+Listening on http://0.0.0.0:8000/</code></pre>
+<p>Launch a browser and navigate to <code>http://localhost:8000</code>. You will be able to click any Elm file in the directory where <code>elm-reactor</code> was run in order to run the Elm program. Edit your source file, save, and then refresh the browser page.</p>
+<p><a href="http://elm-lang.org/blog/Introducing-Elm-Reactor.elm">This old blog post</a> describes and demonstrates some nifty debugging features that are not active in the current version of the language.</p>
+<!--
+To use the debugging features, open
+the page by clicking the wrench icon instead of the file name.
+
+The Reactor will become useful as we start programming with user events.
+-->
+<p><br></p>
+<h1 id="lab-submission-system">Lab Submission System</h1>
+<p>We will use Moodle for lab submissions.</p>
+<p>XXX</p>
+<h1 id="links">Links</h1>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

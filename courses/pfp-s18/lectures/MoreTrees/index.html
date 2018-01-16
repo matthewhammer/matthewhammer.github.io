@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>MoreTrees</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="more-trees-and-then">More Trees And Then…</h1>
+<!--
+Let's pick up with trees as defined before
+and revisit the (bungled) quiz question.
+-->
+<p>Let’s revisit the tree type as defined before.</p>
+<pre><code>type Tree a = Empty | Node a (Tree a) (Tree a)</code></pre>
+<p>We will define height as follows:</p>
+<pre><code>height t =
+  case t of
+    Empty        -&gt; 0
+    Node _ t1 t2 -&gt; 1 + max (height t1) (height t2)</code></pre>
+<p>For example:</p>
+<pre><code>height Empty = 0
+height (Node 0 Empty Empty) = 1
+height (Node 0 (Node 1 Empty Empty) Empty) = 2</code></pre>
+<p>With this terminology, the height of a <code>Tree</code> <code>t</code> is the number of <code>Node</code>s along the longest path from the root (i.e. <code>t</code>) to an <code>Empty</code> tree. Equivalently, the height is the number of edges along the longest path from the root to an <code>Empty</code> tree.</p>
+<p>Alternatively, we can define height to be the number of edges along the longest path from the root to a “leaf” node (in our case, a <code>Node</code> with two <code>Empty</code> children). Perhaps this definition is <a href="https://en.wikipedia.org/wiki/Tree_%28data_structure%29">more common</a> and intuitive. In a functional language, however, both definitions are, arguably, reasonable since empty nodes are represented explicitly (i.e. <code>Empty</code>) instead of implicitly as a <code>null</code> pointer to a tree. (In a language like Java, a value of a reference type <code>T</code> is either <code>null</code> or a reference to a value of type <code>T</code> — akin to <code>Maybe (Ref T)</code>).</p>
+<p>In any case, let’s stick with the first definition above. (We will use it again in Homework 3). Furthermore, let’s refer to the depth of a <code>Tree</code> <code>t</code> (with respect to a root <code>Tree</code>) as the number of edges from the root to <code>t</code>. With this terminology, depth in a <code>Tree</code> of height <code>h</code> ranges from <code>0</code> to <code>h</code>.</p>
+<p><a href="MoreTrees.elm"><code>MoreTrees.elm</code></a> contains the code below.</p>
+<h2 id="full-trees">Full Trees</h2>
+<p>Let’s write a function that determines whether a <code>Tree</code> is full.</p>
+<pre><code>isFull : Tree a -&gt; Bool</code></pre>
+<p>There are many ways to implement this. Let’s start with the following version:</p>
+<pre><code>isFull t =
+  let h = height t in
+  let foo depth tree =
+    if depth == h then True
+    else {- depth &lt; h -}
+      case tree of
+        Empty -&gt; False
+        Node _ t1 t2 -&gt;
+          let b1 = foo (depth+1) t1 in
+          let b2 = foo (depth+1) t2 in
+          b1 &amp;&amp; b2
+  in
+  h == 0 || foo 0 t</code></pre>
+<p>Here, we first compute the height <code>h</code> and then use a helper function <code>foo</code> to recursively walk the tree, keeping track of the <code>depth</code> of the <code>tree</code> under consideration. <code>Empty</code> is allowed only at the bottom-most level; the <code>then</code> branch returns <code>True</code> without discriminating <code>tree</code>, because it must be <code>Empty</code> based on how <code>height</code> has computed <code>h</code>. At all other levels (handled by the <code>else</code> branch), the <code>tree</code> is required to be a <code>Node</code> and, if so, its children are recursively traversed.</p>
+<p>Let’s improve the definition of <code>isFull</code> above in two ways. First, we will eliminate the second recursive call when the first returns <code>False</code>:</p>
+<pre><code>...
+let b1 = foo (depth+1) t1 in
+let b2 = foo (depth+1) t2 in
+b1 &amp;&amp; b2
+...</code></pre>
+<p>Second, we will avoid the need to call <code>height</code> first before making a “second pass” over the <code>Tree</code> to check for fullness:</p>
+<pre><code>...
+let h = height t in
+...</code></pre>
+<h2 id="short-circuiting">Short-Circuiting</h2>
+<p>We might attempt the first improvement as follows:</p>
+<pre><code>(foo (depth+1) t1) &amp;&amp; (foo (depth+1) t2)</code></pre>
+<p>Elm is an eager (a.k.a. strict) language, however, so all arguments to a function are fully evaluated before evaluating the function body. So, won’t both recursive calls be evaluated before the <code>(&amp;&amp;)</code> function is called?</p>
+<p>To answer this question, we could look for guidance in the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#&amp;&amp;">language documentation</a> and then, to answer any lingering questions, we could either dive into the language implementation or we could devise some hypotheses and make queries to test them. Let’s do the latter.</p>
+<h3 id="digression-investigative-journalism">Digression: Investigative Journalism</h3>
+<p>To observe when an expression really does get evaluated, let’s define the following function:</p>
+<pre><code>&gt; false () = let _ = Debug.log &quot;thunk evaluated &quot; () in False
+&lt;function&gt; : () -&gt; Bool</code></pre>
+<p>Evaluating the <code>false</code> function will print a message and return the <code>Bool</code>ean <code>False</code>:</p>
+<pre><code>&gt; false ()
+thunk evaluated : ()
+False
+    : Bool</code></pre>
+<p>We have “delayed” the evaluation of the expression by wrapping it in a function that takes the dummy argument <code>()</code>. Functions like are called “thunks” and turn out to be extremely useful for programming in (and compiling) functional languages. We will put thunks to good use later in the course.</p>
+<p>Now let’s write some tests to exercise the behavior of <code>(&amp;&amp;)</code>. As a first sanity check, let’s make sure that evaluate <code>false</code> twice forces it to evaluate twice (akin to our two, in-sequence recursive calls to <code>isFull</code> above):</p>
+<pre><code>&gt; let b1 = false () in \
+| let b2 = false () in \
+| b1 &amp;&amp; b2
+thunk evaluated : ()
+thunk evaluated : ()
+False
+    : Bool</code></pre>
+<p>That’s not surprising. We might expect the same effects on…</p>
+<pre><code>&gt; false () &amp;&amp; false ()
+thunk evaluated : ()
+False
+    : Bool</code></pre>
+<p>… but this time <code>false</code> is forced to evaluated only once! What’s going on? Elm is not lazy, but if we wanted to run a sanity test anyway just to make sure:</p>
+<pre><code>&gt; let _ = false () in 0
+thunk evaluated : ()
+0
+    : number</code></pre>
+<p>Okay, how about this?</p>
+<pre><code>&gt; and = (&amp;&amp;)
+&lt;function&gt; : Bool -&gt; Bool -&gt; Bool
+
+&gt; and (false ()) (false ())
+thunk evaluated : ()
+thunk evaluated : ()
+False
+    : Bool</code></pre>
+<p>Interesting! When <code>(&amp;&amp;)</code> masquerades as <code>and</code>, both arguments are evaluated.</p>
+<p>What’s going on is that when <code>(&amp;&amp;)</code> is called syntactically, the expression <code>e1 &amp;&amp; e2</code> gets parsed and translated (essentially) to the expression <code>if e1 then e2 else False</code> which does capture the essence of short-circuiting. But when <code>(&amp;&amp;)</code> is “hidden” inside another expression, it is no longer parsed and treated specially; instead, it is an ordinary function call, where the arguments are fully evaluated before evaluating the function itself. (Note: <code>(||)</code> is treated similarly).</p>
+<p>This is not a surprising compromise actually. The short-circuiting semantics is often what one wants when using <code>(&amp;&amp;)</code>. But to provide the same when it is computed from other expressions would require solving a very hard problem known as <em>higher-order control flow analysis</em>, which aims to determine (rather, approximate) the set of function definitions that may “flow into” a particular call-site expression. Such analysis is an important part of compiler optimizations and other static analysis but would be overkill for this particular use. Instead, if one wants the short-circuiting semantics, it seems reasonable to have to write <code>(&amp;&amp;)</code> or <code>if</code> explicitly.</p>
+<p>Let’s write one more test to continue to develop our understanding:</p>
+<pre><code>&gt; (&amp;&amp;) (false ()) (false ())
+thunk evaluated : ()
+thunk evaluated : ()
+False
+    : Bool</code></pre>
+<p>So it turns out that using <code>(&amp;&amp;)</code> as a prefix function (instead of an infix operator) does <em>not</em> result in short-circuiting. I would have expected this to be treated the same as the infix case, but it’s no big deal in any case.</p>
+<!--
+TODO dig into compiler Binop vs call
+-->
+<p>For what it’s worth, OCaml treats prefix calls to <code>(&amp;&amp;)</code> the same way it treats <code>(||)</code>. If you’re curious and don’t have <code>ocaml</code> installed, you can try the following out at <a href="http://try.ocamlpro.com/">TryOCaml</a> and watch the Web Console for the logging messages.</p>
+<pre><code># let returnFalse () = print &quot;thunk evaluated\n&quot;; false;;
+val returnFalse : unit -&gt; bool = &lt;fun&gt;
+
+# returnFalse () ;;
+- : bool = false
+
+# (returnFalse ()) &amp;&amp; (returnFalse ()) ;;
+- : bool = false
+
+# (&amp;&amp;) (returnFalse ()) (returnFalse ()) ;;
+- : bool = false</code></pre>
+<h3 id="digression">&lt;/Digression&gt;</h3>
+<p>Okay, so we can short-circuit the second recursive call by simplying using <code>&amp;&amp;</code> after all:</p>
+<pre><code>(foo (depth+1) t1) &amp;&amp; (foo (depth+1) t2)</code></pre>
+<h2 id="single-pass-better-solution">Single-Pass (<span style="color: red">Better Solution</span>)</h2>
+<p><span style="color: red"> NOTE: The following approach is much better than the original, clunky one described in class (and moved to the bottom of these notes). </span></p>
+<p>We should be able to determine whether a <code>Tree</code> is full without having to first compute its height and then making a second pass comparing the depth of <code>Empty</code> nodes against the height. Instead, we need to do is recursively check that every <code>Node</code> has two children of the same height.</p>
+<p>We will write the recursive function</p>
+<pre><code>maybeFullTreeHeight : Tree a -&gt; Maybe Int</code></pre>
+<p>to return</p>
+<ol type="1">
+<li><code>Nothing</code> if the input tree is not full; and</li>
+<li><code>Just h</code> if both subtrees are full and have height <code>h-1</code>.</li>
+</ol>
+<p>The integer height is needed internally to help determine fullness, but can then be discarded if we only need the boolean answer:</p>
+<pre><code>isFullTree : Tree a -&gt; Bool
+isFullTree t =
+  case maybeFullTreeHeight t of
+    Just _  -&gt; True
+    Nothing -&gt; False</code></pre>
+<p>We start with <code>Empty</code> trees, which are trivially full:</p>
+<pre><code>maybeFullTreeHeight t =
+  case t of
+    Empty -&gt; Just 0</code></pre>
+<p>For inner nodes, both children must be full (<code>maybeFullTreeHeight</code> must not evaluate to <code>Nothing</code>) and of the same height:</p>
+<pre><code>    Node _ left right -&gt;
+      case maybeFullTreeHeight left of
+        Nothing -&gt; Nothing
+        Just h1 -&gt;
+          case maybeFullTreeHeight right of
+            Nothing -&gt; Nothing
+            Just h2 -&gt;
+              if h1 == h2
+                then Just (1 + h1)
+                else Nothing</code></pre>
+<p>Excellent, we have traversed the <code>Tree</code> in a single pass and checked for fullness.</p>
+<p>In the recursive case above, the “error plumbing” code is untidy. One attempted remedy is the following:</p>
+<pre><code>      case (maybeFullTreeHeight left, maybeFullTreeHeight right) of
+        (Just h1, Just h2) -&gt; if h1 == h2
+                                then Just (1 + h1)
+                                else Nothing
+        _                  -&gt; Nothing</code></pre>
+<p>Perhaps this version is more readable, but it no longer shortcuts the second recursive call when its result is not needed.</p>
+<h3 id="and-then">And Then…</h3>
+<p>Instead, we can factor out a general pattern of “chaining” together operations on <code>Maybe</code> values:</p>
+<pre><code>maybeAndThen : (a -&gt; Maybe b) -&gt; Maybe a -&gt; Maybe b
+maybeAndThen f mx =
+  case mx of
+    Nothing -&gt; Nothing
+    Just x  -&gt; f x</code></pre>
+<p>This abstraction allows us to chain multiple <code>Maybe</code> computations together using what looks like straight-line code:</p>
+<pre><code>    Node _ left right -&gt;
+      maybeFullTreeHeight left  |&gt; maybeAndThen (\h1 -&gt;
+      maybeFullTreeHeight right |&gt; maybeAndThen (\h2 -&gt;
+        if h1 == h2 then Just (1 + h1) else Nothing
+      ))</code></pre>
+<p>A couple more helper functions…</p>
+<pre><code>maybeReturn : a -&gt; Maybe a
+maybeReturn x = Just x
+
+maybeGuard : Bool -&gt; Maybe ()
+maybeGuard b =
+  if b
+    then Just ()
+    else Nothing</code></pre>
+<p>… allow us to refactor once more in style:</p>
+<pre><code>    Node _ left right -&gt;
+      maybeFullTreeHeight left  |&gt; maybeAndThen (\h1 -&gt;
+      maybeFullTreeHeight right |&gt; maybeAndThen (\h2 -&gt;
+      maybeGuard (h1 == h2)     |&gt; maybeAndThen (\() -&gt;
+        maybeReturn (1 + h1)
+      )))</code></pre>
+<p>Much better (especially if we chose some shorter names)!</p>
+<p>This “and then” pattern for chaining together expressions is rather common and comes with some library support:</p>
+<pre><code>Maybe.andThen        : (a -&gt; Maybe b)    -&gt; Maybe a    -&gt; Maybe b
+Result.andThen       : (a -&gt; Result x b) -&gt; Result x a -&gt; Result x b
+Task.andThen         : (a -&gt; Task x b)   -&gt; Task x a   -&gt; Task x b
+Json.Decoder.andThen : (a -&gt; Decoder b)  -&gt; Decoder a  -&gt; Decoder b
+...</code></pre>
+<p>Remember how I said I wouldn’t say “monad” in this class? Well, if you have not seen them before, you may have just developed a bit of intuition for why… “chains” are useful in programming and why functional programmers think they’re such a big deal.</p>
+<p><br><br><br><br><br></p>
+<h2 id="single-pass">Single-Pass</h2>
+<p><span style="color: red"> NOTE: This is the original, much clunkier “three-state” solution. </span></p>
+<!--
+look back at original isFull. what is the running time?
+both call height, which means at least O(n)
+where n is the number of Nodes in the tree.
+worst case, the second pass has to visit all nodes, so
+still O(n).
+-->
+<p>We should be able to determine whether a <code>Tree</code> is full without having to first compute its height. What we need to do is check that the depth of each <code>Empty</code> subtree is the same. This is a good exercise in functional programming: we need to maintain some information across multiple recursive calls, but of course we do not have access to any mutable variables to help.</p>
+<p>There are three “states” we need to track as we traverse a tree:</p>
+<ol type="1">
+<li>Whether we have already deemed the tree not to be full;</li>
+<li>Whether we have not yet reached any <code>Empty</code> subtree; and</li>
+<li>Whether all <code>Empty</code> subtrees seen so far have the same depth;</li>
+</ol>
+<p>If we are in the third state after processing the entire tree, then the tree is full.</p>
+<p>We can use the type</p>
+<pre><code>Maybe (Maybe Int)</code></pre>
+<p>to represent these three states, respectively, as <code>Nothing</code>, <code>Just Nothing</code>, and <code>Just maxDepth</code>. (Besides not having to define a custom datatype with three data constructors just for the purpose of this function, another benefit of this encoding is that we sometimes get to type “<code>Just Nothing</code>”.)</p>
+<p>We will define a function called <code>traverse</code> that will do the heavy lifting, transforming the input state <code>acc</code> into an output state based on the given <code>tree</code> at depth <code>depth</code>:</p>
+<pre><code>traverse : Maybe (Maybe Int) -&gt; Int -&gt; Tree a -&gt; Maybe (Maybe Int)
+traverse acc depth tree =
+  ...</code></pre>
+<p>Once finished, we will define <code>isFull</code> by calling <code>traverse</code> and checking the final state:</p>
+<pre><code>isFullOnePass : Tree a -&gt; Bool
+isFullOnePass t =
+  case traverse (Just Nothing) 0 t of
+    Just (Just _) -&gt; True
+    _             -&gt; False</code></pre>
+<p>Okay, let’s start implementing the different cases for <code>traverse</code>:</p>
+<pre><code>traverse acc depth tree =
+  case (acc, tree) of</code></pre>
+<p>Let’s first handle the case where the input <code>acc</code> is already the “error” state, <code>Nothing</code>, which we just propagate.</p>
+<pre><code>    (Nothing, _) -&gt; Nothing</code></pre>
+<p>Next are two cases for reaching an <code>Empty</code> tree. If have not reached a leaf <code>Node</code> yet (<code>acc</code> == <code>Nothing</code>), then we record the current <code>depth</code> that all paths from the root to <code>Empty</code> need to have. If we have seen an <code>Empty</code> subtree already, then we compare the <code>maxDepth</code> of previous paths to the current <code>depth</code>.</p>
+<pre><code>    (Just Nothing, Empty) -&gt; Just (Just depth)
+    (Just (Just maxDepth), Empty) -&gt;
+      if depth == maxDepth then acc else Nothing</code></pre>
+<p>Lastly is the case for <code>Node</code>, where we recursively process the children and, if they both are full subtrees, check that their depths <code>n</code> and <code>m</code> are equal.</p>
+<pre><code>    (acc, Node _ t1 t2) -&gt;
+      let recurse = traverse acc (depth+1) in
+      case recurse t1 of
+        Nothing -&gt; Nothing
+        Just Nothing -&gt; Nothing
+        Just (Just n) -&gt;
+          case recurse t2 of
+            Nothing -&gt; Nothing
+            Just Nothing -&gt; Nothing
+            Just (Just m) -&gt; if n == m then Just (Just n) else Nothing</code></pre>
+<p>Excellent, we have traversed the <code>Tree</code> in a single pass and checked for fullness. Now we can factor out a general pattern of “chaining” together operations on <code>Maybe</code> values.</p>
+<p><code>maybeAndThen</code> would help get rid of one level of the plumbing code above. To help with the second, we can essentially repeat the process:</p>
+<pre><code>maybeMaybeAndThen : (a -&gt; Maybe (Maybe b)) -&gt; Maybe (Maybe a) -&gt; Maybe (Maybe b)
+maybeMaybeAndThen f mmx =
+  case mmx of
+    Nothing -&gt; Nothing
+    Just mx -&gt; mx |&gt; maybeAndThen f</code></pre>
+<p>All this abstraction then allows us to chain multiple <code>Maybe</code> computations together using what looks like straight-line code:</p>
+<pre><code>    (acc, Node _ t1 t2) -&gt;
+      let recurse = traverse acc (depth+1) in
+      recurse t1 |&gt; maybeMaybeAndThen (\n -&gt;
+      recurse t2 |&gt; maybeMaybeAndThen (\m -&gt;
+        if n == m then Just (Just n) else Nothing
+      ))</code></pre>
+<p>A couple more helper functions…</p>
+<pre><code>maybeMaybeGuard : Bool -&gt; Maybe (Maybe ())
+maybeMaybeGuard b =
+  if b
+    then Just (Just ())
+    else Nothing
+
+maybeMaybeReturn : a -&gt; Maybe (Maybe a)
+maybeMaybeReturn x = Just (Just x)</code></pre>
+<p>… allow us to refactor once more in style:</p>
+<pre><code>    (acc, Node _ t1 t2) -&gt;
+      let recurse = traverse acc (depth+1) in
+      recurse t1               |&gt; maybeMaybeAndThen (\n -&gt;
+      recurse t2               |&gt; maybeMaybeAndThen (\m -&gt;
+      maybeMaybeGuard (n == m) |&gt; maybeMaybeAndThen (\_ -&gt;
+        maybeMaybeReturn n
+      )))</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

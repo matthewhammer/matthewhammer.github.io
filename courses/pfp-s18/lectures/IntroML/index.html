@@ -1,0 +1,617 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IntroML</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="introduction-to-ml-in-elm">Introduction to ML in Elm</h1>
+<p>We will be using <a href="http://elm-lang.org/blog/the-perfect-bug-report">Elm v0.18</a>. If there are minor language revisions released throughout the quarter, we will decide whether or not to upgrade. You should <a href="../../assignments/hw0/index.html">get Elm up and running as soon as possible</a> to make sure that you have a working development environment.</p>
+<p>Let’s jump in with some examples at the REPL (read-eval-print loop).</p>
+<pre><code>% elm-repl
+---- elm repl 0.18.0 -----------------------------------------------------------
+ :help for help, :exit to exit, more at &lt;https://github.com/elm-lang/elm-repl&gt;
+--------------------------------------------------------------------------------
+&gt;</code></pre>
+<h3 id="basic-values">Basic Values</h3>
+<pre><code>&gt; True
+True : Bool
+
+&gt; False
+False : Bool
+
+&gt; &#39;a&#39;
+&#39;a&#39; : Char
+
+&gt; &quot;abc&quot;
+&quot;abc&quot; : String
+
+&gt; 3.0
+3 : Float</code></pre>
+<p>Numeric literals without a decimal point are described by the type variable <code>number</code>, which describes both <code>Int</code>s and <code>Float</code>s.</p>
+<pre><code>&gt; 3
+3 : number</code></pre>
+<p>One way to read the last line above is “for every type <code>number</code> such that <code>number</code> = <code>Int</code> or <code>number</code> = <code>Float</code>, <code>3</code> has type <code>number</code>.” In other words, “<code>3</code> has type <code>Int</code> and <code>Float</code>” and depending on how the expression is used, the Elm type checker will choose to <em>instantiate</em> the type variable <code>number</code> with one of these types.</p>
+<pre><code>&gt; truncate
+&lt;function: truncate&gt; : Float -&gt; Int
+
+&gt; truncate 3
+3 : Int
+
+&gt; truncate 3.0
+3 : Int</code></pre>
+<p>If you are familiar with Haskell, think of <code>number</code> as a type class that is “baked in” to the language. Elm does not have general support for type classes, but it does have a few special purpose type classes like <code>number</code>.</p>
+<h3 id="tuples">Tuples</h3>
+<p>Tuples package two or more expressions into a single expression. The type of a tuple records the number of components and each of their types.</p>
+<pre><code>&gt; (True, False)
+(True,False) : ( Bool, Bool )
+
+&gt; (1, 2, 3.0)
+(1,2,3) : ( number, number1, Float )</code></pre>
+<p>Notice the suffix on the type of the second number. That’s because the expressions <code>1</code> and <code>2</code> both have type <code>number</code> (i.e. <code>Int</code> or <code>Float</code>) but they may be <em>different</em> kinds of numbers. So, suffixes are used to create different variables so that each numeric type can be specified independently. If you’re familiar with Haskell, the type of this triple would be something like <code>(Num a, Num b) =&gt; (a, b, Float)</code>. This can be read as saying “for any types <code>a</code> and <code>b</code> that are <code>number</code>s, the tuple has type <code>(a, b, Float)</code>.”</p>
+<p>Lone expressions prefer to remain alone:</p>
+<pre><code>&gt; (&quot;Leave me alone!&quot;)
+&quot;Leave me alone!&quot; : String
+
+&gt; ((((((&quot;Leave me alone!&quot;))))))
+&quot;Leave me alone!&quot; : String</code></pre>
+<h3 id="functions">Functions</h3>
+<p>Like in most functional languages, all functions take exactly one argument and return exactly one value.</p>
+<pre><code>&gt; exclaim = \s -&gt; s ++ &quot;!&quot;
+&lt;function&gt; : String -&gt; String
+
+&gt; exclaim s = s ++ &quot;!&quot;
+&lt;function&gt; : String -&gt; String
+
+&gt; exclaim &quot;Hi&quot;
+&quot;Hi!&quot; : String</code></pre>
+<p>Multiple arguments in <em>uncurried</em> style:</p>
+<pre><code>&gt; plus = \(x,y) -&gt; x + y
+&lt;function&gt; : ( number, number ) -&gt; number
+
+&gt; plus (x,y) = x + y
+&lt;function&gt; : ( number, number ) -&gt; number
+
+&gt; plus xy = Tuple.first xy + Tuple.second xy
+&lt;function&gt; : ( number, number ) -&gt; number</code></pre>
+<p>Notice the lack of suffixes in the types above. That’s because the addition operator takes two numeric arguments of the <em>same</em> type:</p>
+<pre><code>&gt; (+)
+&lt;function&gt; : number -&gt; number -&gt; number</code></pre>
+<p>Infix operators can be used as functions:</p>
+<pre><code>&gt; (+) 3 4
+7 : number
+
+&gt; (+) ((+) 3 4) 5
+12 : number</code></pre>
+<p>(Note to Haskellers: Recent versions of Elm disallow the use of <a href="http://elm-lang.org/blog/the-perfect-bug-report">backticks</a> to treat named functions into infix operators, as well as a couple other syntactic features originally derived from Haskell.)</p>
+<p>Multiple arguments in <em>curried</em> style:</p>
+<pre><code>&gt; plus x y = x + y
+&lt;function&gt; : number -&gt; number -&gt; number
+
+&gt; plus x = \y -&gt; x + y
+&lt;function&gt; : number -&gt; number -&gt; number
+
+&gt; plus = \x -&gt; \y -&gt; x + y
+&lt;function&gt; : number -&gt; number -&gt; number
+
+&gt; plus = \x y -&gt; x + y
+&lt;function&gt; : number -&gt; number -&gt; number</code></pre>
+<p><em>Partial application</em> of curried functions:</p>
+<pre><code>&gt; plus7 = plus 7
+&lt;function&gt; : number -&gt; number
+
+&gt; plus7 1
+8 : number
+
+&gt; plus7 11
+18 : number</code></pre>
+<p>(Note to Haskellers: Elm does not support sections.)</p>
+<p>What if we wanted to restrict our <code>plus</code> function to <code>Int</code>s rather than arbitrary <code>number</code>s? We need some way to “cast” a <code>number</code> to an <code>Int</code>. Although the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics"><code>Basics</code></a> library does not provide such a <code>toInt</code> function, we can define something to help ourselves:</p>
+<pre><code>&gt; toInt n = n // 1
+&lt;function&gt; : Int -&gt; Int</code></pre>
+<p>This doesn’t quite have the type <code>number -&gt; Int</code> we sought… but on second thought, we don’t really need our casting function to have that type. Why not?</p>
+<pre><code>&gt; plusInt x y = (toInt x) + y
+&lt;function&gt; : Int -&gt; Int -&gt; Int
+
+&gt; plusInt x y = toInt (x + y)
+&lt;function&gt; : Int -&gt; Int -&gt; Int</code></pre>
+<h3 id="type-annotations">Type Annotations</h3>
+<p>Elm, like most ML dialects, automatically infers most types. Nevertheless, it is often good practice to explictly declare type annotations for “top-level” definitions (we will see “local” definitions shortly).</p>
+<p>In an Elm source file (e.g. <a href="IntroML.elm"><code>IntroML.elm</code></a>), a top-level definition can be preceded by a type annotation. The type checker will check whether the implementation actually satisfies the type you’ve declared.</p>
+<pre><code>plus : number -&gt; number -&gt; number
+plus x y = x + y
+
+plusInt : Int -&gt; Int -&gt; Int
+plusInt x y = x + y</code></pre>
+<p>Notice that by using an explicit annotation for <code>plusInt</code>, we avoid the need to use the roundabout <code>toInt</code> function from before. In fact, we can refactor the definition as follows:</p>
+<pre><code>plusInt : Int -&gt; Int -&gt; Int
+plusInt = plus</code></pre>
+<p>This version really emphasizes the fact that our <em>implementation</em> of <code>plusInt</code> is more general than the API (i.e. type) exposed to <em>clients</em> of the function. Designing software is full of decisions like this one.</p>
+<p>There’s nothing stopping us from writing programs where the expressions we write do not satisfy the type signatures we write:</p>
+<pre><code>plus : number -&gt; number -&gt; Bool
+plus x y = x + y</code></pre>
+<p>When we do, Elm reports helpful error messages explaining the inconsistencies:</p>
+<pre><code>-- TYPE MISMATCH ----------------------------------------------- ././IntroML.elm
+
+The definition of `plus` does not match its type annotation.
+
+5| plus : number -&gt; number -&gt; Bool
+6|&gt;plus x y = x + y
+
+The type annotation for `plus` says it always returns:
+
+    Bool
+
+But the returned value (shown above) is a:
+
+    number
+
+Hint: Your type annotation uses type variable `number` which means any type of
+value can flow through. Your code is saying it CANNOT be anything though! Maybe
+change your type annotation to be more specific? Maybe the code has a problem?
+
+More at:
+&lt;https://github.com/elm-lang/elm-compiler/blob/0.18.0/hints/type-annotations.md&gt;</code></pre>
+<h3 id="importing-modules">Importing Modules</h3>
+<p>Now that we’ve started putting definitions in source files, how do we import them from the REPL and from other files? Notice that the file <a href="IntroML.elm"><code>IntroML.elm</code></a> defines a module of the same name, which can be imported in several ways.</p>
+<p>The following <code>import</code> will require all imported definitions to be qualified for use.</p>
+<pre><code>&gt; import IntroML
+
+&gt; IntroML.plusInt 2 3
+5 : Int
+
+&gt; plusInt 2 3
+-- NAMING ERROR ---------------------------------------------- repl-temp-000.elm
+
+Cannot find variable `plusInt`
+
+4|   plusInt 3 4
+     ^^^^^^^
+Maybe you want one of the following?
+
+    IntroML.plusInt</code></pre>
+<p>Another option is to specify which definitions to import for use <em>without</em> qualification. All other definitions from <code>IntroML</code> will still be accessible with qualification.</p>
+<pre><code>&gt; import IntroML exposing (plusInt)
+
+&gt; plusInt 2 3
+5 : Int
+
+&gt; IntroML.plus 2.0 3.0
+5 : Float
+
+&gt; IntroML.exclaim &quot;Cool&quot;
+&quot;Cool!&quot; : String</code></pre>
+<p>You can also import all definitions for use without qualification.</p>
+<pre><code>&gt; import IntroML (..)
+
+&gt; (plusInt 2 3, exclaim &quot;Cool&quot;)
+(5,&quot;Cool!&quot;) : ( Int, String )</code></pre>
+<p>Finally, you can also define an abbreviation for the imported module.</p>
+<pre><code>&gt; import IntroML as M
+
+&gt; M.plusInt 2 3
+5 : Int</code></pre>
+<p>Whew, that was a lot of choices! This kind of flexibility will come in handy, because it can be hard to remember where functions are defined when importing many modules. Furthermore, many modules will define functions with popular names, such as <code>map</code> and <code>foldr</code>, so qualified access will be needed.</p>
+<p>You may have noticed that we have been using some library functions without any <code>import</code>s. That’s because <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics"><code>Basics</code></a>, as well as a few other very common libraries such as <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Maybe"><code>Maybe</code></a>, are opened <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/">by default</a>.</p>
+<h3 id="hot-swapping">Hot-Swapping</h3>
+<p>If you change the following definition in <a href="IntroML.elm"><code>IntroML.elm</code></a> to append additional exclamation points…</p>
+<pre><code>exclaim s = s ++ &quot;!!!&quot;</code></pre>
+<p>… you will immediately have access to the new version without having to first <code>import</code> the module again.</p>
+<pre><code>&gt; M.exclaim &quot;Whoa&quot;
+&quot;Whoa!!!&quot; : String</code></pre>
+<p>This kind of <a href="http://elm-lang.org/blog/interactive-programming">hot-swapping</a> can be useful once we get to writing and running more interesting programs.</p>
+<h3 id="conditionals">Conditionals</h3>
+<p>Conditional expressions must return the same type of value on both branches.</p>
+<pre><code>&gt; if 1 == 1 then &quot;yes&quot; else &quot;no&quot;
+&quot;yes&quot; : String
+
+&gt; if False then 1.0 else 1
+1 : Float</code></pre>
+<p>(Note to Racketeers: Even if you know for sure that returning different types of expressions on different branches will jive with the rest of your program, Elm will not let you do it. You have to use union types, discussed below. Restrictions like this may sometimes annoy the programmer. But in return, they enable the type system to provide static checking error detection that becomes really useful, especially as programs get large.)</p>
+<h3 id="polymorphic-types">Polymorphic Types</h3>
+<p>Type variables are identifiers that start with a lower case letter and are often a single character.</p>
+<pre><code>&gt; choose b x y = if b then x else y
+&lt;function&gt; : Bool -&gt; a -&gt; a -&gt; a</code></pre>
+<p>As with the <code>number</code> type discussed above, this function type should be read as having an implicit “forall” at the beginning that “defines” the scope of the type variable: “for all types <code>a</code>, <code>choose</code> has type <code>Bool -&gt; a -&gt; a -&gt; a</code>.</p>
+<p>When calling a polymorphic function such as <code>choose</code>, Elm (like other ML dialects) will automatically <em>instantiate</em> the type variables with type arguments appropriately based on the value arguments.</p>
+<pre><code>&gt; choose True True False      -- a instantiated to Bool
+&gt; choose True &quot;a&quot; &quot;b&quot;         -- a instantiated to String
+&gt; choose True 1.0 2.0         -- a instantiated to Float
+&gt; choose True 1 2             -- a instantiated to number</code></pre>
+<p>These function calls can be thought of as taking type arguments (one for each type universally quantified type variable for the function) that are automatically inferred by the type checker. If the syntax of Elm were to allow explicit type instantiations, the above expressions might look something like:</p>
+<pre><code>choose [Bool] True True False
+choose [String] True &quot;a&quot; &quot;b&quot;
+choose [Float] True 1.0 2.0
+choose [number] True 1 2</code></pre>
+<p>Imagine that polymorphic types in Elm required an explicit forall quantifier. The result of instantiating a polymorphic type with a type argument <code>T</code> is obtained by <em>substituting</em> bound occurrences of the type variable with <code>T</code>.</p>
+<pre><code>choose : forall a. Bool -&gt; a      -&gt; a      -&gt; a
+
+choose [Bool]    : Bool -&gt; Bool   -&gt; Bool   -&gt; Bool
+choose [String]  : Bool -&gt; String -&gt; String -&gt; String
+choose [Float]   : Bool -&gt; Float  -&gt; Float  -&gt; Float
+choose [number]  : Bool -&gt; number -&gt; number -&gt; number</code></pre>
+<p>Just as the particular choices of program variables does not matter, neither do the particular choices of type variables. So polymorphic types are equivalent up to renaming. For example, <code>choose</code> can be annotated with polymorphic types that choose a different variable name than <code>a</code>.</p>
+<pre><code>choose : Bool -&gt; b -&gt; b -&gt; b 
+
+choose : Bool -&gt; c -&gt; c -&gt; c 
+
+choose : Bool -&gt; thing -&gt; thing -&gt; thing</code></pre>
+<p>What happens if <code>choose</code> is annotated as follows?</p>
+<pre><code>choose : Bool -&gt; number -&gt; number -&gt; number</code></pre>
+<p>The <code>choose</code> function typechecks with this annotation, but this type is more restrictive than the earlier ones. Remember that <code>number</code>, as discussed earlier, can only be instantiated with the types <code>Int</code> and <code>Float</code>. This special handling of the particular variable <code>number</code> — as opposed to other identifiers — is the way that Elm shoehorns a limited form of type classes into the language. It’s a pretty interesting design choice!</p>
+<p>While we are on the subject, there is another special purpose type variable called <code>comparable</code> that is used to describe types that are, well, comparable using an ordering relation. See <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics"><code>Basics</code></a> for more info.</p>
+<pre><code>&gt; (&lt;)
+&lt;function&gt; : comparable -&gt; comparable -&gt; Bool
+
+&gt; 1 &lt; 2
+True : Bool
+
+&gt; 1 &lt; 2.0
+True : Bool
+
+&gt; &quot;a&quot; &lt; &quot;ab&quot;
+True : Bool
+
+&gt; (2, 1) &lt; (1, 2)
+False : Bool
+
+&gt; (1 // 1) &lt; 2.0
+-- TYPE MISMATCH --------------------------------------------- repl-temp-000.elm
+...
+
+&gt; True &lt; False
+-- TYPE MISMATCH --------------------------------------------- repl-temp-000.elm
+...
+
+Hint: Only ints, floats, chars, strings, lists, and tuples are comparable.</code></pre>
+<h3 id="infix-operators">Infix Operators</h3>
+<p>There are a bunch of really useful infix operators in <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics">Basics</a>, so take a look around. Make sure to visit <code>(&lt;|)</code>, <code>(|&gt;)</code>, <code>(&lt;&lt;)</code>, and <code>(&gt;&gt;)</code>, which can be used to write elegant chains of function applications.</p>
+<p><span style="color: red;">NOTE: Added on Mar 30:</span></p>
+<p>Depending on your prior experience and tastes, you may prefer to write the expression</p>
+<pre><code>\x -&gt; h (g (f x))</code></pre>
+<p>in a flavor that emphasizes composition, such as</p>
+<pre><code>(\x -&gt; x |&gt; f |&gt; g |&gt; h)</code></pre>
+<p>or</p>
+<pre><code>(f &gt;&gt; g &gt;&gt; h)</code></pre>
+<p>or</p>
+<pre><code>(\x -&gt; h &lt;| g &lt;| f &lt;| x)</code></pre>
+<p>or</p>
+<pre><code>(h &lt;&lt; g &lt;&lt; f)</code></pre>
+<p>or</p>
+<pre><code>(\x -&gt; (g &gt;&gt; h) &lt;| f &lt;| x)</code></pre>
+<p>or</p>
+<pre><code>(\x -&gt; x |&gt; f |&gt; (h &lt;&lt; g))</code></pre>
+<p>All of these definitions are equivalent, so choose a style that you like best and that fits well within the code around it. (But you better not choose versions like the last two, because “pipelining” in both directions won’t help anyone, including yourself, understand your code.)</p>
+<h3 id="lists">Lists</h3>
+<p>Without further ado, lists.</p>
+<pre><code>&gt; 1::2::3::4::[]
+[1,2,3,4] : List number
+
+&gt; [1,2,3,4]
+[1,2,3,4] : List number</code></pre>
+<p>For those keeping score, the list syntax above is part OCaml (<code>(::)</code> for cons rather than <code>(:)</code>) and part Haskell (<code>,</code> to separate elements rather than <code>;</code>).</p>
+<p><code>String</code>s are not lists of <code>Char</code>s like they are in Haskell:</p>
+<pre><code>&gt; [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;]
+[&#39;a&#39;,&#39;b&#39;,&#39;c&#39;] : List Char
+
+&gt; &quot;abc&quot;
+&quot;abc&quot; : String
+
+&gt; [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;] == &quot;abc&quot;
+-- TYPE MISMATCH --------------------------------------------- repl-temp-000.elm
+...</code></pre>
+<p>Pattern matching to destruct lists; the <code>\</code> character is used to enter a multi-line expression in the REPL:</p>
+<pre><code>&gt; len xs = case xs of \
+|   x::xs -&gt; 1 + len xs \
+|   []    -&gt; 0
+&lt;function&gt; : List a -&gt; number
+
+&gt; len [1,2,3]
+3 : number
+
+&gt; len []
+0 : number</code></pre>
+<p>(Note to Racketeers: The first branch of the <code>case</code> expression above essentially <a href="https://docs.racket-lang.org/guide/Pairs__Lists__and_Racket_Syntax.html">combines the functionality</a> of checking whether <code>pair? xs</code> is <code>#t</code> and, if so, calling <code>car xs</code> and <code>cdr xs</code>.)</p>
+<p>Non-exhaustive patterns result in a (compile-time) type error:</p>
+<pre><code>&gt; head xs = case xs of x::_ -&gt; x
+
+-- MISSING PATTERNS ------------------------------------------ repl-temp-000.elm
+
+This `case` does not have branches for all possibilities.
+
+5| head xs = case xs of x::_ -&gt; x
+             ^^^^^^^^^^^^^^^^^^^^
+You need to account for the following values:
+
+    []
+
+Add a branch to cover this pattern!</code></pre>
+<p>If you really must write a partial function:</p>
+<pre><code>&gt; unsafe_head xs = case xs of \
+|   x::_ -&gt; x \
+|   []   -&gt; Debug.crash &quot;unsafe_head: empty list&quot;
+&lt;function&gt; : List a -&gt; a
+
+&gt; unsafe_head [1]
+1 : number
+
+&gt; unsafe_head []
+... Error: Ran into a `Debug.crash` ...</code></pre>
+<p>Using <code>Debug.crash</code> as a “placeholder” during development is extremely useful, so that you can typecheck, run, and test your programs before you have finished handling all cases. (Check out the type of <code>Debug.crash</code>.)</p>
+<p>Elm also statically rejects programs with a <em>redundant</em> pattern, which will never match at run-time because previous patterns subsume it:</p>
+<pre><code>&gt; len xs = case xs of \
+|   _::xs -&gt; 1 + len xs \
+|   []    -&gt; 0 \
+|   []    -&gt; 9999
+
+-- REDUNDANT PATTERN ----------------------------------------- repl-temp-000.elm
+
+The following pattern is redundant. Remove it.
+
+8|   []    -&gt; 9999
+      ^
+Any value with this shape will be handled by a previous pattern.</code></pre>
+<h3 id="higher-order-functions">Higher-Order Functions</h3>
+<p>The classics:</p>
+<pre><code>&gt; List.filter
+&lt;function&gt; : (a -&gt; Bool) -&gt; List a -&gt; List a
+
+&gt; List.filter (\x -&gt; rem x 2 == 0) (List.range 1 10)
+[2,4,6,8,10] : List Int
+
+&gt; List.map
+&lt;function&gt; : (a -&gt; b) -&gt; List a -&gt; List b
+
+&gt; List.map (\x -&gt; x ^ 2) (List.range 1 10)
+[1,4,9,16,25,36,49,64,81,100] : List number
+
+&gt; List.foldr
+&lt;function&gt; : (a -&gt; b -&gt; b) -&gt; b -&gt; List a -&gt; b
+
+&gt; List.foldl
+&lt;function&gt; : (a -&gt; b -&gt; b) -&gt; b -&gt; List a -&gt; b</code></pre>
+<p>A quick refresher on how folding from the right and left differ:</p>
+<pre><code>List.foldr f init [e1, e2, e3]
+  === f e1 (f e2 (f e3 init))
+  === init |&gt; f e3 |&gt; f e2 |&gt; f e1
+
+List.foldl f init [e1, e2, e3]
+  === f e3 (f e2 (f e1 init))
+  === init |&gt; f e1 |&gt; f e2 |&gt; f e3</code></pre>
+<p>Thus:</p>
+<pre><code>&gt; List.foldr (\x acc -&gt; x :: acc) [] (List.range 1 10)
+[1,2,3,4,5,6,7,8,9,10] : List number
+
+&gt; List.foldl (\x acc -&gt; x :: acc) [] (List.range 1 10)
+[10,9,8,7,6,5,4,3,2,1] : List number</code></pre>
+<p>For any (well-typed) function expression <code>e</code>, the function <code>(\x -&gt; e x)</code> is said to be <em>eta-equivalent</em> to <code>e</code>. The verbose version is said to be <em>eta-expanded</em> whereas the latter is <em>eta-contracted</em>.</p>
+<p>The following emphasizes that the lambda used in the last call to <code>List.foldl</code> above is eta-expanded:</p>
+<pre><code>&gt; (::)
+&lt;function&gt; : a -&gt; List a -&gt; List a
+
+&gt; List.foldl (\x acc -&gt; (::) x acc) [] (List.range 1 10)
+[10,9,8,7,6,5,4,3,2,1] : List number</code></pre>
+<p>The eta-reduced version is nicer:</p>
+<pre><code>&gt; List.foldl (::) [] (List.range 1 10)
+[10,9,8,7,6,5,4,3,2,1] : List number</code></pre>
+<h3 id="datatypes-and-pattern-matching">Datatypes and Pattern Matching</h3>
+<p><code>List</code> is a built-in <em>inductive, algebraic datatype</em>. You can define your own datatypes (or <a href="http://elm-lang.org/docs/syntax#union-types">union types</a> or “disjoint sums” or “sums-of-products”). Each type constructor is defined with one or more data constructors, each of which is defined to “hold” zero or more values.</p>
+<pre><code>&gt; type Diet = Herb | Carn | Omni | Other String
+
+&gt; Carn
+Carn : Repl.Diet
+
+&gt; Omni
+Omni : Repl.Diet
+
+&gt; Other &quot;Lactose Intolerant&quot;
+Other (&quot;Lactose Intolerant&quot;) : Repl.Diet</code></pre>
+<p>Non-nullary data constructors are themselves functions:</p>
+<pre><code>&gt; Other
+&lt;function&gt; : String -&gt; Repl.Diet</code></pre>
+<p>Use datatypes to simulate “heterogeneous” lists of values:</p>
+<pre><code>&gt; diets = [Herb, Herb, Omni, Other &quot;Vegan&quot;, Carn]
+[Herb,Herb,Omni,Other &quot;Vegan&quot;,Carn] : List Repl.Diet</code></pre>
+<p>Pattern matching is the (only) way to “use,” or “destruct,” constructed values. Patterns that describe values of a datatype <code>t</code> are either:</p>
+<ol type="1">
+<li>variables,</li>
+<li>the <em>wildcard</em> pattern (written <code>_</code>), or</li>
+<li>data constructors of <code>t</code> applied to an appropriate number of patterns for that data constructor.</li>
+</ol>
+<p>For example:</p>
+<pre><code>&gt; maybeHuman d = case d of \
+|   Carn -&gt; False \
+|   _    -&gt; True
+&lt;function&gt; : Repl.Diet -&gt; Bool
+
+&gt; List.map maybeHuman diets
+[True,True,True,True,False] : List Bool</code></pre>
+<p>As before, be careful with non-exhaustive and redundant patterns.</p>
+<p>The fact that Elm reports compile-time errors for redundant patterns helps prevent the following bug that pops up pretty frequently when learning functional programming:</p>
+<pre><code>&gt; carn = Carn
+Carn : Repl.Diet
+
+&gt; isCarn d = case d of \
+|   carn -&gt; True \
+|   _    -&gt; False
+
+-- REDUNDANT PATTERN ----------------------------------------- repl-temp-000.elm
+...</code></pre>
+<p>A variable pattern matches <em>anything</em>, even if that variable is in scope and binds a particular value. Note that the wildcard pattern also matches anything; it is useful when the value it binds does not need to be referred to in the subsequent branch expression.</p>
+<p>Patterns can be nested. For example, the function …</p>
+<pre><code>firstTwo xs =
+  case xs of
+    x::ys -&gt; case ys of
+               y::_ -&gt; (x, y)
+               []   -&gt; Debug.crash &quot;firstTwo&quot;
+    []    -&gt; Debug.crash &quot;firstTwo&quot;</code></pre>
+<p>… can be written more clearly as follows:</p>
+<pre><code>firstTwo xs =
+  case xs of
+    x::y::_ -&gt; (x, y)
+    _       -&gt; Debug.crash &quot;firstTwo&quot;</code></pre>
+<p>Test your understanding: what’s the type of <code>firstTwo</code>?</p>
+<h3 id="type-aliases">Type Aliases</h3>
+<p>Defining an <em>alias</em> or <em>synonym</em> for an existing type:</p>
+<pre><code>type alias IntPair = (Int, Int)</code></pre>
+<h3 id="types-for-errors">Types for Errors</h3>
+<p>Our <code>unsafe_head</code> function above fails with a run-time error when its argument is non-empty. Another way to deal with error cases is to track them explicitly, by introducing data values that are used explicitly to represent the error, or the lack of a meaningful answer.</p>
+<p>For example, the type</p>
+<pre><code>&gt; type MaybeInt = YesInt Int | NoInt</code></pre>
+<p>describes two kinds of values: ones labeled <code>YesInt</code> that <em>do</em> come bundled with an <code>Int</code>, and ones labeled <code>NoInt</code> that do <em>not</em> come bundled with any other data. In other words, the latter can be used to encode when there is no meaningful <code>Int</code> to return:</p>
+<pre><code>&gt; head xs = case xs of \
+|   x::_ -&gt; YesInt x \
+|   []   -&gt; NoInt
+&lt;function&gt; : List Int -&gt; Repl.MaybeInt
+
+&gt; head (List.range 1 4)
+YesInt 1 : Repl.MaybeInt
+
+&gt; head []
+NoInt : Repl.MaybeInt</code></pre>
+<p>Ah, much better than a run-time error!</p>
+<p>This <code>MaybeInt</code> type is defined to work only with <code>Int</code>s, but the same pattern — the presence or absence of a meaningful result — will emerge with all different types of values.</p>
+<p>Polymorphic datatypes to the rescue:</p>
+<pre><code>&gt; type MaybeData a = YesData a | NoData</code></pre>
+<p>As when calling polymorphic functions, type variables for type constructors like <code>MaybeData</code> get instantiated to particular type arguments in order to match the kinds of values it is being used with.</p>
+<p>Polymorphic datatypes and polymorphic functions make a formidable duo:</p>
+<pre><code>&gt; head xs = case xs of \
+|   x::_ -&gt; YesData x \
+|   []   -&gt; NoData
+&lt;function&gt; : List a -&gt; Repl.MaybeData a
+
+&gt; head [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;]
+YesData &#39;a&#39; : Repl.MaybeData Char
+
+&gt; head [&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]
+YesData &#39;a&#39; : Repl.MaybeData String
+
+&gt; head (List.range 1 4)
+YesData 1 : Repl.MaybeData number
+
+&gt; head []
+NoData : Repl.MaybeData a</code></pre>
+<p>“For every type <code>a</code>, <code>NoData</code> has type <code>a</code>.” Cool, <code>NoData</code> is a polymorphic <em>constant</em> and its type may be instantiated, or specialized, depending on how it is used.</p>
+<p>The <code>MaybeData</code> pattern is so common that there’s a library called <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Maybe"><code>Maybe</code></a> that provides the following type, which is like ours but with different names:</p>
+<pre><code>type Maybe a = Just a | Nothing</code></pre>
+<p>There’s also a related library and type called <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result"><code>Result</code></a> that generalizes the <code>Maybe</code> pattern. Check them out, and also see <a href="IntroML.elm"><code>IntroML.elm</code></a> for a couple simple examples.</p>
+<h3 id="let-expressions">Let-Expressions</h3>
+<p>So far we have worked only with top-level definitions. Elm’s <code>let</code>-expressions allow the definition of variables that are “local” to the enclosing scope. As with other language features, whitespace matters so make sure equations are aligned.</p>
+<pre><code>plus3 a =
+  let b = a + 1 in
+  let c = b + 1 in
+  let d = c + 1 in
+    d</code></pre>
+<p>No need to write so many <code>let</code>s and <code>in</code>s:</p>
+<pre><code>plus3 a =
+  let
+    b = a + 1
+    c = b + 1
+    d = c + 1
+  in
+    d</code></pre>
+<p>Too many local variables can sometimes obscure meaning (just as too few variables can). In this case, the “pipelined” definition</p>
+<pre><code>plus3 a = a |&gt; plus 1 |&gt; plus 1 |&gt; plus 1</code></pre>
+<p>and, better yet, the definition by function composition</p>
+<pre><code>plus3 = plus 1 &lt;&lt; plus 1 &lt;&lt; plus 1</code></pre>
+<p>are, arguably, more readable.</p>
+<h3 id="list-concatenation">List Concatenation</h3>
+<p>There’s a “primitive typeclass” (in addition to <code>number</code> and <code>comparable</code>, discussed above) called <code>appendable</code>, which describes types including lists and strings:</p>
+<pre><code>&gt; (++)
+&lt;function&gt; : appendable -&gt; appendable -&gt; appendable
+
+&gt; &quot;hello&quot; ++ &quot; world&quot;
+&quot;hello world&quot; : String
+
+&gt; List.range 1 10 ++ List.range 11 20
+[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] : List number</code></pre>
+<h3 id="records">Records</h3>
+<p>Records are like tuples, where the components (i.e. fields) are denoted by name rather than position and where the order of components is irrelevant. Record patterns bind the values of components by name, and they can omit fields that are not needed.</p>
+<pre><code>&gt; type alias Point = { x : Int, y : Int }
+
+&gt; let {x,y} = {y=2, x=1} in x + y
+3 : number
+
+&gt; let {x} = {y=2, x=1} in x
+1 : number</code></pre>
+<p>Read <a href="http://elm-lang.org/docs/records">more about records</a>. Records can be polymorphic and even extensible:</p>
+<pre><code>type alias PolymorphicPoint number = { x : number, y : number }
+
+type alias PointLike a number = { a | x : number, y : number }</code></pre>
+<p>Datatypes, record types, and type aliases are orthogonal:</p>
+<pre><code>&gt; type alias T = {x:String}
+&gt; type S1 = S1 {x:String}
+&gt; type S2 = S2 T
+&gt; type U = U1 T | U2 {x:Int} | U3 (Int, String) | U4</code></pre>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li><a href="http://elm-lang.org/learn/Syntax.elm">Syntax Reference</a></li>
+<li>Libraries: <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics"><code>Basics</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Maybe"><code>Maybe</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/List"><code>List</code></a></li>
+</ul>
+<h3 id="recommended">Recommended</h3>
+<ul>
+<li>Look through some of the <a href="http://elm-lang.org/Examples.elm">Elm Examples</a></li>
+<li>Look through more of the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/">Standard Libraries</a></li>
+</ul>
+<h3 id="additional">Additional</h3>
+<ul>
+<li>If you would like to see the syntax and features of two other ML dialects, Standard ML and OCaml, take a look at <a href="http://www.mpi-sws.org/~rossberg/sml-vs-ocaml.html">this</a> and <a href="http://adam.chlipala.net/mlcomp/">this</a>.</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

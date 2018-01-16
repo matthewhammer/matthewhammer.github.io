@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LeftistHeaps</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="leftist-heaps">Leftist Heaps</h1>
+<!--
+## Representation
+-->
+<pre><code>type alias Rank = Int
+    
+type Heap a = E | T Rank a (Heap a) (Heap a)</code></pre>
+<p>The rank <code>r</code> of a leftist heap is the length of its rightmost spine (that is, the number of edges on the path to the rightmost <code>E</code>mpty node, or the number of non-<code>E</code> nodes along this path).</p>
+<p>The node <code>T r i left right</code> stores its rank <code>r</code> so that the <code>rank</code> function below does not need to call <code>computeRank</code> to recompute it.</p>
+<pre><code>computeRank : Heap -&gt; Rank
+computeRank h =
+  case h of
+    E -&gt; 0
+    T r _ left right -&gt;
+      if r == (1 + computeRank right)
+        then r
+        else Debug.crash &quot;incorrect rank&quot;
+
+rank h =
+  case h of
+    E         -&gt; 0
+    T r _ _ _ -&gt; r</code></pre>
+<p>A few functions on leftist heaps that we will use to state invariants:</p>
+<pre><code>value h =
+  case h of
+    E         -&gt; Nothing
+    T _ x _ _ -&gt; Just x
+
+left h =
+  case h of
+    E         -&gt; E
+    T _ _ a _ -&gt; a
+
+right h =
+  case h of
+    E         -&gt; E 
+    T _ _ _ b -&gt; b
+
+size h =
+   case h of
+     E         -&gt; 0
+     T _ _ a b -&gt; 1 + size a + size b</code></pre>
+<h2 id="invariants">Invariants</h2>
+<ul>
+<li>Min-Heap Property: <em>∀<code>h</code>. (<code>left(h)</code> ≠ <code>E</code> ⇒ <code>value(h)</code> ≤ <code>value(left(h))</code>) ∧ (<code>right(h)</code> ≠ <code>E</code> ⇒ <code>value(h)</code> ≤ <code>value(right(h))</code>)</em></li>
+<li>Leftist Heap Rank Property: <em>∀<code>h</code>. <code>rank(left(h))</code> ≥ <code>rank(right(h))</code></em></li>
+</ul>
+<p><strong>In-Class Exercise</strong></p>
+<!--
+Let `log = logBase 2`.
+-->
+<ul>
+<li>Prove: <em>∀<code>h</code>. <code>size(h)</code> ≥ <code>2^rank(h) - 1</code></em></li>
+<li>Corollary: <em>∀<code>h</code>. <code>rank(h)</code> is O(<code>log(size(h))</code>)</em>. That is, the right spine of a leftist heap <code>h</code> of size <code>n</code> has <em>O(<code>log n</code>)</em> elements.</li>
+</ul>
+<h2 id="merging">Merging</h2>
+<p>Unlike for regular min-heaps, merging leftist heaps runs quickly (faster than <em>O(n)</em>) by taking advantage of the fact that right spines are short (<em>O(log n)</em>).</p>
+<p>The helper function <code>makeT</code> creates a <code>T</code> node that stores <code>x</code> and positions <code>h1</code> and <code>h2</code> as its children depending on their rank.</p>
+<pre><code>makeT : a -&gt; Heap a -&gt; Heap a -&gt; Heap a
+makeT x h1 h2 =
+  let (r1,r2) = (rank h1, rank h2) in
+  if r1 &gt;= r2
+    then T (1+r2) x h1 h2
+    else T (1+r1) x h2 h1</code></pre>
+<p>The following is an equivalent definition of <code>makeT</code>.</p>
+<pre><code>makeT x h1 h2 =
+  let (left,right) =
+    if rank h1 &gt;= rank h2
+      then (h1, h2)
+      else (h2, h1)
+  in
+  T (1 + rank right) x left right</code></pre>
+<p>The <code>merge</code> function combines two non-empty heaps by choosing the smaller of their two minimum values and recursively merging, using <code>makeT</code> to place “heavier” subtrees to the left.</p>
+<pre><code>merge : Heap comparable -&gt; Heap comparable -&gt; Heap comparable
+merge h1 h2 = case (h1, h2) of
+  (_, E) -&gt; h1
+  (E, _) -&gt; h2 
+  (T _ x1 left1 right1, T _ x2 left2 right2) -&gt;
+    if x1 &lt;= x2
+      then makeT x1 left1 (merge right1 h2)
+      else makeT x2 left2 (merge h1 right2)</code></pre>
+<p>The <code>makeT</code> function runs in <em>O(1)</em> time. The running time of <code>merge</code> is dominated by its recursive calls. Let <em>n</em> be the size of the larger of the two heaps. The leftist property ensures that the right spine of each heap has <em>O(log n)</em> elements. Because the recursive calls traverse the right spine of one of the input heaps, there are at most <em>O(log n)</em> recursive calls, each of which performs <em>O(1)</em> work. Therefore, <code>merge</code> runs in <em>O(log n)</em> time.</p>
+<h2 id="rest-of-interface">Rest of Interface</h2>
+<pre><code>empty : Heap comparable
+empty = E
+
+isEmpty : Heap comparable -&gt; Bool
+isEmpty h = h == empty
+
+findMin : Heap comparable -&gt; Maybe comparable
+findMin h =
+  case h of
+    E         -&gt; Nothing
+    T _ x _ _ -&gt; Just x</code></pre>
+<p>Insertion and deletion can be defined in terms of <code>merge</code>, so each runs in <em>O(log n)</em> time.</p>
+<pre><code>insert : comparable -&gt; Heap comparable -&gt; Heap comparable
+insert x h = merge (T 1 x E E) h
+
+deleteMin : Heap comparable -&gt; Maybe (comparable, Heap comparable)
+deleteMin h =
+  case h of
+    E         -&gt; Nothing
+    T _ x a b -&gt; Just (x, merge a b)</code></pre>
+<p>Our implementation (<a href="LeftistHeap.elm"><code>LeftistHeap.elm</code></a>) exports the same type signatures as the array-based implementation of min-heaps from before.</p>
+<pre><code>module LeftistHeaps exposing
+  (Heap, empty, isEmpty, findMin, insert, deleteMin, merge)
+  ...</code></pre>
+<!--
+Notice how sequences of `insert`s pile up elements heavily to the left.
+-->
+<p>Take it for a quick spin:</p>
+<pre><code>&gt; import LeftistHeap exposing (..)
+&gt; makeHeap = List.foldl insert empty
+&lt;function&gt; : List comparable -&gt; LeftistHeap.Heap comparable
+&gt; makeHeap (String.toList &quot;abcd&quot;)
+T 2 &#39;a&#39; (T 1 &#39;b&#39; E E) (T 1 &#39;c&#39; (T 1 &#39;d&#39; E E) E) : LeftistHeap.Heap Char
+&gt; makeHeap (String.toList &quot;dcba&quot;)
+T 1 &#39;a&#39; (T 1 &#39;b&#39; (T 1 &#39;c&#39; (T 1 &#39;d&#39; E E) E) E) E : LeftistHeap.Heap Char</code></pre>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 3.1</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

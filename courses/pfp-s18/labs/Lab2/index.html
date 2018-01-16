@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab2</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-2-80-points">Lab 2 (80 points)</h1>
+<p>Download the skeleton file <a href="Pi.elm"><code>Pi.elm</code></a> and use it as a starting point for the following problems. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions. Once you are done, follow the submission instructions below.</p>
+<h2 id="problem-1-estimating-pi">Problem 1: Estimating Pi</h2>
+<p>In this problem, you will write a program that estimates the value of <em>π</em>. You will also get practice with the basics of programming web applications in Elm by implementing a simple animation — using the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Time"><code>Time</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random"><code>Random</code></a>, and 2D graphics libraries — to accompany the estimation process.</p>
+<p>The idea behind <a href="http://en.wikipedia.org/wiki/Monte_Carlo_method#mediaviewer/File:Pi_30K.gif">estimating <em>π</em></a> for this problem is simple: throw darts randomly at the unit square and keep track of how many fall within the circle that is centered in the square. According to the areas of circles and squares, the fraction of points within the circle is an estimate of <em>π / 4</em>.</p>
+<p>The application will be organized in a familiar way:</p>
+<pre><code>main = 
+  Html.program
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }</code></pre>
+<h4 id="the-model-5-points">2.1.1 – The “Model” (5 points)</h4>
+<p>First, we define the following type alias to describe points:</p>
+<pre><code>type alias Point = { x:Float, y:Float }</code></pre>
+<p>Next, we define the model to keep track of the state the simulation at any given point:</p>
+<pre><code>type alias Model =
+  { hits : List Point
+  , misses : List Point
+  , hitCount : Int
+  , missCount : Int
+  , seed : Seed
+  }</code></pre>
+<p>The first two components of <code>Model</code> record which points “hit” inside the unit circle, and which points “missed.” We maintain two integer counters for the lengths of these lists, to avoid recomputation. Lastly, we maintain a <code>Random.Seed</code> value that is used to generate the next random point.</p>
+<p>Define the initial model; any initial seed value is acceptable.</p>
+<pre><code>initialModel : Model</code></pre>
+<h4 id="the-controller-45-points">2.1.2 – The “Controller” (45 points)</h4>
+<p>We need only a dummy “tick” message to trigger the generation of a random <code>Point</code>.</p>
+<pre><code>type Msg = Tick</code></pre>
+<p>Using the <code>Time</code> library, implement <code>subscriptions</code> to trigger a <code>Tick</code> every so often. Exactly how long (for example, every 100 milliseconds or every 1 second) is up to you.</p>
+<pre><code>subscriptions : Model -&gt; Sub Msg</code></pre>
+<p>Next, implement the following <code>Random.Generator</code> of <code>Point</code>s. Notice how <code>Random</code> provides primitive <code>Generator</code>s for base types, which can be used to construct <code>Generator</code>s for more complex types, such as <code>Point</code>.</p>
+<pre><code>pointGenerator : Generator Point</code></pre>
+<p>Finally, implement the <code>update</code> function so that every time a <code>Msg</code> comes in, a <code>Point</code> is randomly generated and the new <code>Model</code> takes into account whether this <code>Point</code> is a hit or miss.</p>
+<pre><code>update : Msg -&gt; Model -&gt; (Model, Cmd Msg)</code></pre>
+<p>We have not yet discussed commands (i.e. <code>Cmd</code>) in detail, so the second component of the output should always be <code>Cmd.none</code>. When looking into the API of the <code>Random</code> library, make sure to use the “manual” functions for generating random values, rather than the functions that use <code>Cmd</code>s.</p>
+<h4 id="the-view-30-points">2.1.3 – The “View” (30 points)</h4>
+<p>The last key component is to render the current state of the simulation to the screen. For this, implement the function:</p>
+<pre><code>view : Model -&gt; Html Msg</code></pre>
+<p>Although the particular details are largely up to you, your rendering should:</p>
+<ol type="1">
+<li>draw dots for each randomly generated point, using different colors to distinguish hits and misses; and</li>
+<li>display the current estimate of <em>π</em> based on these points.</li>
+</ol>
+<p>You have two options for drawing 2D graphics:</p>
+<ol type="a">
+<li><p>The <code>evancz/elm-graphics</code> package exposes several modules: the <a href="http://package.elm-lang.org/packages/evancz/elm-graphics/1.0.1/Element"><code>Element</code></a> library defines an API for laying out text, images, and other <code>Element</code>s (e.g. see <code>toHtml</code>); the <a href="http://package.elm-lang.org/packages/evancz/elm-graphics/1.0.1/Collage"><code>Collage</code></a> library provides tools for defining freeform graphics, comprising shapes, lines, colors, etc (e.g. see <code>collage</code> and <code>circle</code>); and <a href="http://package.elm-lang.org/packages/evancz/elm-graphics/1.0.1/Text"><code>Text</code></a> for styling text. If you use these libraries, add the following package to your <code>elm-package.json</code>:</p>
+<pre><code>&quot;evancz/elm-graphics&quot;: &quot;1.0.1 &lt;= v &lt; 2.0.0&quot;</code></pre></li>
+<li><p>Alternatively, you can use the <a href="http://package.elm-lang.org/packages/elm-lang/svg/2.0.0"><code>Svg</code></a> library to create SVG graphics with CSS (e.g. see <code>svg</code> and <code>circle</code>).</p></li>
+</ol>
+<p>The choice is up to you. With either approach, you may find it useful to define helper functions, such as the following, for the two subtasks above:</p>
+<pre><code>pointsToCircles : Color -&gt; List Point -&gt; List Shape  -- if using elm-graphics
+pointsToCircle : String -&gt; List Point -&gt; List Svg    -- if using svg
+
+estimatePi : Model -&gt; Float</code></pre>
+<p><a href="https://www.classes.cs.uchicago.edu/archive/2015/winter/22300-1/public-code/hw1/PiSample.html"> <img align="right" border=0pt style="padding: 10px;" src="ThumbPi.png"> </a></p>
+<p>For reference, <a href="https://www.classes.cs.uchicago.edu/archive/2015/winter/22300-1/public-code/hw1/PiSample.html">click here</a> to see the output from a sample implementation. Be creative!</p>
+<h4 id="extra-credit-points-based-on-voting">2.1.4 (10 <span style="color:red;">extra credit</span> points based on voting)</h4>
+<p>You will receive full points for the parts above as long as everything is working, no matter how pretty (or ugly) the results are. These last few remaining points are reserved for solutions that are particularly pleasing.</p>
+<p>To help get the creative juices flowing, here are some possible ideas for making the animation prettier:</p>
+<ul>
+<li>Make more recent dots darker than older ones</li>
+<li>Make the dartboard more colorful</li>
+<li>Have <em>π</em> appear in the background of the dartboard</li>
+<li>Use a different shape for the dartboard</li>
+<li>Vary the size of the board and dots based on window size</li>
+</ul>
+<p>In the coming weeks, we will generate a poll based on everyone’s solutions to this problem. You may receive points for this problem based on the results of the voting. More details to follow.</p>
+<p><br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Submit the following two files:</p>
+<ul>
+<li><p>The file <a href="Pi.elm"><code>Pi.elm</code></a> updated with your changes. You are free to modify these files as you wish, as long as you do <strong>not</strong> change any type signatures that are provided.</p></li>
+<li><p>A 200-by-200 pixel thumbnail image of your animation called <code>ThumbPi.EXT</code>, where <code>EXT</code> is a standard image format such as <code>png</code>, <code>jpg</code>, or <code>gif</code>. This thumbnail will be used to help generate a gallery on the forthcoming voting page, where each thumbnail will link to the corresponding animation. So you will want to choose an accurate and compelling preview of your animation to entice people to view it.</p></li>
+</ul>
+<p>NOTE: There is no need to submit your <code>elm-package.json</code> file. We will run everyone’s submission with one that includes the <code>evancz/elm-graphics</code> package.</p>
+<p>Your solution will be graded using a combination of automated grading scripts and manual review. It is a good idea for you to design some test cases of your own to exercise more sample behaviors than just the ones provided in the writeup. We also reserve the right to take into account the organization and style of your code when assigning grades.</p>
+<p>If you are not able to finish all parts of the assignment, make sure that all of your submitted files compile successfully. If not, you risk getting <strong>zero points</strong> for the assignment. In particular, for each file <code>Foo.elm</code>, make sure that it can be loaded into the Elm REPL</p>
+<pre><code>% elm-repl
+&gt; import Foo
+&gt;</code></pre>
+<p>and that it can be compiled to a standalone HTML file:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Successfully generated Foo.html</code></pre>
+<h3 id="submitting-your-code">Submitting Your Code</h3>
+<p>We will use the <a href="https://phoenixforge.cs.uchicago.edu/projects/cs223-spr-17"><code>cs223-spr-17</code> Subversion repository on PhoenixForge</a>. You should have done <a href="../hw0/index.html">this</a> by now.</p>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% cd USER-cs223-spr-17
+% svn mkdir hw2
+% cd hw2
+% wget http://www.classes.cs.uchicago.edu/current/assignments/hw2/Pi.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add Pi.elm
+% svn add ThumbPi.EXT</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create (except that <code>EXT</code> should be replaced with the actual file extension). Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw2 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

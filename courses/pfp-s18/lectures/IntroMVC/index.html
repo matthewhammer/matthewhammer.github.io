@@ -1,0 +1,287 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IntroMVC</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="introduction-to-mvc-in-elm">Introduction to MVC in Elm</h1>
+<p>Say that we wanted to write some JavaScript (pseudo)code to keep track of whether the user is currently pressing the mouse button. We might start by defining a mutable variable, and then installing two “callback” functions that get invoked by the JavaScript run-time system when the <code>mousedown</code> and <code>mouseup</code> events are triggered:</p>
+<pre><code>// the application &quot;state&quot; or &quot;model&quot;
+var isDown = false;
+
+// the &quot;view&quot; of the state
+function printIsDown() { mainElement.innerHTML = isDown.toString(); }
+
+// event handlers to update the state
+function handleMouseDown() { isDown = true;  printIsDown(); }
+function handleMouseUp()   { isDown = false; printIsDown(); }
+
+// the &quot;controller&quot; that maps events to handlers
+element.addEventListener(&quot;mousedown&quot;, handleMouseDown);
+element.addEventListener(&quot;mouseup&quot;,   handleMouseUp);</code></pre>
+<p>(Note: The point of this example is to make plain the structure of managing the state, so we will avoid the natural urge to refactor.)</p>
+<p>This is quite a roundabout way of implementing what can be described simply as “a boolean that is <code>true</code> only when the mouse button is being pressed.” Furthermore, in a hypothetical typed dialect of JavaScript, the types of these functions would be rather uninformative:</p>
+<pre><code>printIsDown : () -&gt; void
+handleMouseDown : () -&gt; void
+handleMouseUp : () -&gt; void
+Element.addEventListener : (string, () -&gt; void) -&gt; void</code></pre>
+<p>Matters quickly become more complicated when managing state that depends on multiple events and multiple intermediate computations.</p>
+<h2 id="elm-architecture">Elm Architecture</h2>
+<p>The Model-View-Controller (MVC) architecture is a common way to structure systems that need to react in response to events. The MVC paradigm in Elm benefits from the building blocks of typed functional programming.</p>
+<p>A program is factored into the following <a href="https://guide.elm-lang.org/architecture/">three parts described in The Elm Architecture</a>:</p>
+<pre><code>import Html exposing (..)
+
+
+-- MODEL
+
+type alias Model = { ... }
+
+
+-- UPDATE
+
+type Msg = Reset | ...
+
+update : Msg -&gt; Model -&gt; Model
+update msg model =
+  case msg of
+    Reset -&gt; ...
+    ...
+
+
+-- VIEW
+
+view : Model -&gt; Html Msg
+view model =
+  ...
+
+
+-- MAIN
+
+main : Program Never Model Msg
+main =
+  Html.beginnerProgram { model = initialModel, view = view, update = update }
+
+initialModel : Model
+initialModel = ...</code></pre>
+<p>Unlike the manifestation of MVC in the JavaScript example above, where mutable variables and callback functions glue the pieces together, the entire state of the Elm application is factored into a single data structure (<code>Model</code>) and all events are factored into a single data structure (<code>Msg</code>).</p>
+<p>The <em>model</em> keeps track of all the information that is needed to produce the desired result. We may be sloppy and sometimes (actually, often) refer to the model as the <em>state</em>, but let us not be tricked into thinking there is anything mutable at the source level. This greatly simplifies the nature of event-based programming.</p>
+<p>(We won’t worry about the <a href="http://package.elm-lang.org/packages/evancz/elm-effects/2.0.1/Effects"><code>Never</code></a> type, which is used internally to guarantee the absence of some failures.)</p>
+<h4 id="example-count-button-clicks">Example: Count Button Clicks</h4>
+<pre><code>-- MODEL
+
+type alias Model = { count: Int }
+
+initialModel = { count = 0 }</code></pre>
+<p><br></p>
+<pre><code>-- UPDATE
+
+type Msg = Reset | Increment
+
+update : Msg -&gt; Model -&gt; Model
+update msg model =
+  case msg of
+    Reset -&gt; initialModel
+    Increment -&gt; { count = 1 + model.count }</code></pre>
+<p><br></p>
+<p>The <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html"><code>Html</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Attributes"><code>Html.Attribute</code></a>, and <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Events"><code>Html.Events</code></a> libraries provide wrappers around the full HTML5 format. In particular, <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html"><code>Html</code></a> provides</p>
+<pre><code>node : String -&gt; List (Attribute msg) -&gt; List (Html msg) -&gt; Html msg</code></pre>
+<p>to create an arbitrary kind of DOM node. The library also provides helpers for many common kinds of DOM nodes, such as:</p>
+<pre><code>text : String -&gt; Html msg
+
+button : List (Attribute msg) -&gt; List (Html msg) -&gt; Html msg
+
+h1 : List (Attribute msg) -&gt; List (Html msg) -&gt; Html msg
+
+img : List (Attribute msg) -&gt; List (Html msg) -&gt; Html msg</code></pre>
+<p>You can peek at the <a href="https://github.com/elm-lang/html/tree/2.0.0">implementation</a> to see how these are phrased in terms of the general-purpose <code>node</code> function.</p>
+<p>Likewise, <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Events"><code>Html.Events</code></a> provides a general-purpose</p>
+<pre><code>on : String -&gt; Decoder msg -&gt; Attribute msg</code></pre>
+<p>function and useful helpers for specific events, such as:</p>
+<pre><code>onClick : msg -&gt; Attribute msg</code></pre>
+<p>A simple user interface with a reset button, increment button, and counter display:</p>
+<pre><code>-- VIEW
+
+view : Model -&gt; Html Msg
+view model =
+  let reset = Html.button [onClick Reset] [Html.text &quot;Reset&quot;] in
+  let increment = Html.button [onClick Increment] [Html.text &quot;Increment&quot;] in
+  let display = Html.text (&quot;Count: &quot; ++ toString model.count) in
+  Html.div [] [reset, increment, display]</code></pre>
+<p>Download this program as <a href="CountButtonClicks.elm"><code>CountButtonClicks.elm</code></a> and launch <code>elm-reactor</code>.</p>
+<h4 id="example-count-mouse-clicks">Example: Count Mouse Clicks</h4>
+<p>Let’s create a variation of the counter without buttons, counting mouse clicks instead and using the escape key for reset. For the user interface, we’ll just strip out the buttons:</p>
+<pre><code>view : Model -&gt; Html Msg
+view model =
+  let display = Html.text (&quot;Count: &quot; ++ toString model.count) in
+  Html.div [] [display]</code></pre>
+<p>The basic Elm architecture has the following structure:</p>
+<pre><code>main : Program Never Model Msg
+main = 
+  Html.beginnerProgram 
+    { model = initialModel, view = view, update = update }
+
+initialModel : Model
+update : Msg -&gt; Model -&gt; Model
+view : Model -&gt; Html Msg</code></pre>
+<p>Writing to an HTML window is the primary <em>effect</em> that basic Elm programs can affect.</p>
+<p>The “full” Elm architecture has mechanisms for <em>subscribing</em> to additional kinds of incoming events (besides those provided by <code>Html.Events</code>) and issuing <em>commands</em> for outgoing events. For now, we will look only at subscriptions, because mouse and keyboard events in Elm are provided through the subscription mechanism rather than through <code>Html.Events</code>. Later on, we will return to commands, which allow interacting with native code (e.g. JavaScript) and performing effects in addition to computing the <code>Html</code> output to be rendered.</p>
+<pre><code>main : Program Never Model Msg
+main =
+  Html.program
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
+
+init : (Model, Cmd Msg)
+update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+view : Model -&gt; Html Msg
+subscriptions : Model -&gt; Sub Msg</code></pre>
+<p>The <code>view</code> function remains unchanged.</p>
+<p>The <code>update</code> function, however, issues a command (of type <code>Cmd Msg</code> defined in <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd"><code>Platform.Cmd</code></a>) in addition to an updated <code>Model</code>. Likewise, the initial program state issues an initial command. In all cases, we use dummy command <code>Cmd.none</code>:</p>
+<pre><code>init : (Model, Cmd Msg)
+init = (initialModel, Cmd.none)
+
+update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+update msg model =
+  case msg of
+    Reset -&gt; (initialModel, Cmd.none)
+    Increment -&gt; ({ count = 1 + model.count }, Cmd.none)</code></pre>
+<p>The other change is to define <code>subscriptions</code> which is (effectively) a list of events to subscribe to, and this list can be determined based on the current <code>Model</code>.</p>
+<p><a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Mouse"><code>Mouse</code></a> provides the following:</p>
+<pre><code>clicks : (Position -&gt; msg) -&gt; Sub msg</code></pre>
+<p>Whenever the mouse is clicked at <code>Position</code> position, we want Elm to feed the <code>Increment</code> message into our <code>update</code> function:</p>
+<pre><code>subscriptions : Model -&gt; Sub Msg
+subscriptions model =
+  Mouse.clicks (\position -&gt; Increment)</code></pre>
+<p>We subscribe to mouse events no matter what the current <code>Model</code> is and we disregard the click <code>position</code>, so we may choose to remove the unnecessary identifiers:</p>
+<pre><code>subscriptions _ =
+  Mouse.clicks (always Increment)</code></pre>
+<p><a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Keyboard"><code>Keyboard</code></a> provides the following:</p>
+<pre><code>downs : (KeyCode -&gt; msg) -&gt; Sub msg</code></pre>
+<p><a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub"><code>Platform.Sub</code></a> provides</p>
+<pre><code>batch : List (Sub msg) -&gt; Sub msg</code></pre>
+<p>to define multiple subscriptions.</p>
+<pre><code>subscriptions model =
+  Sub.batch
+    [ Mouse.clicks (always Increment)
+    , Keyboard.downs (\keyCode -&gt; ...)
+    ]</code></pre>
+<p>We want to <code>Reset</code> only when <code>keyCode</code> is escape (ASCII code <code>27</code>), but we have to return a <code>Msg</code> no matter what. So, we add a new <code>Noop</code> value:</p>
+<pre><code>type Msg = Noop | Reset | Increment
+
+update msg model =
+  case msg of
+    Noop -&gt; (model, Cmd.none)
+    ...</code></pre>
+<p>Now we are in a position to respond to all clicks and “only” escape downs:</p>
+<pre><code>subscriptions : Model -&gt; Sub Msg
+subscriptions model =
+  Sub.batch
+    [ Mouse.clicks (always Increment)
+    , Keyboard.downs (\keyCode -&gt; if keyCode == 27 then Reset else Noop)
+    ]</code></pre>
+<p>As a final touch, let’s use CSS to position the counter display in the center of the window. The use of <code>(&lt;|)</code> below is a way to use a 2-space indent despite the whitespace rules of the language.</p>
+<pre><code>view model =
+  let style =
+    Html.Attributes.style &lt;|
+      [ (&quot;position&quot;, &quot;fixed&quot;)
+      , (&quot;top&quot;, &quot;50%&quot;)
+      , (&quot;left&quot;, &quot;50%&quot;)
+      , (&quot;transform&quot;, &quot;translate(-50%, -50%)&quot;)
+      ]
+  in
+  let display = Html.text (&quot;Count: &quot; ++ toString model.count) in
+  Html.div [style] [display]</code></pre>
+<p>Download <a href="CountMouseClicks.elm"><code>CountMouseClicks.elm</code></a> and try it out in <code>elm-reactor</code>.</p>
+<p>Here’s the <a href="CountMouseClicks.html">compiled version</a>, which requires adding <code>Mouse</code> and <code>Keyboard</code> to <code>elm-package.json</code>:</p>
+<pre><code>...
+&quot;dependencies&quot;: {
+    &quot;elm-lang/core&quot;: &quot;5.1.1 &lt;= v &lt; 6.0.0&quot;,
+    &quot;elm-lang/html&quot;: &quot;2.0.0 &lt;= v &lt; 3.0.0&quot;,
+    &quot;elm-lang/mouse&quot;: &quot;1.0.1 &lt;= v &lt; 2.0.0&quot;,
+    &quot;elm-lang/keyboard&quot;: &quot;1.0.1 &lt;= v &lt; 2.0.0&quot;
+},
+...</code></pre>
+<h2 id="compiling-to-javascript">Compiling to JavaScript</h2>
+<p>Wait a minute… We are factoring our Elm code into models, views, and controllers just like in the JavaScript code we started with. So, what have we really gained?</p>
+<p>Well, in JavaScript, we would write logic in event handlers to determine which parts of the state need to be updated for different events. In Elm, we define a completely <code>Model</code> record for every update, and we leave it to the Elm compiler and run-time to figure out when and how values can be cached and reused. The Elm compiler is left with the responsibility to generate target JavaScript that manages mutable state and event handlers, similar to the pseudocode we started with. So, we have gained a lot!</p>
+<p>A naive approach would be to recompute the <em>entire</em> program based on changes to <em>any</em> event. This would, of course, be inefficient and is also unnecessary, because many parts of the computation are likely to be stable across events. Instead, the compiler tracks dependencies in the dependency graph and uses a concurrent message-passing system to more efficiently recompute only those parts of a program that are needed.</p>
+<p>We will not go into any of the details of the compilation process, but you can find more information about it in the Reading links posted below. At a basic level, however, our intuitions for how the process might work should resemble our intuitions about how optimizing compilers for functional languages (even without events) work: a source language may be purely functional with immutable data structures being copied all over the place, but we know that, below the hood, the compiler is working to identify opportunities to reuse and cache previously computed results. In fact, we will see much more of this principle in the coming weeks as we study how to realize efficient data structures in purely functional languages.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Libraries: <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html"><code>Html</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Mouse"><code>Mouse</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/mouse/1.0.1/Keyboard"><code>Keyboard</code></a>, <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1"><code>Debug</code></a> <!--
+  [`Time`][Time], [`Random`][Random]
+--></li>
+</ul>
+<h3 id="recommended">Recommended</h3>
+<ul>
+<li><a href="https://guide.elm-lang.org/architecture/">Basic Elm Architecture</a></li>
+<li><a href="https://guide.elm-lang.org/architecture/effects/">Full Elm Architecture</a></li>
+</ul>
+<h3 id="additional">Additional</h3>
+<p>For a more comprehensive background on the implementation of an early version of Elm, you may want to skim parts of Evan Czaplicki’s papers below. Note that features and terminology have evolved since then.</p>
+<ul>
+<li><a href="http://elm-lang.org/papers/concurrent-frp.pdf">Senior Thesis</a> and</li>
+<li><a href="http://people.seas.harvard.edu/~chong/pubs/pldi13-elm.pdf">PLDI 2013 paper</a> with <a href="http://people.seas.harvard.edu/~chong/">Stephen Chong</a>.</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

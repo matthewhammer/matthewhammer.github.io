@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Heaps</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="heaps">Heaps</h1>
+<p>The <em>min-heap</em> abstraction below is defined for any element type that is <code>comparable</code>. The following type signatures define our <code>Heap</code> interface:</p>
+<pre><code>type Heap a
+
+empty     : Heap comparable
+isEmpty   : Heap comparable -&gt; Bool
+findMin   : Heap comparable -&gt; Maybe comparable
+deleteMin : Heap comparable -&gt; Maybe (comparable, Heap comparable)
+insert    : comparable -&gt; Heap comparable -&gt; Heap comparable
+merge     : Heap comparable -&gt; Heap comparable -&gt; Heap comparable</code></pre>
+<p><em>Max-heaps</em> are defined similarly.</p>
+<h2 id="heaps-as-arrays">Heaps as Arrays</h2>
+<p>One way to represent a <em>min-heap</em> is as a complete binary tree that satisfies the min-heap property, which requires that every node be no bigger than its children. Complete binary trees can be implemented using arrays.</p>
+<p>There is a scheme for the representing the nodes of a complete binary tree in breadth-first order…</p>
+<pre><code>    Depth 0              0
+
+    Depth 1        1           2
+
+    Depth 2     3     4     5     6
+
+               . .   . .   . .   . .</code></pre>
+<p>… using an an array <code>a</code>:</p>
+<pre><code>      i:     0   1   2   3   4   5   6   ...
+           ----------------------------------
+   a[i]:   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ...
+           ----------------------------------</code></pre>
+<p>And then navigating the parent and child edges for a node stored in <code>a[i]</code> is easy:</p>
+<ul>
+<li>the parent is stored in <code>a[(i-1)//2]</code>,</li>
+<li>the left child (if any) is stored in <code>a[(2*i)+1]</code>, and</li>
+<li>the right child (if any) is stored in <code>a[(2*i)+2]</code>.</li>
+</ul>
+<p>In imperative languages, retrieving an arbitrary element in an array takes <em>O(1)</em> time. In functional languages, purely functional arrays are often implemented in terms of balanced search trees, which typically provide <em>O(log n)</em> access to arbitrary elements.</p>
+<p>Although we have not yet talked about how to implement balanced search trees, we will take as given an implementation of balanced search trees. In Elm, the <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Array"><code>Array</code></a> library is implemented with a data structure called <a href="http://infoscience.epfl.ch/record/169879/files/RMTrees.pdf">Relaxed Radix Trees</a>, which provides <em>O(log n)</em> operations for getting and setting arbitrary indices.</p>
+<h2 id="internal-representation-vs.external-interface">Internal Representation vs. External Interface</h2>
+<p>We will make use of the <code>Array</code> library to implement the heap abstraction. If we choose to define and export</p>
+<pre><code>type alias Heap a = Array a</code></pre>
+<p>then clients of our module will be able to see that we have implemented <code>Heap</code>s using <code>Array</code>s and will have access to the <code>Array</code> values that we will use to represent <code>Heap</code>s. If we wish to hide the representation from clients, we can instead define a <em>new</em> type</p>
+<pre><code>type Heap a = Heap (Array a)</code></pre>
+<p>and export only those functions that we want clients to use:</p>
+<pre><code>module Heaps exposing
+  (Heap, empty, isEmpty, findMin, deleteMin, insert merge)
+  ...</code></pre>
+<p>We can’t create a <code>Heap</code> value directly…</p>
+<pre><code>&gt; import ArrayHeap exposing (..)
+&gt; import Array
+&gt; Heap Array.empty
+-- NAMING ERROR ---------------------------------------------- repl-temp-000.elm
+
+Cannot find variable `Heap`
+
+6|   Heap Array.empty
+     ^^^^</code></pre>
+<p>because the module declaration exposes only the <code>Heap</code> type and not the <code>Heap</code> data constructor. We could change the module declaration to expose the data constructors, too (notice the <code>Heap(..)</code>):</p>
+<pre><code>module Heaps exposing
+  (Heap(..), empty, isEmpty, findMin, deleteMin, insert merge)
+  ...</code></pre>
+<p>Then we would be able to use the <code>Heap</code> data constructor to directly create <code>Heap</code> values from outside the module:</p>
+<pre><code>&gt; Heap Array.empty
+Heap (Array.fromList []) : ArrayHeap.Heap a</code></pre>
+<p>However, we choose <em>not</em> to expose the internal representation of the <code>Heap</code> type to the client. Furthermore, we will not provide any functions of type <code>Heap comparable -&gt; Array comparable</code> that allow accessing the internal representation. So, clients will not be able to manipulate <code>Heap</code>s directly with <code>Array</code> operators.</p>
+<p>Creating abstraction boundaries like this facilitate the software engineering process, by preventing clients from (intentionally or accidentally) violating invariants that the correctness of the module implementation depends on, as well as facilitating changes to the implementation by limiting and making explicit the boundaries between modules.</p>
+<p>To implement the <code>Heap</code> abstraction, we will use the following <code>Array</code> operators with assumed bounds for their running times:</p>
+<pre><code>Array.empty   : Array a                           -- O(1)
+Array.isEmpty : Array a -&gt; Bool                   -- O(1)
+Array.length  : Array a -&gt; Int                    -- O(1)
+Array.push    : a -&gt; Array a -&gt; Array a           -- O(log n)
+Array.get     : Int -&gt; Array a -&gt; Maybe a         -- O(log n)
+Array.set     : Int -&gt; a -&gt; Array a -&gt; Array a    -- O(log n)
+Array.slice   : Int -&gt; Int -&gt; Array a -&gt; Array a  -- O(log n)</code></pre>
+<p>The <code>Array.push</code> function creates a new array that is the same as the input array except that it contains an additional element at the end. Let’s “rename” it so that we remember which end it works with.</p>
+<pre><code>addToEnd : a -&gt; Array a -&gt; Array a
+addToEnd = Array.push</code></pre>
+<p>For convenience, we will define an analogous function called <code>removeFromEnd</code> that retrieves the last element and creates a new array without it.</p>
+<pre><code>removeFromEnd : Array a -&gt; Maybe (a, Array a)
+removeFromEnd array =
+  let n = Array.length array in
+  case Array.get (n-1) array of
+    Nothing   -&gt; Nothing
+    Just last -&gt; Just (last, Array.slice 0 -1 array)</code></pre>
+<p>We will start with the simple operators.</p>
+<pre><code>empty : Heap comparable
+empty = Heap Array.empty
+
+isEmpty : Heap comparable -&gt; Bool
+isEmpty (Heap array) =
+  Array.isEmpty array</code></pre>
+<p>Notice that the definition of <code>isEmpty</code> uses pattern matching to, at once, deconstruct the argument value and bind the underlying array value to the variable <code>array</code>. This definition is equivalent to all of the following:</p>
+<pre><code>isEmpty h = case h of Heap array -&gt; Array.isEmpty array
+
+isEmpty = \h -&gt; case h of Heap array -&gt; Array.isEmpty array
+
+isEmpty = \h -&gt; let (Heap array) = h in Array.isEmpty array
+
+isEmpty = \(Heap array) -&gt; Array.isEmpty array</code></pre>
+<p>Because values of type <code>Heap</code> can only be constructed by the <code>Heap</code> data constructor, we can use patterns in bindings (rather than <code>case</code> expressions) and be sure that we have covered all patterns.</p>
+<p>The <code>findMin</code> implementation is also straightforward.</p>
+<pre><code>findMin : Heap comparable -&gt; Maybe comparable
+findMin (Heap array) =
+  Array.get 0 array</code></pre>
+<h2 id="insertion">Insertion</h2>
+<p>Let’s now look at the first non-trivial operator, inserting an element into a <code>Heap</code>. The idea is to add the element to the next position in the complete binary tree (conveniently represented as the last element in the array) and then “bubble” or “percolate” the element up the tree until it is no longer bigger than its parent.</p>
+<pre><code>insert : comparable -&gt; Heap comparable -&gt; Heap comparable
+insert x (Heap array) =
+  array
+    |&gt; addToEnd x
+    |&gt; bubbleUp (Array.length array)
+    |&gt; Heap</code></pre>
+<p>As we manipulate the underlying <code>Array</code> representations, we will make sure to always access elements within bounds. So we define an “unsafe” version of <code>get</code>:</p>
+<pre><code>justGet : Int -&gt; Array a -&gt; a
+justGet i array =
+  case Array.get i array of
+    Nothing -&gt; Debug.crash (&quot;justGet: &quot; ++ toString i)
+    Just x  -&gt; x</code></pre>
+<p>We also define a helper function to swap two elements in an <code>Array</code>:</p>
+<pre><code>swap : Int -&gt; Int -&gt; Array a -&gt; Array a
+swap i j array =
+  let ai = justGet i array in
+  let aj = justGet j array in
+  array |&gt; Array.set i aj |&gt; Array.set j ai</code></pre>
+<p>The <code>bubbleUp</code> function is defined to swap node <code>i</code> with its parent node <code>(i-1)//2</code> if the parent is larger and, if so, recursively traverses up the tree. Notice how <code>bubbleUp</code> is a function that works directly with the internal representation and is not exposed to clients.</p>
+<pre><code>parentIdx i = (i-1) // 2
+
+bubbleUp : Int -&gt; Array comparable -&gt; Array comparable
+bubbleUp i array =
+  let
+    child  = justGet i array
+    parent = justGet (parentIdx i) array
+  in
+  if parent &lt;= child
+    then array
+    else array |&gt; swap i (parentIdx i) |&gt; bubbleUp (parentIdx i)</code></pre>
+<p>Let’s now consider the worst-case time cost of the insertion algorithm. The <code>insert</code> function computes the length of the <code>Array</code> (which runs in <em>O(1)</em> time, by looking at the <a href="https://github.com/elm-lang/core/blob/5.1.1/src/Array.elm#L220-L222">library implementation</a> with <a href="https://github.com/elm-lang/core/blob/5.1.1/src/Native/Array.js#L815-L826">native code</a>), <code>push</code>es an element on the end of it (which runs in worst-case <em>O(log n)</em> time) and calls <code>bubbleUp</code>.</p>
+<p>The <code>bubbleUp</code> function makes use of <code>justGet</code> and <code>swap</code>. Because <code>Array.get</code> runs in <em>O(log n)</em> time, so does the wrapper function <code>justGet</code>. The <code>swap</code> function makes several calls to <code>Array.set</code> and <code>justGet</code>, each of which takes <em>O(log n)</em> time. Thus, <code>swap</code> takes <em>O(log n)</em> time. The <code>bubbleUp</code> function visits at most <em>O(log n)</em> elements because the index <code>i</code> is divided in half before each recursive call. Therefore, there are <em>O(log n)</em> calls to <code>bubbleUp</code>, each of which performs <em>O(log n)</em> work. So the running time of <code>bubbleUp</code>, and hence <code>insert</code>, is <em>O(log<sup>2</sup>n)</em>. In an imperative language, where array operations take worst-case <em>O(1)</em> time, the insertion algorithm runs in worst-case <em>O(log n)</em> time.</p>
+<h2 id="deletion">Deletion</h2>
+<p>To delete the minimum element, which is stored at index <code>0</code>, we first overwrite the root with the value currently stored in the last position (conveniently stored in the last element of the <code>Array</code>). We pop the last element because its value is now stored in the root and then “bubble” or “percolate” this value down as long as necessary. When recursively bubbling down, we choose the child tree whose root is smaller in order to maintain the heap order property.</p>
+<pre><code>deleteMin : Heap comparable -&gt; Maybe (comparable, Heap comparable)
+deleteMin (Heap array) =
+  case removeFromEnd array of
+    Nothing -&gt; Nothing
+    Just (lastElement, choppedArray) -&gt;
+      let minElement = justGet 0 array in
+      let newArray =
+        choppedArray
+          |&gt; Array.set 0 lastElement
+          |&gt; bubbleDown 0
+      in
+      Just (minElement, Heap newArray)</code></pre>
+<p>If <code>choppedArray</code> has no elements, then the minimum element is the last element, so there is nothing left to bubble down. Rather than checking for this case explicitly, however, we rely on the fact that <code>Array.set</code> and <code>bubbleDown</code> leave the array unchanged if the index argument (i.e. <code>0</code>) is out of bounds.</p>
+<p>For a given index <code>i</code>, the index of the left child is <code>j = 2*i + 1</code> and of the right child as <code>k = 2*i + 2</code>.</p>
+<pre><code>leftIdx i  = 2*i + 1
+rightIdx i = 2*i + 2</code></pre>
+<p>If there is no left child (in which case, neither is there a right one), then there is nothing left to bubble down:</p>
+<pre><code>bubbleDown i array =
+
+  if leftIdx i &gt;= Array.length array then
+    array</code></pre>
+<p>If there is a left child but not left child, we need to compare the value of the left child to the current to decide whether or not to bubble down to the left:</p>
+<pre><code>  else if rightIdx i &gt;= Array.length array then 
+    let
+      this  = justGet i array
+      left  = justGet (leftIdx i) array
+    in
+    if this &lt;= left
+      then array
+      else bubbleDownLeft ()</code></pre>
+<p>If both children are defined, there are several cases:</p>
+<pre><code>    let
+      this  = justGet i array
+      left  = justGet (leftIdx i) array
+      right = justGet (rightIdx i) array
+    in
+    if this &lt;= left &amp;&amp; this &lt;= right then array
+    else if left &lt; this &amp;&amp; this &lt;= right then bubbleDownLeft ()
+    else if right &lt; this &amp;&amp; this &lt;= left then bubbleDownRight ()
+    else {- left &lt;= this &amp;&amp; right &lt;= this -}
+      if left &lt;= right
+        then bubbleDownLeft ()
+        else bubbleDownRight ()</code></pre>
+<p>In the above, we defined a few helpers to reduce some of the commonalities in bubbling down to the left and right in various cases:</p>
+<pre><code>  let swapAndRecurse j = array |&gt; swap i j |&gt; bubbleDown j in
+  let bubbleDownLeft () = swapAndRecurse (leftIdx i) in
+  let bubbleDownRight () = swapAndRecurse (rightIdx i) in</code></pre>
+<p>(Note: how we use functions with dummy arguments so that we can give names to expressions that we may want to evaluate in one or more subsequent expressions. Functions with dummy arguments, called <em>thunks</em>, are often useful in functional programming to “delay” the evaluation of an expression until later.)</p>
+<p>Nevertheless, this has become overly verbose. Instead, we can define a single operation (called <code>smaller</code> below) to check if each child index is in bounds and, if so, whether its value is less than the others.</p>
+<pre><code>bubbleDown : Int -&gt; Array comparable -&gt; Array comparable
+bubbleDown i array =
+  let n = Array.length array in
+  let smaller j acc =
+    if j &lt; n &amp;&amp; justGet j array &lt; justGet acc array
+      then j
+      else acc
+  in
+  let smallest = i |&gt; smaller (leftIdx i) |&gt; smaller (rightIdx i) in
+  if i == smallest
+    then array
+    else array |&gt; swap i smallest |&gt; bubbleDown smallest</code></pre>
+<p>If the value at index <code>i</code> is smaller than both children, the output array is unchanged. Otherwise, the value at index <code>i</code> is swapped with the smaller value among the two subtrees and <code>bubbleDown</code> recurses on that subtree.</p>
+<p>The analysis of <code>bubbleDown</code> and <code>deleteMin</code> is similar to the insertion algorithm, resulting in a <em>O(log<sup>2</sup>n)</em> worst-case time cost.</p>
+<h2 id="merging">Merging</h2>
+<p>We will not go through the algorithm for merging heaps that are as arrays in this course. But you may be curious to go read about it if you have not seen it before.</p>
+<p>In our Elm implementation, we will pretend that we implement the <code>merge</code> function faithfully, but instead we will always trigger a run-time error.</p>
+<pre><code>merge _ _ = Debug.crash &quot;merge not implemented&quot;</code></pre>
+<p>The <a href="ArrayHeap.elm"><code>ArrayHeap.elm</code></a> file contains the implementation above.</p>
+<h2 id="testing">Testing</h2>
+<p>The <a href="ArrayHeapTest.elm"><code>ArrayHeapTest.elm</code></a> file provides a tiny bit of testing.</p>
+<pre><code>&gt; import ArrayHeapTest exposing (..)
+
+&gt; simpleHeapSort [100,123,235,235,1,999,998]
+[1,100,123,235,235,998,999] : List number</code></pre>
+<p>In general, it would be a good idea to design your own testing infrastructure to help sanity check your implementations of the various data structures we will study.</p>
+<p><br></p>
+<p><br></p>
+<h1 id="polymorphic-types-for-heaps">Polymorphic Types for Heaps</h1>
+<h2 id="haskell-style-type-classes">Haskell-style Type Classes</h2>
+<p>Recall that Elm provides the special polymorphic type variable <code>comparable</code>. We may want to define interfaces in terms of types that come with operators besides those specified in the <code>comparable</code> “type class.” Elm does not provide a way for the programmer to define an interface that describes a set of types.</p>
+<p>In Haskell, user-defined type classes can be used to specify the heap abstraction as follows.</p>
+<pre><code>class Ord a where
+  (&lt;)  :: a -&gt; a -&gt; Bool
+  (&gt;=) :: a -&gt; a -&gt; Bool
+  (&gt;)  :: a -&gt; a -&gt; Bool
+  (&lt;=) :: a -&gt; a -&gt; Bool
+  max  :: a -&gt; a -&gt; a
+  min  :: a -&gt; a -&gt; a
+
+class Ord a =&gt; Heap a where
+  empty     : Heap a
+  isEmpty   : Heap a -&gt; Bool
+  findMin   : Heap a -&gt; Maybe a
+  insert    : a -&gt; Heap a -&gt; Heap a
+  deleteMin : Heap a -&gt; Maybe (a, Heap a)
+  merge     : Heap a -&gt; Heap a -&gt; Heap a</code></pre>
+<p>The second class definition says that a type <code>a</code> “is a” <code>Heap</code> if (1) <code>a</code> “is a” <code>Ord</code> and (2) the six functions specified can be defined for that type. Particular implementations are then defined to “implement” the <code>Heap</code> “interface”.</p>
+<pre><code>type ArrayHeap a = Heap (Array a)
+
+instance ArrayHeap (Heap a) where
+  insert = ...
+  ...</code></pre>
+<p>For simplicity, the definition above does not mention the Haskell <code>Eq</code> type class.</p>
+<h2 id="ml-style-modules">ML-style Modules</h2>
+<p>In Standard ML and OCaml, <em>signatures</em> are used to describe <em>modules</em>, which are structures that contain values and types.</p>
+<pre><code>signature ORDERED =
+sig
+  type T
+
+  val eq  : T -&gt; T -&gt; bool
+  val lt  : T -&gt; T -&gt; bool
+  val leq : T -&gt; T -&gt; bool
+end
+
+signature HEAP =
+sig
+  structure Elem : ORDERED
+
+  type H
+
+  val empty     : H
+  val isEmpty   : H -&gt; bool
+  val insert    : Elem.T -&gt; H -&gt; H
+  val merge     : H -&gt; H -&gt; H
+  val findMin   : H -&gt; Elem.t option
+  val deleteMin : H -&gt; (Elem.T * H) option
+end</code></pre>
+<p>An implementation satisfies the <code>Heap</code> signature by defining a <em>functor</em> that takes a module as an argument and returns another module. Note that these ML functors are the not same thing as Haskell <code>Functor</code>s.</p>
+<pre><code>functor MyHeap (Element : ORDERED) : HEAP =
+struct
+  structure Elem = Element
+
+  datatype H = ...
+
+  fun insert = ...
+  ...
+end</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

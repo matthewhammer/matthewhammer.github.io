@@ -1,0 +1,476 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RedBlackDelete</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="red-black-trees-delete">Red-Black Trees: Delete</h1>
+<p>Deleting an element from a red-black tree is considerably harder than inserting one. All of the difficulty stems from the case when the node to remove is black and has no children; the other cases can be handled locally. Matt Might <a href="http://matt.might.net/articles/red-black-delete/">presents a deletion algorithm</a> that extends the temporary-invariant-violation plus bubble-and-rotate approach for insertion to work for deletion. Today, we’ll reformulate his approach using slightly different terminology and drawing conventions to match the ones we used <a href="../RedBlackTrees/index.html">last time</a>. The code below is found in <a href="RedBlackDelete.elm"><code>RedBlackDelete.elm</code></a>.</p>
+<p>There will be new kinds of temporary invariant violations, tracked using three new kinds of nodes:</p>
+<ul>
+<li>the <em>black empty tree</em> <code>BE</code> which counts as one black node,</li>
+<li>the <em>double black node</em> <code>T BB left x right</code> which counts as two black nodes, and</li>
+<li>the <em>double red node</em> <code>T RR left x right</code> which counts as negative one black node.</li>
+</ul>
+<p>We extend our <code>Tree</code> type as follows (differences in terminology and weights compared to <a href="http://matt.might.net/articles/red-black-delete/">the original</a> are noted in parentheses):</p>
+<pre><code>type Color
+  = BB   -- +2  &quot;double black&quot; (&quot;double black&quot;)
+  | B    -- +1
+  | R    --  0
+  | RR   -- -1  &quot;double red&quot;   (&quot;negative black&quot;)
+
+type Tree a
+  = E    --  0  &quot;empty&quot;        (&quot;black leaf&quot;        +1)
+  | BE   -- +1  &quot;black empty&quot;  (&quot;double black leaf&quot; +2)
+  | T Color (Tree a) a (Tree a)</code></pre>
+<p>We extend our convention of drawing square <strong>b</strong>oxes for <strong><code>B</code></strong>lack nodes and <span style="color:red;"><b>r</b></span>ound circles for <span style="color:red;"><b>R</b></span>ed nodes to the new kinds of <code>Tree</code>s:</p>
+<center>
+<img width="400px" src="new_legend.jpg"/>
+</td>
+</center>
+<h2 id="balance-redux">Balance: Redux</h2>
+<p>Before we start, let’s split the <a href="../RedBlackTrees/RedBlackTree.elm">original <code>balance</code> function</a> into pieces, which will set us up for some changes later. The <code>Balance</code> alias is shorthand for the type of <code>balance</code> as before, and the new <code>BalanceMaybe</code> alias describes balancing functions that may or may not perform a transformation:</p>
+<pre><code>type alias Balance comparable =
+  Color -&gt; Tree comparable -&gt; comparable -&gt; Tree comparable -&gt; Tree comparable
+
+type alias BalanceMaybe comparable =
+  Color -&gt; Tree comparable -&gt; comparable -&gt; Tree comparable -&gt; Maybe (Tree comparable)</code></pre>
+<p>The four rotation cases of <code>balance</code> can be factored into a one function …</p>
+<pre><code>balance_B_R_R : BalanceMaybe comparable
+balance_B_R_R color l val r =
+  case (color, l, val, r) of
+    (B, T R (T R a x b) y c, z, d) -&gt; Just &lt;| T R (T B a x b) y (T B c z d)
+    (B, T R a x (T R b y c), z, d) -&gt; Just &lt;| T R (T B a x b) y (T B c z d)
+    (B, a, x, T R (T R b y c) z d) -&gt; Just &lt;| T R (T B a x b) y (T B c z d)
+    (B, a, x, T R b y (T R c z d)) -&gt; Just &lt;| T R (T B a x b) y (T B c z d)
+    _                              -&gt; Nothing</code></pre>
+<p>… and the default case can be handled as follows:</p>
+<pre><code>balance : Balance comparable
+balance c l val r =
+  Maybe.withDefault (T c l val r) (balance_B_R_R c l val r)</code></pre>
+<p>We use the function</p>
+<pre><code>Maybe.withDefault : a -&gt; Maybe a -&gt; Maybe a
+Maybe.withDefault x mx =
+  case mx of
+    Nothing -&gt; x
+    Just x  -&gt; x</code></pre>
+<p>to provide a “default” value in case the <code>balance_B_R_R</code> function does not perform a rotation.</p>
+<p>We will define additional re-balancing functions later. To stitch them together easily (that is, to try one after another until one succeeds), we define a helper function for “adding” (or “or-ing”) <code>Maybe</code> values:</p>
+<pre><code>maybePlus : Maybe a -&gt; Maybe a -&gt; Maybe a
+maybePlus mx my =
+  case mx of
+    Just x  -&gt; mx
+    Nothing -&gt; my</code></pre>
+<h2 id="deletion-algorithm-overview">Deletion Algorithm: Overview</h2>
+<p>There are three phases in the algorithm.</p>
+<h3 id="removal">1. Removal</h3>
+<p>To remove an element <code>y</code>, we first need to traverse the <code>Tree</code>, making left or right turns as dictated by the search order property until we find <code>y</code> or reach an <code>E</code>mpty.</p>
+<h4 id="empty">Empty</h4>
+<p>If we reach <code>E</code>mpty, there is nothing to remove.</p>
+<table cellpadding="10">
+<tr>
+<td>
+</td>
+<td>
+<img width="400px" src="remove_empty.jpg"/>
+</td>
+<td>
+</td>
+</tr>
+</table>
+<h4 id="node-with-0-children">Node with 0 Children</h4>
+<p>If we find <code>y</code> at a node with zero children, there are two cases.</p>
+<table cellpadding="10">
+<tr>
+<td>
+</td>
+<td>
+<img width="400px" src="remove_0_1.jpg"/>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+<img width="400px" src="remove_0_2.jpg"/>
+</td>
+<td>
+<ul>
+<li><p>This is the case where a black empty is created, to track the removal of a black node.</p>
+</td>
+</tr>
+</table></li>
+</ul>
+<h4 id="node-with-1-child">Node with 1 Child</h4>
+<p>Now, let’s say we find <code>y</code> at a node with one child. The following six cases are impossible, the first two because the original tree cannot have red-red violations and the last four because the original tree would not have satisfied the black height property.</p>
+<center>
+<td>
+<img width="700px" src="remove_1_impossible.jpg"/>
+</td>
+</center>
+<p>There are only two cases that can appear. In both cases, we can locally re-establish the red-black tree invariants:</p>
+<center>
+<table cellpadding="10">
+<tr>
+<td>
+<img width="400px" src="remove_1_1.jpg"/>
+</td>
+<td>
+<img width="400px" src="remove_1_2.jpg"/>
+</td>
+</tr>
+</table>
+</center>
+<h4 id="node-with-2-children">Node with 2 Children</h4>
+<p>Lastly, let’s say we find <code>y</code> at a node with two children. We can reduce this case to the removal of a node with zero or one child (specifically, the rightmost node in the left subtree of <code>y</code>):</p>
+<!--
+See [the article][MightBlog] for an example
+(look for the diagram with blue and green nodes).
+-->
+<center>
+<td>
+<img width="600px" src="remove_2.jpg"/>
+</td>
+</center>
+<h3 id="bubbling">2. Bubbling</h3>
+<p>If the removal phase converts a black node to a black empty, the black empty must be bubbled upwards and dealt with. There are six configurations in which a black node could have been transformed to <code>BE</code>.</p>
+<table cellpadding="10">
+<tr>
+<td>
+1a
+</td>
+<td>
+<img width="400px" src="bubble_1a.jpg"/>
+</td>
+<td>
+<ul>
+<li>The black empty becomes empty.</li>
+<li><p>This may introduce a <code>R</code>/<code>R</code> violation, which can be handled with the original <code>balance_B_R_R</code> function.</p>
+</td>
+</tr>
+<tr>
+<td>
+2a
+</td>
+<td>
+<img width="400px" src="bubble_2a.jpg"/>
+</td>
+<td></li>
+<li>The black node becomes double black.</li>
+<li><p>This may introduce a <code>R</code>/<code>R</code> violation below a <code>BB</code> node, which will be handled by a new <code>balance_BB_R_R</code> function.</p>
+</td>
+</tr>
+<tr>
+<td>
+3a
+</td>
+<td>
+<img width="400px" src="bubble_3a.jpg"/>
+</td>
+<td></li>
+<li>The black node becomes double black.</li>
+<li>The red node becomes double red.</li>
+<li><p>A new <code>balance_BB_RR</code> function will eliminate <code>RR</code> nodes, which always appear below <code>BB</code> ones.</p>
+</td>
+</tr>
+</table></li>
+</ul>
+<p>There are three cases analogous to the above:</p>
+<table cellpadding="10">
+<tr>
+<td>
+1b
+</td>
+<td>
+<img width="400px" src="bubble_1b.jpg"/>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+2b
+</td>
+<td>
+<img width="400px" src="bubble_2b.jpg"/>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+3b
+</td>
+<td>
+<img width="400px" src="bubble_3b.jpg"/>
+</td>
+<td>
+</td>
+</tr>
+</table>
+<p>Some transformations above introduce double black nodes that, like black empties, must be bubbled upwards. So, there are six more cases analogous to the ones above.</p>
+<p>In each case above, the transformation re-colored the parent with one more unit of black and re-colored each child with one less. The same strategy will apply to the new cases.</p>
+<!--
+furthermore, increasing E corresponds to BE and decreasing BE corresponds
+to E.
+-->
+<center>
+<table cellpadding="10">
+<tr>
+<td>
+1a’
+</td>
+<td>
+<img width="400px" src="bubble_1a'.jpg"/>
+</td>
+<td>
+<img width="400px" src="bubble_1b'.jpg"/>
+</td>
+<td>
+1b’
+</td>
+</tr>
+<tr>
+<td>
+2a’
+</td>
+<td>
+<img width="400px" src="bubble_2a'.jpg"/>
+</td>
+<td>
+<img width="400px" src="bubble_2b'.jpg"/>
+</td>
+<td>
+2b’
+</td>
+</tr>
+<tr>
+<td>
+3a’
+</td>
+<td>
+<img width="400px" src="bubble_3a'.jpg"/>
+</td>
+<td>
+<img width="400px" src="bubble_3b'.jpg"/>
+</td>
+<td>
+3b’
+</td>
+</tr>
+</table>
+</center>
+<h3 id="rebalancing">3. Rebalancing</h3>
+<p>The last aspect of the algorithm is to implement the two new re-balancing functions to clean up the effects of bubbling.</p>
+<p>Recall the original <code>balance_B_R_R</code> (below, left). The four cases for <code>balance_BB_R_R</code> (below, right) are similar.</p>
+<center>
+<table cellpadding="10">
+<tr>
+<td>
+<img height="420px" src="../RedBlackTrees/balance_B_R_R.jpg">
+</td>
+<td>
+<img height="420px" src="balance_BB_R_R.jpg">
+</td>
+</tr>
+</table>
+</center>
+<p>Because only red nodes turn into double red ones, there are only two cases that <code>balance_BB_RR</code> must handle.</p>
+<center>
+<table cellpadding="10">
+<tr>
+<td>
+<img height="220px" src="balance_BB_RR_1.jpg"/>
+</td>
+<td>
+<img height="220px" src="balance_BB_RR_2.jpg"/>
+</td>
+</tr>
+</table>
+</center>
+<p>In both cases, the original <code>balance_B_R_R</code> must be called (at most once) to handle a new <code>R</code>/<code>R</code> violation that may be introduced.</p>
+<h2 id="deletion-algorithm-code">Deletion Algorithm: Code</h2>
+<p>We will now implement the three steps.</p>
+<h3 id="rebalancing-1">3. Rebalancing</h3>
+<p>The <code>balance_BB_R_R</code> function is quite similar to <code>balance_B_R_R</code>:</p>
+<pre><code>balance_BB_R_R : BalanceMaybe comparable
+balance_BB_R_R color l val r =
+  case (color, l, val, r) of
+    (BB, T R (T R a x b) y c, z, d) -&gt; Just &lt;| T B (T B a x b) y (T B c z d)
+    (BB, T R a x (T R b y c), z, d) -&gt; Just &lt;| T B (T B a x b) y (T B c z d)
+    (BB, a, x, T R (T R b y c) z d) -&gt; Just &lt;| T B (T B a x b) y (T B c z d)
+    (BB, a, x, T R b y (T R c z d)) -&gt; Just &lt;| T B (T B a x b) y (T B c z d)
+    _                               -&gt; Nothing</code></pre>
+<p>One more new balancing function:</p>
+<pre><code>balance_BB_RR : BalanceMaybe comparable
+balance_BB_RR color l val r =
+  case (color, l, val, r) of
+    (BB, T RR (T B a w b) x (T B c y d), z, e) -&gt; Just &lt;| T B (balance B (T R a w b) x c) y (T B d z e)
+    (BB, a, w, T RR (T B b x c) y (T B d z e)) -&gt; Just &lt;| T B (T B a w b) x (balance B c y (T R d z e))
+    _                                          -&gt; Nothing</code></pre>
+<p>Finally, we stitch them all together:</p>
+<pre><code>balance : Balance comparable
+balance c l val r =
+  balance_B_R_R c l val r
+  |&gt; maybePlus (balance_BB_R_R c l val r)
+  |&gt; maybePlus (balance_BB_RR c l val r)
+  |&gt; Maybe.withDefault (T c l val r)</code></pre>
+<h3 id="bubbling-1">2. Bubbling</h3>
+<p>We define two helper functions for incrementing and decrementing a node’s color:</p>
+<pre><code>incr c =
+  case c of
+    BB -&gt; Debug.crash &quot;incr BB&quot;
+    B  -&gt; BB
+    R  -&gt; B
+    RR -&gt; R
+
+decr c =
+  case c of
+    BB -&gt; B
+    B  -&gt; R
+    R  -&gt; RR
+    RR -&gt; Debug.crash &quot;decr RR&quot;</code></pre>
+<p>The 12 cases for our bubbling function are organized according to the three tables above. If we wanted to, we could also factor this function into smaller pieces like we did for <code>balance</code>.</p>
+<pre><code>bubble_BE_and_BB t =
+  case t of
+
+    -- cases 1a, 2a, 3a
+    T c1 (T c2 a x b) y BE -&gt;
+      case (c1, c2) of
+        (R, B) -&gt; balance (incr c1) (T (decr c2) a x b) y E
+        (B, B) -&gt; balance (incr c1) (T (decr c2) a x b) y E
+        (B, R) -&gt; balance (incr c1) (T (decr c2) a x b) y E
+        _      -&gt; t
+
+    -- cases 1b, 2b, 3b
+    T c1 BE y (T c3 c z d) -&gt;
+      case (c1, c3) of
+        (R, B) -&gt; balance (incr c1) E y (T (decr c3) c z d)
+        (B, B) -&gt; balance (incr c1) E y (T (decr c3) c z d)
+        (B, R) -&gt; balance (incr c1) E y (T (decr c3) c z d)
+        _      -&gt; t
+
+    -- cases 1a&#39;, 1b&#39;, 2a&#39;, 2b&#39;, 3a&#39;, 3b&#39;
+    T c1 (T c2 a x b) y (T c3 c z d) -&gt;
+      case (c1, c2, c3) of
+        (R, B, BB) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        (R, BB, B) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        (B, B, BB) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        (B, BB, B) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        (B, R, BB) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        (B, BB, R) -&gt; balance (incr c1) (T (decr c2) a x b) y (T (decr c3) c z d)
+        _          -&gt; t
+
+    _ -&gt; t</code></pre>
+<h3 id="removal-1">1. Removal</h3>
+<p>First, the case for removing a node <code>y</code> with two (non-empty) children:</p>
+<pre><code>rem_2_children c left y right =
+  let remove_max t =
+    case t of
+      T R E x E           -&gt; (x, E)          -- cases 1a/1b
+      T B E x E           -&gt; (x, BE)         -- cases 2a/2b
+      T B (T R E w E) x E -&gt; (x, T B E w E)  -- cases 3a/3b
+
+      T c l v r -&gt;
+        let (x, r2) = remove_max r in
+        (x, T c l v r2)
+
+      _ -&gt; Debug.crash &quot;rem_2_children&quot;
+  in
+  let (x, new_left) = remove_max left in
+  T c new_left x right</code></pre>
+<p>Lastly, the top-level removal procedure. As with <code>insert</code>, a helper function <code>rem</code> does the traversal, and then the last step is to color the resulting root node black; this is okay no matter whether the root is red, black, or double black.</p>
+<pre><code>remove : comparable -&gt; Tree comparable -&gt; Tree comparable
+remove x t =
+  case rem x t of
+    T _ l y r -&gt; T B l y r
+    _         -&gt; Debug.crash &quot;remove E&quot;
+
+rem : comparable -&gt; Tree comparable -&gt; Tree comparable
+rem n t =
+  case t of
+
+    BE -&gt; Debug.crash &quot;rem BE&quot;
+    E  -&gt; E
+
+    -- 0 children
+    T R E x E -&gt; if n == x then BE else t
+    T B E x E -&gt; if n == x then T BB E x E else t
+
+    -- 1 child
+    T B (T R E x E) y E -&gt; if n == y then T B E x E else t
+    T B E y (T R E z E) -&gt; if n == y then T B E z E else t
+    T _ E _ _           -&gt; Debug.crash &quot;rem&quot;
+    T _ _ _  E          -&gt; Debug.crash &quot;rem&quot;
+
+    -- 2 children
+    T c l y r -&gt;
+      if n &lt; y then balance c (bubble_BE_and_BB (rem n l)) y r
+      else if n &gt; y then balance c l y (bubble_BE_and_BB (rem n r))
+      else {- n == y -} rem_2_children c l y r</code></pre>
+<p>Calls to <code>bubble_BE_and_BB</code> may return trees with red roots (via <code>balance_B_R_R</code> via <code>balance</code>), so we propagate these red-red violations upwards and call <code>balance</code> to fix downward violations. <!-- We leave the case for removing a node with two children as an exercise. --> We use <code>Debug.crash</code> for the cases that should never appear.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="optional">Optional</h3>
+<ul>
+<li><a href="http://matt.might.net/articles/red-black-delete/">The Missing Method: Deleting from Okasaki’s Red-Black Trees</a>, by Matt Might</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

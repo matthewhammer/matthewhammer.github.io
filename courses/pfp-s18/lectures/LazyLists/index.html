@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LazyLists</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lazy-lists">Lazy Lists</h1>
+<p><span style="color: red"> NOTE: Updated 5/11 and 5/16. </span></p>
+<p>A common data structure that incorporates laziness is a <em>lazy list</em> (a.k.a. <em>stream</em>). Having worked through laziness in Elm in detail using the previous examples, our discussion of streams here will be brief, mainly focusing on picking the right representation.</p>
+<h3 id="first-attempt-notsolazylist.elmnotsolazylistfile">First Attempt — <span style="text-transform: capitalize;"><a href="NotSoLazyList.elm"><code>NotSoLazyList.elm</code></a></span></h3>
+<p>One possibility for representing <code>LazyList</code>s is the following type.</p>
+<pre><code>type LazyList a
+  = Nil
+  | Cons (Lazy a) (LazyList a)</code></pre>
+<p>This datatype describes lists that are not very lazy, however. We can define a function <code>range : Int -&gt; Int -&gt; LazyList Int</code> and demonstrate how a <code>LazyList</code> of <em>n</em> elements immediately builds <em>n</em> <code>Cons</code> cells.</p>
+<pre><code>&gt; range 1 10
+Cons (Lazy &lt;function&gt;)
+ (Cons (Lazy &lt;function&gt;)
+  (Cons (Lazy &lt;function&gt;)
+   (Cons (Lazy &lt;function&gt;)
+    (Cons (Lazy &lt;function&gt;)
+     (Cons (Lazy &lt;function&gt;)
+      (Cons (Lazy &lt;function&gt;)
+       (Cons (Lazy &lt;function&gt;)
+        (Cons (Lazy &lt;function&gt;)
+         (Cons (Lazy &lt;function&gt;) Nil)))))))))
+    : NotSoLazyList.LazyList Int</code></pre>
+<h3 id="second-attempt-prettylazylist.elmprettylazylistfile">Second Attempt — <span style="text-transform: capitalize;"><a href="PrettyLazyList.elm"><code>PrettyLazyList.elm</code></a></span></h3>
+<p>Another option is the following.</p>
+<pre><code>type LazyList a
+  = Nil
+  | Cons a (Lazy (LazyList a))</code></pre>
+<p>This is pretty good, but notice that a non-<code>Nil</code> list must have its first value evaluated. Consider what the representation of a <code>range</code> of <code>Int</code>s looks like.</p>
+<pre><code>&gt; range 1 10
+Cons 1 (Lazy &lt;function&gt;) : PrettyLazyList.LazyList Int</code></pre>
+<h3 id="final-attempt-lazylist.elmlazylistfile">Final Attempt — <span style="text-transform: capitalize;"><a href="LazyList.elm"><code>LazyList.elm</code></a></span></h3>
+<p>What we really want is for all elements in the list, including the first, to be delayed until needed. We can achieve this as follows.</p>
+<pre><code>type alias LazyList a = Lazy (LazyListCell a)
+
+type LazyListCell a
+  = Nil
+  | Cons a (LazyList a)</code></pre>
+<p><strong>Thought Exercise:</strong> Why didn’t we use a similar strategy in defining the the lazy <code>Nat</code>s before?</p>
+<h3 id="range"><code>range</code></h3>
+<p>The <code>range</code> function is incremental. Notice the <em>trivial</em> suspension <code>lazy (\_ -&gt; Nil)</code>.</p>
+<pre><code>range : Int -&gt; Int -&gt; LazyList Int
+range i j =
+  if i &gt; j
+    then lazy (\_ -&gt; Nil)
+    else lazy (\_ -&gt; Cons i (range (i+1) j))</code></pre>
+<p>The comparison <code>i &gt; j</code> isn’t expensive, so we decided to evaluate it right away rather than delaying it by putting it inside the <code>LazyList.</code></p>
+<p>We can also define a “debug” version to emphasize when list items get forced to evaluate:</p>
+<pre><code>range_ : Int -&gt; Int -&gt; LazyList Int
+range_ i j =
+  if i &gt; j then lazy (\_ -&gt; Nil)
+  else lazy &lt;| \_ -&gt;
+    let _ = Debug.log &quot;force&quot; i in
+    Cons i (range_ (i+1) j)</code></pre>
+<h3 id="tolist"><code>toList</code></h3>
+<p>Converting a stream to a <code>List</code> is monolithic:</p>
+<pre><code>toList : LazyList a -&gt; List a
+toList xs =
+  let foo acc xs = case force xs of
+    Nil        -&gt; acc
+    Cons x xs_ -&gt; foo (x::acc) xs_
+  in
+  List.reverse &lt;| foo [] xs</code></pre>
+<p>Now we can force the incremental <code>range</code> function to do its work:</p>
+<pre><code>&gt; range_ 1 5 |&gt; toList
+force: 1
+force: 2
+force: 3
+force: 4
+force: 5
+[1,2,3,4,5]
+    : List Int</code></pre>
+<h3 id="infinite"><code>infinite</code></h3>
+<p>We can also describe infinite streams.</p>
+<pre><code>infinite : Int -&gt; LazyList Int
+infinite i = lazy (\_ -&gt; Cons i (infinite (i+1)))</code></pre>
+<p>Let’s define a debug version again:</p>
+<pre><code>infinite_ : Int -&gt; LazyList Int
+infinite_ i = lazy &lt;| \_ -&gt;
+  let _ = Debug.log &quot;force&quot; i in
+  Cons i (infinite_ (i+1))</code></pre>
+<p>Not surprisingly, we don’t have enough memory to represent all positive integers:</p>
+<pre><code>&gt; infinite_ 1 |&gt; toList
+FATAL ERROR: JS Allocation failed - process out of memory</code></pre>
+<h3 id="take"><code>take</code></h3>
+<p>The <code>take</code> function is incremental.</p>
+<pre><code>take : Int -&gt; LazyList a -&gt; LazyList a
+take k xs =
+  case (k, force xs) of
+    (0, _)         -&gt; lazy (\_ -&gt; Nil)
+    (_, Nil)       -&gt; lazy (\_ -&gt; Nil)
+    (_, Cons x xs) -&gt; lazy (\_ -&gt; Cons x (take (k-1) xs))</code></pre>
+<p>Incremental function in action:</p>
+<pre><code>&gt; infinite 1
+Lazy &lt;function&gt; : Lazy.Lazy (LazyList.LazyListCell Int)
+
+&gt; infinite 1 |&gt; take 10
+Lazy &lt;function&gt; : Lazy.Lazy (LazyList.LazyListCell Int)
+
+&gt; infinite 1 |&gt; take 10 |&gt; toList
+[1,2,3,4,5,6,7,8,9,10] : List Int</code></pre>
+<p>But there is still some unnecessary work; <code>take</code> forces the input list even if no elements are taken:</p>
+<pre><code>&gt; infinite_ 1 |&gt; take 0 |&gt; toList
+force: 1
+[]
+    : List Int</code></pre>
+<p>A slightly lazier version of <code>take</code>:</p>
+<pre><code>take k xs =
+  if k &lt;= 0 then lazy (\_ -&gt; Nil)
+  else
+    case force xs of
+      Nil        -&gt; lazy (\_ -&gt; Nil)
+      Cons x xs_ -&gt; lazy (\_ -&gt; Cons x (take (k-1) xs_))</code></pre>
+<p>This no longer forces the list when zero elements are taken…</p>
+<pre><code>&gt; infinite_ 1 |&gt; take 0 |&gt; toList
+[] : List Int
+
+&gt; infinite_ 1 |&gt; take 5 |&gt; toList
+force: 1
+force: 2
+force: 3
+force: 4
+force: 5
+[1,2,3,4,5]
+    : List Int</code></pre>
+<p>… but it does force the list even when the first element is really needed:</p>
+<pre><code>&gt; infinite_ 1 |&gt; take 5
+force: 1
+Lazy &lt;function&gt;
+    : LazyList.LazyList Int</code></pre>
+<p>Lazier:</p>
+<pre><code>take k xs =
+  if k &lt;= 0 then lazy (\_ -&gt; Nil)
+  else
+    lazy &lt;| \_ -&gt;
+      case force xs of
+        Nil        -&gt; Nil
+        Cons x xs_ -&gt; Cons x (take (k-1) xs_)</code></pre>
+<p>That’s better:</p>
+<pre><code>&gt; infinite_ 1 |&gt; take 5
+Lazy &lt;function&gt; : LazyList.LazyList Int</code></pre>
+<h3 id="drop"><code>drop</code></h3>
+<p>The <code>drop</code> function is also incremental.</p>
+<pre><code>drop : Int -&gt; LazyList a -&gt; LazyList a
+drop k xs =
+  if k &lt;= 0 then xs
+  else
+    lazy &lt;| \_ -&gt;
+      case force xs of
+        Nil        -&gt; Nil
+        Cons _ xs_ -&gt; force (drop (k-1) xs_)</code></pre>
+<p>For example:</p>
+<pre><code>&gt; infinite 1 |&gt; drop 10 |&gt; take 10 |&gt; toList
+[11,12,13,14,15,16,17,18,19,20] : List Int</code></pre>
+<h3 id="append"><code>append</code></h3>
+<p>Combining two streams using <code>append</code> is incremental.</p>
+<pre><code>append : LazyList a -&gt; LazyList a -&gt; LazyList a
+append xs ys =
+  lazy &lt;| \_ -&gt;
+    case force xs of
+      Nil        -&gt; force ys
+      Cons x xs_ -&gt; Cons x (append xs_ ys)</code></pre>
+<h3 id="reverse"><code>reverse</code></h3>
+<p>Reversing a stream delays forcing the input list…</p>
+<pre><code>reverse : LazyList a -&gt; LazyList a
+reverse xs =
+  lazy &lt;| \_ -&gt;
+    case force xs of
+      Nil        -&gt; Nil
+      Cons x xs_ -&gt; force (append (reverse xs_) (singleton x))
+
+nil         = lazy (\_ -&gt; Nil)
+singleton x = lazy (\_ -&gt; Cons x nil)</code></pre>
+<p>… but once it is forced, the recursion is monolithic:</p>
+<pre><code>&gt; reverse (range_ 1 5) |&gt; toList
+force: 1
+force: 2
+force: 3
+force: 4
+force: 5
+[5,4,3,2,1]
+    : List Int
+
+&gt; eq (range 1 1) (range 1 10000)
+False : Bool
+
+&gt; eq (range 1 1) (reverse (range 1 10000))
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>So, we should make it tail-recursive: <span style="color: red"> (NOTE 5/16: Updated the <code>Cons</code> case below.) </span></p>
+<pre><code>reverse : LazyList a -&gt; LazyList a
+reverse xs =
+  let foo acc xs =
+    case force xs of
+      Nil        -&gt; acc
+      Cons x xs_ -&gt; lazy (\_ -&gt; force (foo (lazy (\_ -&gt; Cons x acc)) xs_))
+   -- Cons x xs_ -&gt; foo (lazy (\_ -&gt; Cons x acc)) xs_
+  in
+  lazy (\_ -&gt; force (foo nil xs))</code></pre>
+<p>Notice that <code>lazy (\_ -&gt; Cons x acc)</code> above is another example of a trivial thunk. The values <code>x</code> and <code>acc</code> have already been evaluated, so building the <code>Cons</code> value does not force any additional computations.</p>
+<h3 id="loose-end-added-516"><span style="color:red">&lt;Loose End&gt; (Added 5/16)</span></h3>
+<p>Hmm, even though this version does not make the recursive call to the helper function <code>foo</code> right away, it still busts the stack…</p>
+<pre><code>&gt; eq (range 1 1) (reverse (range 1 10000))
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>What if we write a tail-recursive function that does not attempt to delay any of the (non-trivial) computation?</p>
+<pre><code>reverse2 : LazyList a -&gt; LazyList a
+reverse2 xs =
+  let foo acc xs =
+    case force xs of
+      Nil        -&gt; acc
+      Cons x xs_ -&gt; foo (lazy (\_ -&gt; Cons x acc)) xs_
+  in
+  foo nil xs</code></pre>
+<p>This works okay here…</p>
+<pre><code>&gt; eq (range 1 1) (reverse2 (range 1 10000))
+False : Bool</code></pre>
+<p>… but there are new issues:</p>
+<pre><code>&gt; range 1 5 |&gt; reverse2 |&gt; toList
+FATAL ERROR: JS Allocation failed - process out of memory
+
+&gt; range 1 5 |&gt; reverse2 |&gt; take 2 |&gt; toList
+[&lt;internal structure&gt;,&lt;internal structure&gt;] : List Int</code></pre>
+<p>Out of memory for such a small list? And “internal structure” values? If we swap out the use of <code>Lazy</code> with hand-rolled thunks instead…</p>
+<pre><code>-- import Lazy exposing (Lazy, lazy, force)
+
+type Lazy a = Lazy (() -&gt; a)
+force (Lazy f) = f ()
+lazy = Lazy</code></pre>
+<p>… we get the same last two behaviors above. So, the issue does not seem to stem from the <code>Lazy</code> library.</p>
+<p>I’m not sure… let’s live with the version above that busts the stack.</p>
+<h3 id="section"><span style="color:red"></Loose End&gt;</span></h3>
+<!--
+That's better:
+
+    > eq (range 1 1) (reverse (range 1 10000))
+    False : Bool
+
+    > reverse (range_ 1 5) |> toList
+    force: 1
+    force: 2
+    force: 3
+    force: 4
+    force: 5
+    [5,4,3,2,1]
+        : List Int
+-->
+<h3 id="eq"><code>eq</code></h3>
+<p>Our final monolithic example function checks for equality, forcing only as many elements as needed when the lists are not equal.</p>
+<pre><code>eq : LazyList a -&gt; LazyList a -&gt; Bool
+eq xs ys =
+  case (force xs, force ys) of
+    (Nil, Nil)               -&gt; True
+    (Cons x xs_, Cons y ys_) -&gt; x == y &amp;&amp; eq xs_ ys_
+    _                        -&gt; False</code></pre>
+<p>Can break out early, but busts the stack:</p>
+<pre><code>&gt; eq (range 0 1000) (range 0 1000)
+True : Bool
+
+&gt; eq (range 0 1000) (range 0 10000)
+False : Bool
+
+&gt; eq (range 0 10000) (range 0 10000)
+RangeError: Maximum call stack size exceeded</code></pre>
+<p>Even though <code>(&amp;&amp;)</code> has <a href="../MoreTrees/index.html">short-circuiting semantics</a>, this syntactic expression eludes the compiler’s support for tail call elimination. So let’s use a conditional instead:</p>
+<pre><code>    ...
+    (Cons x xs_, Cons y ys_) -&gt; if x /= y then False else eq xs_ ys_
+    ...</code></pre>
+<p>That’s better:</p>
+<pre><code>&gt; eq (range 0 10000) (range 0 10000)
+True : Bool
+
+&gt; eq (range 1 10) (range 1 10000000)
+False : Bool
+
+&gt; eq (range 1 10) (range 1 1000000000000000)
+False : Bool
+
+&gt; eq (range 1 10) (infinite 1)
+False : Bool</code></pre>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 4.2</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

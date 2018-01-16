@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Persistence</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="immutability-and-persistence">Immutability and Persistence</h1>
+<p>What makes implementing efficient data structures harder in a purely functional setting compared to an imperative one?</p>
+<ol type="1">
+<li><p>The lack of <em>imperative</em>, or <em>destructive</em>, updates leads to copying possibly large parts of the data structure, and</p></li>
+<li><p>All versions of a data structure are expected to be <em>persistent</em> and can be used even after updates.</p></li>
+</ol>
+<p>Any practical compiler for a purely functional language aggressively looks for opportunities to <em>share</em> the representation of data that is common to multiple data structures. Nevertheless, space overhead is unavoidable when compared to similar data structures in imperative settings. However, as we will see later in the course, with clever design and a dash of lazy evaluation, many efficient data structures can be designed for purely functional settings. But first, some basics…</p>
+<h4 id="lists">Lists</h4>
+<p>The following function updates the element in <code>xs</code> at index <code>i</code>, if one exists, with the value <code>y</code>:</p>
+<pre><code>update : List a -&gt; Int -&gt; a -&gt; List a
+update xs i y =
+  case (xs, i) of
+    ([],      _) -&gt; []
+    (x::rest, 0) -&gt; y :: rest
+    (x::rest, _) -&gt; x :: update rest (i-1) y</code></pre>
+<p>As with the <code>find</code> function that walks through a list one element at a time, so too does <code>update</code> by keeping track of how many more elements <code>i</code> to traverse. The worst-case running time of <code>update</code> is <em>O(n)</em>, where <em>n</em> is the size of <code>xs</code>. Why isn’t the worst-case running time infinite, when <code>i</code> is negative?</p>
+<p>In addition to running times, we also need to pay attention to the space overheads incurred. That is, how much additional data needs to be represented during and after a call to the function.</p>
+<p>In the second case, notice that the output list <code>y :: rest</code> refers to <code>rest</code>, which is identical to the tail of the input list. This is an opportunity for the language implementation, which will of course use pointers and pointer manipulation, to share the underlying representation of <code>rest</code> among the representations of the input and output lists.</p>
+<p>In the third case, on the other hand, there is no such opportunity for sharing; the resulting list is built from <code>x</code> and some unknown list that results from the recursive call to <code>update</code>. As a result, a new memory cell must be allocated for <code>x</code> in the output list and concatenated to the list that results from the recursive call. This case embodies the worst case with respect to space (in addition to time). If <code>update</code> needs to update the last element in the list, then the first <em>n-1</em> elements of <code>xs</code> are copied and cons-ed on to the singleton list <code>y :: []</code>. Thus, <code>update</code> allocates <em>O(n)</em> space in the worst case.</p>
+<p>Another list operation to consider is <code>append</code>:</p>
+<pre><code>append : List a -&gt; List a -&gt; List a
+append xs ys =
+  case xs of
+    []      -&gt; ys
+    x::rest -&gt; x :: append rest ys</code></pre>
+<p>Let <em>n</em> be the size of <code>xs</code> and <em>m</em> be the size of <code>ys</code>. Notice that the elements of <code>ys</code> are not traversed at all (so its number of elements cannot contribute to execution time) and <code>ys</code> is referred to by name in the first case, where the language implementation can share its representation in the input and output lists. Thus, the worst-case time and space cost of <code>append</code> is <em>O(n)</em>.</p>
+<p>In practice, it is common to use a single variable <em>n</em> to describe the combined size of the lists, or the size of the larger list. In either case, the worst-case time and space costs are still <em>O(n)</em>.</p>
+<h4 id="binary-search-trees">Binary Search Trees</h4>
+<p>Recall the <code>findBST</code> function that searches for an element in a binary-search-ordered tree, making a recursive call only in the subtree where the element can possibly appear. The insertion algorithm that preserves the binary search property is similar:</p>
+<pre><code>insert : comparable -&gt; Tree comparable -&gt; Tree comparable
+insert x t = case t of
+  Empty -&gt; Node x Empty Empty
+  Node y left right -&gt;
+    if x == y then      t
+    else if x &lt; y then  Node y (insert x left) right
+    else {- x &gt; y -}    Node y left (insert x right)</code></pre>
+<p>As with <code>findBST</code>, <code>insert</code> runs in <em>O(h)</em> time, where <em>h</em> is the height of the tree. The height <em>h</em> of a tree <em>t</em> is equal to its size <em>n</em> in the worst case, where every <code>Node</code> has only one element (that is, <em>t</em> is a crooked list). And <em>h</em> is <em>O(log(n))</em> in the best case, when <em>t</em> is (roughly) balanced.</p>
+<p>Regarding space, the <code>insert</code> function copies into the output tree all of the node values <code>y</code> that are observed until an <code>Empty</code> is reached. But the <code>right</code> subtree in the second case and the <code>left</code> subtree in the third case are common to both the input and output trees, so the implementation has the opportunity to share this representation. Because at most <em>h</em> nodes are traversed, <code>insert</code> allocates <em>O(h)</em> space in the worst case.</p>
+<p><a href="Persistence.elm"><code>Persistence.elm</code></a> contains the <code>List</code> and <code>Tree</code> examples above.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h4 id="required">Required</h4>
+<ul>
+<li>Okasaki, Chapters 1 and 2</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

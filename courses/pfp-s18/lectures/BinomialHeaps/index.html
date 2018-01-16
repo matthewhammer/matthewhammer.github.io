@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>BinomialHeaps</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="binomial-heaps">Binomial Heaps</h1>
+<p>Our implementation (<a href="BinomialHeap.elm"><code>BinomialHeap.elm</code></a>) exports the same type signatures as the previous implementations of min-heaps.</p>
+<h2 id="binomial-trees-representation-and-invariants">Binomial Trees: Representation and Invariants</h2>
+<pre><code>type alias Rank = Int
+type Tree a = Node Rank a (List (Tree a))
+
+rank (Node r _ _) = r
+root (Node _ x _) = x</code></pre>
+<p><em>Binomial trees</em> of rank <code>r</code> are defined inductively as follows.</p>
+<ul>
+<li><code>Node 0 n []</code> is a binomial tree of rank <code>0</code>.</li>
+<li><code>Node r n ts</code> is a binomial tree of rank <code>r &gt; 0</code> if <code>ts</code> is a list of <code>r</code> binomial trees with rank <code>r-1</code> through <code>0</code>, respectively.</li>
+</ul>
+<p>A binomial tree of rank <code>r</code> has <em>2<sup><code>r</code></sup></em> nodes.</p>
+<h2 id="linking">Linking</h2>
+<p>A binomial tree of rank <code>r + 1</code> is formed by linking together two trees of rank <code>r</code>, making one the leftmost child of the other.</p>
+<p>The <code>link</code> function below links two binomial trees, choosing to keep the smaller of the two elements at the root. Therefore, if <code>t1</code> and <code>t2</code> are both heap-ordered, then so is the result.</p>
+<pre><code>link : Tree comparable -&gt; Tree comparable -&gt; Tree comparable
+link t1 t2 =
+  let
+    (Node r x1 ts1) = t1
+    (Node _ x2 ts2) = t2
+  in
+  if x1 &lt;= x2
+    then Node (r+1) x1 (t2::ts1)
+    else Node (r+1) x2 (t1::ts2)</code></pre>
+<h2 id="binomial-heaps-representation-and-invariants">Binomial Heaps: Representation and Invariants</h2>
+<pre><code>type Heap a = Heap (List (Tree a))</code></pre>
+<p>A <em>binomial heap</em> is list of heap-ordered binomial trees, kept in strictly-increasing order of rank. A binomial heap containing <em>n</em> elements is represented using at most <em>O(log n)</em> binomial trees, analogous to the binary representation of <em>n</em>.</p>
+<h2 id="heap-interface">Heap Interface</h2>
+<pre><code>empty : Heap comparable
+empty = Heap []
+
+isEmpty : Heap comparable -&gt; Bool
+isEmpty h = h == empty</code></pre>
+<p>The <code>findMin</code> function searches for the smallest root among all of the binomial trees, taking <em>O(log n)</em> time.</p>
+<pre><code>findMin : Heap comparable -&gt; Maybe comparable
+findMin (Heap ts) =
+  case List.map root ts of
+    []    -&gt; Nothing
+    n::ns -&gt; Just (List.foldl min n ns)</code></pre>
+<p>See Homework 4 for a way to implement <code>findMin</code> so that it runs in <em>O(1)</em> time, as for other heap implementations.</p>
+<h2 id="insertion">Insertion</h2>
+<p>Inserting into a binomial heap requires pairwise <code>link</code>ing of <code>Trees</code> with equal rank. Think “sum” and “carry” bits as in arithmetic addition. This is analogous to arithmetic addition.</p>
+<pre><code>insert : comparable -&gt; Heap comparable -&gt; Heap comparable
+insert x (Heap ts) = Heap (insertTree (Node 0 x []) ts)
+
+insertTree : Tree comparable -&gt; List (Tree comparable) -&gt; List (Tree comparable)
+insertTree t ts = case ts of
+  []      -&gt; [t]
+  t1::ts1 -&gt;
+    if rank t == rank t1 then insertTree (link t t1) ts1
+    else if rank t &lt; rank t1 then t :: ts
+    else Debug.crash &quot;insertTree: impossible&quot;</code></pre>
+<p>There are <em>O(m)</em> recursive calls to <code>insertTree</code> (where <em>m</em> is the length of <code>ts</code>), each of which performs <em>O(1)</em> work (to <code>link</code> two trees). Thus, <code>insert</code> runs in <em>O(m) = O(log n)</em> time.</p>
+<h2 id="merging">Merging</h2>
+<pre><code>merge : Heap comparable -&gt; Heap comparable -&gt; Heap comparable
+merge (Heap ts1) (Heap ts2) = Heap (merge_ ts1 ts2)
+
+merge_
+    : List (Tree comparable) -&gt; List (Tree comparable)
+   -&gt; List (Tree comparable)
+merge_ ts1 ts2 = case (ts1, ts2) of
+  ([], _) -&gt; ts2
+  (_, []) -&gt; ts1
+  (t1::ts1_rest, t2::ts2_rest) -&gt;
+    if rank t1 &lt; rank t2 then t1 :: merge_ ts1_rest ts2
+    else if rank t2 &lt; rank t1 then t2 :: merge_ ts2_rest ts1
+    else insertTree (link t1 t2) (merge_ ts1_rest ts2_rest)</code></pre>
+<p>To analyze the running time of <code>merge_</code>, let <em>m</em> be the total number of trees in both <code>ts1</code> and <code>ts2</code>. The first two cases run in <em>O(1)</em> time. Each recursive call to <code>merge_</code> decreases <em>m</em> by one (in the third and fourth cases) or two (in the fifth case). The cons operations in the third and fourth cases require <em>O(1)</em> work. In the fifth case, <code>link</code> requires <em>O(1)</em> time, <code>insertTree</code> requires <em>O(m)</em> time, and the recursive call to <code>merge_</code> requires <em>T(m-2)</em> time. There are <em>O(m)</em> recursive calls, each of which requires at most <em>O(m)</em> time. The result is a <em>O(m<sup>2</sup>)</em> running time, which is <em>O(log<sup>2</sup>(n))</em> where <em>n</em> is the total number of elements described in the two heaps being merged.</p>
+<p><a href="http://stackoverflow.com/questions/11462626/should-melding-merging-of-binomial-heaps-be-done-in-one-pass-or-two">A more subtle analysis</a>, however, can be used to argue that the implementation of <code>merge_</code> runs in <em>O(log n)</em> time. The argument requires a more careful accounting of how many times <code>link</code> is called (which is the crux of both <code>insertTree</code> and <code>merge_</code>) based on the analogy between merging lists and adding two numbers in binary representation.</p>
+<p>For our purposes, we will consider an alternative, one-pass definition (also drawn from <a href="http://stackoverflow.com/questions/11462626/should-melding-merging-of-binomial-heaps-be-done-in-one-pass-or-two">this post</a>) that is slightly easier to analyze. Notice the new <code>r == r1 == r2</code> case for <code>merge_wc</code>.</p>
+<pre><code>merge_one_pass
+    : List (Tree comparable) -&gt; List (Tree comparable)
+   -&gt; List (Tree comparable)
+merge_one_pass ts1 ts2 = case (ts1, ts2) of
+  ([], _) -&gt; ts2
+  (_, []) -&gt; ts1
+  (t1::ts1_rest, t2::ts2_rest) -&gt;
+    if rank t1 &lt; rank t2 then t1 :: merge_one_pass ts1_rest ts2
+    else if rank t2 &lt; rank t1 then t2 :: merge_one_pass ts1 ts2_rest
+    else merge_wc (link t1 t2) ts1_rest ts2_rest
+
+merge_wc
+    : Tree comparable -&gt; List (Tree comparable) -&gt; List (Tree comparable)
+   -&gt; List (Tree comparable)
+merge_wc t ts1 ts2 = case (ts1, ts2) of
+  ([], _) -&gt; insertTree t ts2
+  (_, []) -&gt; insertTree t ts1
+  (t1::ts1_rest, t2::ts2_rest) -&gt;
+    let (r,r1,r2) = (rank t, rank t1, rank t2) in
+    if r &lt;  r1 &amp;&amp; r &lt;  r2 then t :: merge_one_pass ts1 ts2
+    else if r &lt;  r1 &amp;&amp; r == r2 then merge_wc (link t t2) ts1 ts2_rest
+    else if r == r1 &amp;&amp; r &lt;  r2 then merge_wc (link t t1) ts1_rest ts2
+    else if r == r1 &amp;&amp; r == r2 then t :: merge_wc (link t1 t2) ts1_rest ts2_rest
+    -- else if r == r1 &amp;&amp; r == r2 then merge_wc (link t t1) ts1_rest ts2
+    else Debug.crash &quot;merge_wc: impossible&quot;</code></pre>
+<p>Let <em>T(m)</em> and <em>S(m)</em> be the running times of <code>merge_one_pass</code> and <code>merge_wc</code>, respectively, where <em>m</em> is an upper bound on the number of trees in both input lists combined. Consider each of the five cases of <code>merge_one_pass</code>:</p>
+<ul>
+<li>Cases 1 and 2: <em>T(m)</em> = <em>O(1)</em></li>
+<li>Cases 3 and 4: <em>T(m)</em> = <em>O(1)</em> + <em>T(m-1)</em></li>
+<li>Case 5: <em>T(m)</em> = <em>O(1)</em> + <em>S(m-2)</em></li>
+</ul>
+<p>Consider each of the six cases of <code>merge_wc</code>:</p>
+<ul>
+<li>Cases 1 and 2: <em>S(m)</em> = <em>O(m)</em></li>
+<li>Case 3: <em>S(m)</em> = <em>O(1)</em> + <em>T(m)</em></li>
+<li>Cases 4, 5, and 6: <em>S(m)</em> = <em>O(1)</em> + <em>S(m-1)</em></li>
+</ul>
+<p>There are at most <em>O(m)</em> mutually recursive calls between the two functions. The last call to <code>merge_wc</code> may take <em>O(m)</em> time, but all other calls take <em>O(1)</em> time. Thus, the worst-case running time for each of these two functions is <em>O(m)+O(m) = O(m)</em> time. That is, <em>O(log n)</em> time.</p>
+<h2 id="deletion">Deletion</h2>
+<pre><code>removeMinTree
+    : List (Tree comparable)
+   -&gt; (Tree comparable, List (Tree comparable))
+removeMinTree ts = case ts of
+  []     -&gt; Debug.crash &quot;removeMinTree: impossible&quot;
+  [t]    -&gt; (t, [])
+  t::ts_rest -&gt;
+    let (minTree, restTrees) = removeMinTree ts_rest in
+    if root t &lt; root minTree
+      then (t, ts_rest)
+      else (minTree, t::restTrees)
+
+deleteMin : Heap comparable -&gt; Maybe (comparable, Heap comparable)
+deleteMin (Heap ts) = case ts of
+  [] -&gt; Nothing
+  _  -&gt; let (Node _ x ts1, ts2) = removeMinTree ts in
+        Just (x, Heap (merge_ (List.reverse ts1) ts2))</code></pre>
+<h2 id="finding-revisited">Finding (Revisited)</h2>
+<p>We can reuse the <code>removeMinTree</code> helper function to reimplement <code>findMin</code>.</p>
+<pre><code>findMin (Heap ts) =
+  case ts of
+    [] -&gt; Nothing
+    _  -&gt; Just (root (Tuple.first (removeMinTree ts)))</code></pre>
+<!--
+## Pre- and Post-Conditions
+
+Let's revisit the `merge` function above and think a bit more carefully
+about why the output heap satisfies the intended invariants.
+
+First, assume we have implemented a couple of predicates that identify
+valid binomial trees and binomial heaps, respectively:
+
+    binTree : Tree -> Bool
+    binHeap : Internal Heap -> Bool
+
+Next, we can define the following function to compute the rank of the
+first binomial tree in a binomial heap, if any:
+
+    rankFst : InternalHeap -> Int
+    rankFst ts =
+      case ts of
+        []   -> Random.maxInt   -- pretend this is "infinity"
+        t::_ -> rank t
+
+Now let's reason about the functions on which `merge` depends,
+namely, `link` and `insertTree`.
+  
+In comments, we'll write some pre-conditions on arguments that we
+expect all callers to satisfy and some post-conditions on the
+return value that our implementation intends to satisfy.
+
+       link :     Tree  ->     Tree  ->      Tree
+    -- link : (t1:Tree) -> (t2:Tree) -> (ret:Tree)
+    --
+    --   @pre: binTree t1 && binTree t2 && rank t1 == rank t2
+    --  @post: binTree ret && rank ret == 1 + rank t1
+
+A first attempt for `insertTree`:
+
+       insertTree :    Tree ->      InternalHeap ->       InternalHeap
+    -- insertTree : (t:Tree) -> (ts:InternalHeap) -> (ret:InternalHeap)
+    --
+    --   @pre: binTree t && binHeap ts && rank t <= rankFst ts
+    --  @post: binHeap ret
+
+And a first attempt for `merge_`:
+
+       merge_ : InternalHeap -> InternalHeap -> InternalHeap
+    -- merge_ : (ts1:InternalHeap) -> (ts2:InternalHeap) -> (ret:InternalHeap)
+    --
+    --   @pre: binHeap ts1 && binHeap ts2
+    --  @post: binHeap ret
+
+In the case where `t1` is cons-ed onto the recursive call to
+`merge_`, the `binHeap ret` predicate follows from
+(i) the post-condition established by the recursive call,
+(ii) the conditional check, and
+(iii) from the relationship between `t1` and `ts1'`
+established by the assumption `binHeap ts1`.
+The case where `t2` is cons-ed onto the recursive call is similar.
+
+Now consider the case when `insertTree` is called with the return value
+from the recursive call to `merge_`. The post-condition of `merge_` above
+is not sufficient to satisfy the pre-conditions required by `insertTree`.
+So, we need to establish a stronger post-condition:
+
+       merge_ : InternalHeap -> InternalHeap -> InternalHeap
+    -- merge_ : (ts1:InternalHeap) -> (ts2:InternalHeap) -> (ret:InternalHeap)
+    --
+    --   @pre: binHeap ts1 && binHeap ts2
+    --  @post: binHeap ret &&
+    --         rankFst ret >= min (rankFst ts1) (rankFst ts2)    (added)
+
+This will satisfy the pre-conditions on `insertTree`, but now the post-condition
+of `insertTree` is not sufficient to satisfy the new, stronger post-condition of
+`merge_`. So, we need to strengthen the post-condition of `insertTree`:
+
+       insertTree :    Tree ->      InternalHeap ->       InternalHeap
+    -- insertTree : (t:Tree) -> (ts:InternalHeap) -> (ret:InternalHeap)
+    --
+    --   @pre: binTree t && binHeap ts && rank t <= rankFst ts
+    --  @post: binHeap ret &&
+    --         rankFst ret >= rank t                (added)
+
+This is the kind of informal reasoning we need to do on paper
+to argue why `merge` does indeed produce a valid binomial heap.
+
+To gain more confidence, we could add defensive, dynamic checks at run-time to
+make sure that we haven't missed something. Or we could use powerful theorem
+provers to make certain that we've written the code correctly. Both of these
+are topics for another day.
+-->
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 3.2</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

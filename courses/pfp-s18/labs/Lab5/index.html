@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab5</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-5-100-points">Lab 5 (100 points)</h1>
+<p>This assignment will provide more practice with red-black trees (from Chapter 3 of the Okasaki textbook) in a purely functional language.</p>
+<h2 id="problem-1-deleting-from-red-black-trees">Problem 1: “Deleting” from Red-Black Trees</h2>
+<p>In this problem, we will simulate deletions from red-black trees without actually removing elements.</p>
+<p>Download the skeleton files <a href="RBMaps.elm"><code>RBMaps.elm</code></a> and <a href="RBTreesDel.elm"><code>RBTreesDel.elm</code></a>, and use them as a starting point for this problem. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions.</p>
+<h4 id="points">5.1.1 (20 points)</h4>
+<p>The first step is to implement a version of red-black trees that store key-value pairs rather than just “single” values of some <code>comparable</code> type. We will call these “red-black maps” because each node maps a key (of some <code>comparable</code> type) to a value (of type <code>v</code>).</p>
+<pre><code>type Color = R | B
+type Map comparable v
+   = E
+   | T Color (Map comparable v) (comparable, v) (Map comparable v)</code></pre>
+<p>Fill in the module <a href="RBMaps.elm"><code>RBMaps.elm</code></a> with the implementation of the following operations:</p>
+<pre><code>empty  : Map comparable v
+get    : comparable -&gt; Map comparable v -&gt; Maybe v
+insert : comparable -&gt; v -&gt; Map comparable v -&gt; Map comparable v</code></pre>
+<p>Note that <code>get</code> is analogous to <code>member</code> for red-black trees, except that now a value is (maybe) returned.</p>
+<p>When called with a key <code>k</code> that is already bound in <code>m</code>, the new map that results from <code>insert k v m</code> should bind <code>k</code> to the new value <code>v</code>. For example:</p>
+<pre><code>&gt; import RBMaps exposing (..)
+
+&gt; m = empty |&gt; insert &quot;a&quot; 1 |&gt; insert &quot;b&quot; 2
+T B E (&quot;a&quot;,1) (T R E (&quot;b&quot;,2) E) : RBMaps.Map String number
+
+&gt; get &quot;b&quot; m
+Just 2 : Maybe.Maybe number
+
+&gt; get &quot;c&quot; m
+Nothing : Maybe.Maybe number
+
+&gt; get &quot;c&quot; (insert &quot;c&quot; 3 m)
+Just 3 : Maybe.Maybe number
+
+&gt; get &quot;b&quot; (insert &quot;b&quot; 3 m)
+Just 3 : Maybe.Maybe number</code></pre>
+<p>As in <a href="../../lectures/RedBlackTrees/RedBlackTree.elm"><code>RedBlackTree.elm</code></a>, your implementation of <code>insert</code> should be defined in terms of two helper functions:</p>
+<pre><code>ins : comparable -&gt; v -&gt; Map comparable v -&gt; Map comparable v
+
+balance : Color
+       -&gt; Map comparable v -&gt; (comparable, v) -&gt; Map comparable v
+       -&gt; Map comparable v</code></pre>
+<p>Finally, implement a <code>toList</code> function that returns the <code>List</code> of the key-value pairs stored in a <code>Map</code>.</p>
+<pre><code>toList : Map comparable v -&gt; List (comparable, v)</code></pre>
+<p>The pairs should be ordered according to an in-order traversal of the tree. For example:</p>
+<pre><code>&gt; toList m
+[(&quot;a&quot;,1),(&quot;b&quot;,2)] : List ( String, number )</code></pre>
+<h4 id="points-1">5.1.2 (20 points)</h4>
+<p>The next step is to define a version of red-black trees, called <a href="RBTreesDel.elm"><code>RBTreesDel.elm</code></a>, that uses an <code>RBMap</code> to associate each element with a <code>Bool</code> that denotes whether the element is in the set. The representation of <code>Set</code>s is as follows.</p>
+<pre><code>type Set comparable = Set (Map.Map comparable Bool)</code></pre>
+<p>By using the <code>Map</code> representation, we will simulate deleting an element by updating its binding to <code>False</code>. In other words, deleting an element of <code>Set</code> does not actually remove it from the <code>Map</code>; rather, it just updates its <code>Bool</code> binding. Deleting an element for which there is no <code>Bool</code> binding should not alter the <code>Set</code>.</p>
+<p>Implement the following operations, so that <code>member</code>, <code>insert</code>, and <code>delete</code> all run in <em>O(log n)</em> time, where <em>n</em> is the size of the underlying <code>Map</code>, that is, the number of elements mapped either to <code>True</code> or <code>False</code>.</p>
+<pre><code>empty  : Set comparable
+member : comparable -&gt; Set comparable -&gt; Bool
+insert : comparable -&gt; Set comparable -&gt; Set comparable
+delete : comparable -&gt; Set comparable -&gt; Set comparable</code></pre>
+<p>Finally, implement <code>size</code> to return a pair of <code>Ints</code>, where the first is the number of elements mapped to <code>True</code> and the second is the number of elements mapped to <code>False</code>. Your implementation should run in <em>O(n)</em> time.</p>
+<pre><code>size : Set comparable -&gt; (Int, Int)</code></pre>
+<p>For sets of values where elements are deleted relatively infrequently, or in situations where deleted elements are likely to be added again later, this approach of simulating deletions may be acceptable.</p>
+<p><br></p>
+<h2 id="problem-2-optimizing-the-balance-function">Problem 2: Optimizing the Balance Function</h2>
+<p>This problem is based on Exercise 3.10 from the Okasaki textbook.</p>
+<p>Download the skeleton files <a href="RBTrees1.elm"><code>RBTrees1.elm</code></a>, <a href="RBTrees2.elm"><code>RBTrees2.elm</code></a>, and <a href="RBTrees3.elm"><code>RBTrees3.elm</code></a>, and use them as a starting point for this problem. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions.</p>
+<p>While you are developing and testing your code, you will need to place <a href="../../lectures/RedBlackTrees/RedBlackTree.elm"><code>RedBlackTree.elm</code></a> in the same directory as your solution (but you will not submit it).</p>
+<p>You may wish to use contracts while you develop and test your solutions. If you do, make sure to “turn them off” in your final submissions.</p>
+<h4 id="points-2">5.2.1 (10 points)</h4>
+<p>In order to reduce unnecessary pattern matches and comparisons, the definition of <code>balance</code> in <a href="../../lectures/RedBlackTrees/RedBlackTree.elm"><code>RedBlackTree.elm</code></a> can be split into different cases depending on whether left or right subtrees are being balanced.</p>
+<p>In <a href="RBTrees1.elm"><code>RBTrees1.elm</code></a>, split <code>balance</code> into two different separate balancing functions</p>
+<pre><code>type alias Balance comparable =
+  Color -&gt; Tree comparable -&gt; comparable -&gt; Tree comparable -&gt; Tree comparable
+
+balanceL : Balance comparable
+balanceR : Balance comparable</code></pre>
+<p>and define <code>ins</code> to use <code>balanceL</code> when recursing into the left subtree and use <code>balanceR</code> when recursing into the right subtree. The functions <code>balanceL</code> and <code>balanceR</code> should each check <em>only</em> those tree configurations that might be observed at run-time.</p>
+<h4 id="points-3">5.2.2 (20 points)</h4>
+<p>The previous optimization can be be extended further, so that the original <code>balance</code> function can be broken into four distinct cases rather than two, each of which performs only those pattern matches and comparisons which might possibly result in a rebalancing.</p>
+<p>The idea is for <code>ins</code> to return, in addition to a new <code>Tree</code>, the next two “steps” in the search path traversed by the recursive call. This information is used by <code>ins</code> to decide which of the four balancing functions to call.</p>
+<p>In <a href="RBTrees2.elm"><code>RBTrees2.elm</code></a>, we define the type <code>Dir</code> to describe <code>Left</code> or <code>Right</code> steps along a search path.</p>
+<pre><code>type Dir = Left | Right</code></pre>
+<p>First, define the following four balance functions to handle each of the four distinct cases from the original <code>balance</code> function.</p>
+<pre><code>balanceLL : Balance comparable
+balanceLR : Balance comparable
+balanceRL : Balance comparable
+balanceRR : Balance comparable</code></pre>
+<p>Next, define <code>chooseBalance</code> to choose from among these <code>Balance</code> functions based on the next two steps (stored in a <code>List</code>) in the search path.</p>
+<pre><code>chooseBalance : List Dir -&gt; Balance comparable</code></pre>
+<p>Finally, define <code>ins</code> to return a <code>List</code> containing (at most) the next two steps traversed in the search path. The results from a previous call should be used to determined which <code>Balance</code> function to call.</p>
+<pre><code>ins : comparable -&gt; Tree comparable -&gt; (Tree comparable, List Dir)</code></pre>
+<p>You will also need to redefine <code>insert</code> in order to make use of this updated signature for <code>ins</code>.</p>
+<h4 id="points-4">5.2.3 (30 points)</h4>
+<p>Although the way we factored the optimization in the previous subproblem is intuitive and readable, it still involves unnecessary pattern matching and comparisons to manipulate the <code>List</code> of previous <code>Dir</code>ections.</p>
+<p>In <a href="RBTrees3.elm"><code>RBTrees3.elm</code></a>, you will refactor your solution from the previous subproblem as follows. Rather than returning a <code>List Dir</code>, define <code>ins</code> to return a <em>pair</em> of <code>Balance</code> functions to choose from.</p>
+<pre><code>ins : comparable
+   -&gt; Tree comparable
+   -&gt; (Tree comparable, (Balance comparable, Balance comparable))</code></pre>
+<p>Your task is to figure out which <code>Balance</code> functions to return in each case, and how to choose from among the <code>Balance</code> functions returned by a recursive call to <code>ins</code>. The net effect should be the same as the previous approach that used a <code>List</code> of <code>Left</code> and <code>Right</code> steps.</p>
+<p><strong>Spoiler Alert:</strong> There are some <a href="#hints">hints</a> below.</p>
+<p><br> <br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Submit the files <a href="RBMaps.elm"><code>RBMaps.elm</code></a>, <a href="RBTreesDel.elm"><code>RBTreesDel.elm</code></a>, <a href="RBTrees1.elm"><code>RBTrees1.elm</code></a>, <a href="RBTrees2.elm"><code>RBTrees2.elm</code></a>, and <a href="RBTrees3.elm"><code>RBTrees3.elm</code></a>, updated with your changes. You are free to modify these files as you wish, as long as you do <strong>not</strong> change any of the required type signatures.</p>
+<p>Your solution will be graded using a combination of automated grading scripts and manual review. It is a good idea for you to design some test cases of your own to exercise more sample behaviors than just the ones provided in the writeup. We also reserve the right to take into account the organization and style of your code when assigning grades.</p>
+<p>If you are not able to finish all parts of the assignment, make sure that all of your submitted files compile successfully. If not, you risk getting <strong>zero points</strong> for the assignment. In particular, for each file <code>Foo.elm</code>, make sure that it can be loaded into the Elm REPL</p>
+<pre><code>% elm-repl
+&gt; import Foo
+&gt;</code></pre>
+<p>and that it can be compiled to a standalone HTML file:</p>
+<pre><code>% elm-make Foo.elm --output=Foo.html
+Successfully generated Foo.html</code></pre>
+<h3 id="submitting-your-code">Submitting Your Code</h3>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% svn mkdir hw5
+% cd hw5
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw5/RBMaps.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw5/RBTreesDel.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw5/RBTrees1.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw5/RBTrees2.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw5/RBTrees3.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add RBMaps.elm
+% svn add RBTreesDel.elm
+% svn add RBTrees1.elm
+% svn add RBTrees2.elm
+% svn add RBTrees3.elm</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw5 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+<p><br> <br></p>
+<p><a name="hints"></a></p>
+<h1 id="hints">Hints</h1>
+<h4 id="section">5.2.3</h4>
+<p>Hint: Look for a pattern that leads to the appropriate <code>Balance</code> function (<em>i.e.</em> <code>balanceLL</code>, <code>balanceLR</code>, <code>balanceRL</code>, or <code>balanceRR</code>) being (a) in the first component of the pair returned by the recursive call when recursing on the left subtree and (b) being in the second component of the pair returned by the recursive call when recursing on the right. It may be helpful to draw out a couple example search paths and the flow of values from recursive calls up to their parent nodes.</p>
+<p>Hint: Notice that the data constructor <code>T</code> has type <code>Balance comparable</code>.</p>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

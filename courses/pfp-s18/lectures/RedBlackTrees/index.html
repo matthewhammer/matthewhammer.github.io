@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RedBlackTrees</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="red-black-trees">Red-Black Trees</h1>
+<p>Red-black trees are binary search ordered trees that are roughly balanced, resulting in <em>O(log n)</em> membership, insertion, and deletion operations. The code for this lecture can be found in <a href="RedBlackTree.elm"><code>RedBlackTree.elm</code></a>.</p>
+<p>All non-empty nodes in a red-black tree are colored red or black. <!--
+All nodes in a red-black tree are colored red or black.
+Empty nodes are considered to be black.
+--></p>
+<pre><code>type Color  = R | B
+type Tree a = E | T Color (Tree a) a (Tree a)</code></pre>
+<!--
+
+    color t = case t of
+      T c _ _ _ -> c
+      E         -> B
+
+-->
+<p>By convention, we will draw square <strong>b</strong>oxes for <strong><code>B</code></strong>lack nodes and <span style="color:red;"><b>r</b></span>ound circles for <span style="color:red;"><b>R</b></span>ed nodes:</p>
+<center>
+<img width="150px" src="legend.jpg"/>
+</td>
+</center>
+<p>We define height and size of trees as before:</p>
+<pre><code>height t = case t of
+  E         -&gt; 0
+  T _ l _ r -&gt; 1 + max (height l) (height r)
+
+size t = case t of
+  E         -&gt; 0
+  T _ l _ r -&gt; 1 + size l + size r</code></pre>
+<h2 id="invariants">Invariants</h2>
+<p>A tree <code>t</code> is a valid red-black tree if:</p>
+<ol start="0" type="1">
+<li><p><code>t</code> satisfies the binary search order property. That is, <code>bso t == True</code>, where <span style="color: red;">(UPDATE 5/24: Fixed the original buggy version.)</span></p>
+<pre><code> bso t =
+   let nonDecreasing xs =
+     case xs of
+       x1::x2::rest -&gt; x1 &lt;= x2 &amp;&amp; nonDecreasing (x2::rest)
+       _            -&gt; True
+   in
+   nonDecreasing (toList t)
+
+ toList : Tree a -&gt; List a
+ toList t = case t of
+   E                -&gt; []
+   T _ left x right -&gt; toList left ++ [x] ++ toList right
+
+
+
+
+ {- BUGGY VERSION: --------------------------------
+
+ bso t = case t of
+   E         -&gt; True
+   T _ l x r -&gt; (l == E || root l &lt; x) &amp;&amp;
+                (r == E || x &lt; root r) &amp;&amp;
+                bso l &amp;&amp; bso r
+
+ root t = case t of
+   T _ _ x _ -&gt; x
+   E         -&gt; Debug.crash &quot;root&quot;
+
+ -------------------------------------------------}</code></pre></li>
+<li><p>No red node in <code>t</code> has a red child. That is, <code>noRedRed t == True</code>, where</p>
+<pre><code> noRedRed t = case t of
+   E                   -&gt; True
+   T R (T R _ _ _) _ _ -&gt; False
+   T R _ _ (T R _ _ _) -&gt; False
+   T _ l _ r           -&gt; noRedRed l &amp;&amp; noRedRed r</code></pre></li>
+<li><p>Every path from the root of <code>t</code> to a leaf contains the same number of black nodes. That is, <code>okBlackHeight t == True</code>, where</p>
+<pre><code> okBlackHeight t = case blackHeight t of
+   Just _  -&gt; True
+   Nothing -&gt; False
+
+ blackHeight t = case t of
+   E -&gt; Just 0
+   T c l _ r -&gt;
+     blackHeight l |&gt; Maybe.andThen (\n -&gt;
+     blackHeight r |&gt; Maybe.andThen (\m -&gt;
+       if n /= m then Nothing
+       else if c == B then Just (1 + n)
+       else Just n
+     ))</code></pre>
+<p>Note that we do not include <code>E</code> nodes in path lengths. When <code>blackHeight t == Just n</code>, we refer to <code>n</code> as the <em>black height</em> of <code>t</code>.</p>
+<pre><code> bh t =
+   case blackHeight t of
+     Just n  -&gt; n
+     Nothing -&gt; Debug.crash &quot;bh&quot;</code></pre></li>
+</ol>
+<!--
+3. The root node of `t` is black. That is, `color t == B`.
+   This requirement is not strictly necessary, but it makes the
+   relationship between height and black height, below, more intuitive.
+-->
+<p>To summarize the invariants:</p>
+<pre><code>rb t = bso t &amp;&amp; noRedRed t &amp;&amp; okBlackHeight t</code></pre>
+<!--
+    rb t = bso t && noRedRed t && okBlackHeight t && root t == B
+-->
+<h4 id="balance-property">Balance Property</h4>
+<p>A consequence of the <code>noRedRed</code> invariant is that the longest path from root to leaf in a red-black tree is one that starts and ends with red and alternates between red and black in between. The shortest path is one that consists only of black nodes. Because of the <code>okBlackHeight</code> invariant, the number of black nodes on the shortest and longest paths is equal. Therefore, the longest path in a red-black tree (i.e. its height) is at most twice the length of the shortest path (i.e. its black height). Specifically:</p>
+<ul>
+<li>[Max Height] <em>∀<code>t</code>. <code>rb t</code> ⇒ <code>height t</code> ≤ <code>(2 * bh t) + 1</code></em></li>
+</ul>
+<p><strong>In-Class Exercise.</strong> Prove:</p>
+<ul>
+<li>[Min Size] <em>∀<code>t</code>. <code>rb t</code> ⇒ <code>size t</code> ≥ <code>2^(bh t) - 1</code></em></li>
+<li>[Balance] <em>∀<code>t</code>. <code>rb t</code> ⇒ <code>height t</code> ≤ <code>2(log(1 + size t)) + 1</code></em></li>
+</ul>
+<p>Thus, the height of a red-black tree <code>t</code> of size <code>n</code> is <em>O(<code>log n</code>)</em>.</p>
+<h2 id="membership">Membership</h2>
+<p>Finding an element in a red-black tree proceeds just like finding an element in an unbalanced binary search tree (<em>cf.</em> <a href="../AsymptoticAnalysis/index.html"><code>findBST</code></a>).</p>
+<pre><code>member : comparable -&gt; Tree comparable -&gt; Bool
+member x t = case t of
+  E -&gt; False
+  T _ l y r -&gt;
+    if x == y then True
+    else if x &lt; y then member x l
+    else member x r</code></pre>
+<h2 id="insertion">Insertion</h2>
+<p>When not worrying about maintaining the balancedness of a binary search tree, the insertion procedure walks down a path in the tree making left and right turns as necessary according to the order property. Then, if the element is found nowhere in the tree, it is added as a leaf.</p>
+<p>A naive approach is simply to add a black node at this final position, satisfying the <code>noRedRed</code> invariant but violating the <code>okBlackHeight</code> property. Another approach is to add a red node at this final position, satisfying the <code>okBlackHeight</code> property but violating <code>noRedRed</code>.</p>
+<p>Instead, the idea behind the insertion algorithm is to color the new node red, possibly resulting in temporary red-red violation, and then to walk back up the search path fixing and propagating any violations upwards. The algorithm maintains the invariant that at most one red-red violation is allowed at a time.</p>
+<p>The <code>ins</code> function walks down the search path, inserts a red node as the new leaf, and walks back up the search path calling <code>balance</code> to fix any temporary red-red violations.</p>
+<pre><code>ins : comparable -&gt; Tree comparable -&gt; Tree comparable
+ins x t =
+  case t of
+    E -&gt; T R E x E
+    T c l y r -&gt;
+      if x == y then t
+      else if x &lt; y then balance c (ins x l) y r
+      else balance c l y (ins x r)</code></pre>
+<p>The <code>balance</code> function looks for red-red violations, which can occur in one of four configurations. In each case, the solution is the same.</p>
+<center>
+<img height="500px" src="balance_B_R_R.jpg"/>
+</center>
+<p>In code:</p>
+<pre><code>balance : Color -&gt; Tree comparable -&gt; comparable -&gt; Tree comparable -&gt; Tree comparable
+balance c l val r =
+  case (c, l, val, r) of
+    (B, T R (T R a x b) y c, z, d) -&gt; T R (T B a x b) y (T B c z d)
+    (B, T R a x (T R b y c), z, d) -&gt; T R (T B a x b) y (T B c z d)
+    (B, a, x, T R (T R b y c) z d) -&gt; T R (T B a x b) y (T B c z d)
+    (B, a, x, T R b y (T R c z d)) -&gt; T R (T B a x b) y (T B c z d)
+    _                              -&gt; T c l val r</code></pre>
+<p>The <code>balance</code> function fixes a red-red violation when processing a black parent node that contains it. If <code>ins</code> propagates a red-red violation all the way up to the root, there is no call to <code>balance</code> to fix it. Therefore, the last step in the insertion algorithm is to color the new root node black (which has no effect if it already was black). Alternatively, we could leave the root red if it has no red child.</p>
+<pre><code>insert : comparable -&gt; Tree comparable -&gt; Tree comparable
+insert x t =
+  case ins x t of
+    T _ l y r -&gt; T B l y r
+    E         -&gt; Debug.crash &quot;insert&quot;</code></pre>
+<h2 id="deletion">Deletion</h2>
+<p>Next time, and in Homework 5…</p>
+<!--
+## Contracts
+
+Although it is great to prove properties of pseudocode on paper,
+it is often useful to dynamically check that the input and output
+behavior of a function is as expected.
+
+One style of such testing is referred to as *design by contract*,
+where a function may be decorated with predicates
+(`Bool`-valued functions) that describe preconditions on arguments
+that callers are expected to satisfy and a postconditions on return
+values that the callee is expected to establish.
+
+For example, the function
+
+    \x -> e
+
+may expect `x` to satisfy some predicate `pArg` and may intend
+`e` to satisfy some predicate `pRet`. If either of these
+expectations is violated at run-time, an error should be
+reported (one that, ideally, can help to identify what part
+of the program is responsible for the failure).
+
+Below is one way to rewrite the above function with such
+pre- and postconditions. Notice how this function is a "wrapper"
+around the original function.
+
+    \x ->
+      let _ = if pArg x then () else Debug.crash "..." in
+      let ret = e in
+        if pRet ret then ret
+        else Debug.crash "..."
+
+The insertion algorithm is a bit tricky, so let's define
+wrapper versions with contracts to gain more confidence that
+the implementation corresponds to the analysis that we have
+done on paper.
+
+We start by defining some helper functions.
+
+    check s p x =
+      if p x
+        then x
+        else Debug.crash (s ++ "\n" ++ toString x)
+    
+    checkArg s = check ("ARG CONTRACT ERROR: " ++ s)
+    checkRet s = check ("RET CONTRACT ERROR: " ++ s)
+
+Now, we'll define versions of the previous functions (labeled with
+a "`'`") that perform contract checks on each invocation. In practice,
+we would probably want to include more descriptive error strings
+to report upon failure.
+
+The overall `insert'` algorithm expects its argument to satisfy
+`rb` and returns an updated tree that satisfies `rb`.
+
+    insert' x t_ =
+      let t = checkArg "[insert']" rb t_ in
+      let ret =
+        let (T _ l y r) = ins' x t in
+           T B l y r
+      in
+      checkRet "[insert']" rb ret
+
+The precondition for `ins'` is interesting, because its argument
+ought to satisfy all the red-black tree invariants except possibly
+that the color of the root is red. The resulting tree has the
+same `blackHeight` as the original tree and might have one
+red-red violation. We'll omit the `bso` post-condition from
+`ins'` (and `balance'` below) to save a bit of run-time overhead.
+
+    ins' x t_ =
+      let t = checkArg "[ins']" rbExceptRoot t_ in
+      let ret =
+        case t of
+          E -> T R E x E
+          T c l y r ->
+            if x == y then t
+            else if x < y then balance' c (ins' x l) y r
+            else balance' c l y (ins' x r)
+      in
+      checkRet "[ins']" (\t' -> bh t' == bh t && maybeOneRedRed t') ret
+
+    rbExceptRoot t = bso t && noRedRed t && okBlackHeight t
+
+    maybeOneRedRed t = oneRedRed t || noRedRed t
+    
+    oneRedRed t = case t of
+      E                             -> False
+      T R (T R _ _ _) _ (T R _ _ _) -> False
+      T R (T R l1 _ r1) _ r         -> noRedRed l1 && noRedRed r1 && noRedRed r
+      T R l _ (T R l2 _ r2)         -> noRedRed l && noRedRed l2 && noRedRed r2
+      T _ l _ r                     -> False
+
+The `balance'` function expects the subtrees `l` and `r` to have
+the same `blackHeight` and that at most of them has a red-red violation.
+The resulting tree has the same `blackHeight` as a tree constructed directly
+with the `T` data constructor rather than via the different rotations.
+If one of the four rebalancing cases is triggered, then the resulting
+tree `t'` has `noRedRed` violation. Otherwise, the (untransformed) tree
+`t'` may have one. Therefore, the postcondition is `maybeOneRedRed`.
+
+    balance' c l val r_ =
+      let r = 
+        checkArg "[balance']" (\arg ->
+          (bh l == bh arg) &&
+          (xor [  noRedRed l &&  noRedRed arg
+               , oneRedRed l &&  noRedRed arg
+               ,  noRedRed l && oneRedRed arg ])) r_
+      in
+      let ret =
+        case (c, l, val, r) of
+          (B, T R (T R a x b) y c, z, d) -> T R (T B a x b) y (T B c z d)
+          (B, T R a x (T R b y c), z, d) -> T R (T B a x b) y (T B c z d)
+          (B, a, x, T R (T R b y c) z d) -> T R (T B a x b) y (T B c z d)
+          (B, a, x, T R b y (T R c z d)) -> T R (T B a x b) y (T B c z d)
+          _                              -> T c l val r
+      in
+      checkRet "[balance']"
+        (\t' -> maybeOneRedRed t' && bh t' == bh (T c l val r)) ret
+
+    xor bs = List.filter (\b -> b == True) bs == [True]
+
+Because pre- and post-conditions are evaluated on every function call
+(and the predicates we have supplied are linear in the size of their
+arguments), these versions run *much* slower than the original versions.
+
+    > t = buildRandom insert 1000        -- fast
+
+    > t' = buildRandom insert' 1000      -- slow
+
+    > t == t'
+    True : Bool
+
+During program development, however, we are often willing to trade
+performance in exchange for help with testing and identifying bugs.
+
+Try introducing some bugs into the implementation in order to trigger
+run-time contract violations.
+
+Some languages, such as [Racket](http://racket-lang.org/), provide
+extensive support for specifying and checking contracts. One might
+imagine an extension to Elm that allowed us to write the following
+more precise function types, which automatically get translated
+to the wrapped functions we have manually written above.
+Notice that, in this syntax, types are "refined" by predicate functions.
+
+    insert' : x:Int -> t:Tree{rb t} -> t':Tree{rb t'}
+    
+    ins' : x:Int -> t:Tree{rb t} -> t':Tree{bh t' == bh t && maybeOneRedRed t'}
+    
+    balance' : c:Color
+            -> l:Tree
+            -> val:Int
+            -> r:Tree{bh l == bh r && xor [ ... ]}
+            -> t':Tree{bh t' == bh (T c l val r) && maybeOneRedRed t'}
+
+Better still would be for the language to *statically* figure out that
+these contracts will *never* violated at run-time and, hence, do not
+need to be checked dynamically.
+
+Alas, in this course, we will not cover *software verification* techniques
+or *dependent type systems* that are able to reason about certain fine-grained
+program invariants like these. But this is a longstanding and very active
+area of research.
+
+## Deletion
+
+Stay tuned...
+
+-->
+<!--
+
+## Busting the Stack
+
+It's great that we have a fast, *O(log n)* insertion algorithm...
+
+    > buildRandom insert 1000        -- fast
+
+    > buildRandom insert 10000
+    RangeError: Maximum call stack size exceeded
+
+... but the logarithm of `10000` is not very large, and yet we crash and burn.
+What gives?
+
+    > randomInts 1000
+    ...
+
+    > randomInts 10000
+    RangeError: Maximum call stack size exceeded
+
+Ah, the issue is with generating a large `List` of random numbers, not
+with our insertion algorithm. Bummer. Stay tuned for more.
+
+-->
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 3.3</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

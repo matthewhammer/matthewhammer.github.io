@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Queues</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="queues">Queues</h1>
+<!--
+TODO have dequeue return element also
+-->
+<p>The <code>Queue</code> abstraction employs a First-In-First-Out (FIFO) policy for removing (“dequeing”) elements.</p>
+<pre><code>enqueue : a -&gt; Queue a -&gt; Queue a
+dequeue : Queue a -&gt; Maybe (Queue a)
+peek    : Queue a -&gt; Maybe a</code></pre>
+<p>Without having <em>O(1)</em> time access to the last element in a <code>List</code>, special care must be taken to provide efficient <code>Queue</code> operations in a purely functional language.</p>
+<h2 id="first-attempt-slowqueue.elmslowqueue">First Attempt — <span style="text-transform: capitalize;"><a href="SlowQueue.elm"><code>SlowQueue.elm</code></a></span></h2>
+<pre><code>type Queue a = Q (List a)
+
+empty : Queue a
+empty = Q []
+
+isEmpty : Queue a -&gt; Bool
+isEmpty q = q == empty
+
+enqueue : a -&gt; Queue a -&gt; Queue a
+enqueue x (Q xs) = Q (xs ++ [x])
+
+dequeue : Queue a -&gt; Maybe (Queue a)
+dequeue (Q xs) = case xs of
+  _::xs_ -&gt; Just (Q xs_)
+  []     -&gt; Nothing
+
+peek : Queue a -&gt; Maybe a
+peek (Q xs) = case xs of
+  x::_   -&gt; Just x
+  []     -&gt; Nothing</code></pre>
+<p>Running times:</p>
+<ul>
+<li><code>enqueue</code> : <em>Θ(n)</em></li>
+<li><code>dequeue</code> : <em>O(1)</em></li>
+<li><code>peek</code> : <em>O(1)</em></li>
+</ul>
+<h2 id="second-attempt-anotherslowqueue.elmanotherslowqueue">Second Attempt — <span style="text-transform: capitalize;"><a href="AnotherSlowQueue.elm"><code>AnotherSlowQueue.elm</code></a></span></h2>
+<pre><code>type Queue a = Front (List a) | Back (List a)
+
+empty : Queue a
+empty = Front []
+
+isEmpty : Queue a -&gt; Bool
+isEmpty q = case q of
+  Front [] -&gt; True
+  Back []  -&gt; True
+  _        -&gt; False
+
+enqueue : a -&gt; Queue a -&gt; Queue a
+enqueue x q = case q of
+  Front xs -&gt; Back (x :: List.reverse xs)
+  Back xs  -&gt; Back (x :: xs)
+
+dequeue : Queue a -&gt; Maybe (Queue a)
+dequeue q = case q of
+  Back []      -&gt; Nothing
+  Back (x::xs) -&gt; Just (Back xs)
+  Front xs     -&gt; dequeue (Back (List.reverse xs))
+
+peek : Queue a -&gt; Maybe a
+peek q = case q of
+  Back []      -&gt; Nothing
+  Back (x::_)  -&gt; Just x
+  Front xs     -&gt; peek (Back (List.reverse xs))</code></pre>
+<p>Running times:</p>
+<ul>
+<li><code>enqueue</code> : <em>O(n)</em></li>
+<li><code>dequeue</code> : <em>O(n)</em></li>
+<li><code>peek</code> : <em>O(n)</em></li>
+</ul>
+<h2 id="third-attempt-mediumqueue.elmmediumqueue">Third Attempt — <span style="text-transform: capitalize;"><a href="MediumQueue.elm"><code>MediumQueue.elm</code></a></span></h2>
+<pre><code>type Queue a = Q { front: List a, back: List a }
+
+mkQ f b = Q {front = f, back = b}
+
+empty : Queue a
+empty = mkQ [] []
+
+isEmpty : Queue a -&gt; Bool
+isEmpty q = q == empty
+
+enqueue : a -&gt; Queue a -&gt; Queue a
+enqueue x (Q {front, back}) = mkQ front (x::back)
+
+dequeue : Queue a -&gt; Maybe (Queue a)
+dequeue (Q {front, back}) = case (front, back) of
+  (_::f_, _) -&gt; Just (mkQ f_ back)
+  ([], [])   -&gt; Nothing
+  ([], _)    -&gt; dequeue (mkQ (List.reverse back) [])
+
+peek : Queue a -&gt; Maybe a
+peek (Q {front, back}) = case (front, back) of
+  (x::_, _)  -&gt; Just x
+  ([], [])   -&gt; Nothing
+  ([], _)    -&gt; peek (mkQ (List.reverse back) [])</code></pre>
+<p>Running times:</p>
+<ul>
+<li><code>enqueue</code> : <em>O(1)</em></li>
+<li><code>dequeue</code> : <em>O(n)</em></li>
+<li><code>peek</code> : <em>O(n)</em></li>
+</ul>
+<h2 id="final-version-fastqueue.elmfastqueue">Final Version — <span style="text-transform: capitalize;"><a href="FastQueue.elm"><code>FastQueue.elm</code></a></span></h2>
+<p>Same representation <code>Q {front, back}</code> as previous version, but with the invariant <code>front = []</code> implies <code>back = []</code>.</p>
+<pre><code>enqueue : a -&gt; Queue a -&gt; Queue a
+enqueue x (Q {front, back}) =
+  case front of
+    [] -&gt; mkQ [x] []
+    _  -&gt; mkQ front (x::back)
+
+dequeue : Queue a -&gt; Maybe (Queue a)
+dequeue (Q {front, back}) =
+  case front of
+    []    -&gt; Nothing
+    _::[] -&gt; Just (mkQ (List.reverse back) [])
+    _::f_ -&gt; Just (mkQ f_ back)
+
+peek : Queue a -&gt; Maybe a
+peek (Q {front, back}) = List.head front</code></pre>
+<p>We can factor out a common pattern from <code>enqueue</code> and <code>dequeue</code>. Notice that arguments <code>f</code> and <code>b</code> to <code>checkFront</code> do <em>not</em> necessarily satisfy the invariant, but the output <code>Queue</code> does.</p>
+<pre><code>checkFront : List a -&gt; List a -&gt; Queue a
+checkFront f b =
+  case f of
+    [] -&gt; mkQ (List.reverse b) []
+    _  -&gt; mkQ f b
+
+enqueue_ : a -&gt; Queue a -&gt; Queue a
+enqueue_ x (Q {front, back}) = checkFront front (x::back)
+
+dequeue_ : Queue a -&gt; Maybe (Queue a)
+dequeue_ (Q {front, back}) =
+  case front of
+    []    -&gt; Nothing
+    _::f_ -&gt; Just (checkFront f_ back)</code></pre>
+<p>Running times:</p>
+<ul>
+<li><code>enqueue</code> : <em>O(1)</em></li>
+<li><code>dequeue</code> : <em>O(n)</em></li>
+<li><code>peek</code> : <em>O(1)</em></li>
+</ul>
+<p>The worst-case bound for <code>dequeue</code> does not tell the whole story, however, since it often runs in <em>O(1)</em> time and only occasionally runs in <em>O(n)</em> time. Using amortized asymptotic analysis, we will be able to argue that <code>dequeue</code> runs in <em>O(1)</em> on average.</p>
+<p><br></p>
+<h1 id="reading">Reading</h1>
+<h3 id="required">Required</h3>
+<ul>
+<li>Okasaki, Chapter 5.2</li>
+</ul>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>

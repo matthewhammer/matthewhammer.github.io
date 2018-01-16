@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lab6</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="../../static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="../../static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP, Spring 2018</h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="../../index.html">Home</a></li>
+          <li><a href="../../schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="../../showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="../../courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <div class="content_wide">
+      <div class="post0">
+<h1 id="lab-6-100-points">Lab 6 (100 points)</h1>
+<p>Download the skeleton files <a href="LazyListPlus.elm"><code>LazyListPlus.elm</code></a> and <a href="Deque.elm"><code>Deque.elm</code></a>, and use them as a starting point for the following problems. Look for all occurrences of <code>TODO</code> in comments, which point out where you should implement your solutions. Once you are done, follow the submission instructions below.</p>
+<h2 id="problem-1-lazy-lists">Problem 1: Lazy Lists</h2>
+<p>In this problem, you will implement <code>LazyList</code> analogues of a couple more standard <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/List"><code>List</code></a> functions. You will need to download <a href="../../lectures/LazyLists/LazyList.elm"><code>LazyList.elm</code></a> and <a href="../../lectures/LazyLists/elm-package.json"><code>elm-package.json</code></a> and place them in the directory where you are working.</p>
+<h4 id="points">6.1.1 (50 points)</h4>
+<p>First, implement the following functions.</p>
+<pre><code>map    : (a -&gt; b) -&gt; LazyList a -&gt; LazyList b
+concat : LazyList (LazyList a) -&gt; LazyList a</code></pre>
+<p>Your implementations should be as lazy as possible. In particular, for any <code>f</code> and <code>xs</code>, the expression <code>map f xs</code> should evaluate very quickly even if, for example, <code>head (map f xs)</code> does not.</p>
+<p>Next, use <code>map</code> and <code>concat</code> to define the following.</p>
+<pre><code>concatMap : (a -&gt; LazyList b) -&gt; LazyList a -&gt; LazyList b</code></pre>
+<p>Finally, implement the following function that computes the Cartesian product of two <code>LazyList</code>s and transforms each its pairs using the input function.</p>
+<pre><code>cartProdWith : (a -&gt; b -&gt; c) -&gt; LazyList a -&gt; LazyList b -&gt; LazyList c</code></pre>
+<h2 id="problem-2-deques">Problem 2: Deques</h2>
+<h4 id="okasaki-exercise-5.1a-50-points">6.2.1 — Okasaki, Exercise 5.1a (50 points)</h4>
+<p>A <em>double-ended queue</em>, or <em>deque</em> (pronounced “deck”), allows adding and removing elements from both ends of the data structure. In this problem, you will adapt the <a href="../../lectures/Queues/FastQueue.elm"><code>FastQueue</code></a> strategy from Chapter 5 to implement the <code>Deque</code> abstraction. In particular, use the representation</p>
+<pre><code>type Deque a = D { front : List a, back : List a }</code></pre>
+<p>and maintain the invariant that <code>front</code> and <code>back</code> are both non-empty whenever there are at least two elements in the <code>Deque</code>.</p>
+<p>Implement the following three operations (which we referred to in the <code>Queue</code> context as <code>enqueue</code>, <code>dequeue</code>, and <code>peek</code>, respectively):</p>
+<pre><code>addBack     : a -&gt; Deque a -&gt; Deque a
+removeFront : Deque a -&gt; Maybe (Deque a)
+peekFront   : Deque a -&gt; Maybe a</code></pre>
+<p>In addition, implement the following three analogous operators:</p>
+<pre><code>addFront    : a -&gt; Deque a -&gt; Deque a
+removeBack  : Deque a -&gt; Maybe (Deque a)
+peekBack    : Deque a -&gt; Maybe a</code></pre>
+<p>Implement and use a helper function</p>
+<pre><code>check : List a -&gt; List a -&gt; Deque a</code></pre>
+<p>that enforces the invariant by checking whether either list is empty and, if so, splitting the other in half and reversing one of the halves.</p>
+<p>All operations should run in <em>O(1)</em> amortized time assuming, as in Chapter 5, that values are not used persistently (but you are not asked to prove it).</p>
+<p><strong>Hint</strong>: The frontmost and backmost element of a <code>Deque</code> may be the same.</p>
+<p><br></p>
+<h1 id="grading-and-submission-instructions">Grading and Submission Instructions</h1>
+<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
+<pre><code>% svn mkdir hw6
+% cd hw6
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw6/Deque.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw6/LazyListPlus.elm
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw6/elm-package.json
+% wget http://www.classes.cs.uchicago.edu/current/22300-1/lectures/LazyLists/LazyList.elm</code></pre>
+<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
+<pre><code>% svn add LazyListPlus.elm
+% svn add Deque.elm</code></pre>
+<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
+<pre><code>% svn commit -m &quot;hw6 submission&quot;</code></pre>
+<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
+<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
+<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
+      </div>
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>
