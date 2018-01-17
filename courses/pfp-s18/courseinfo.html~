@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>PFP [course info]</title>
+  <!-- BEGIN LOADED_SRC src/head.src.html -->
+  <meta name="description" content="" />
+  <meta name="keywords" content="" />
+  <!--
+  <link rel="shortcut icon" type="image/png" href="./static/images/OkaPlusElm.png">
+  -->
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="./static/css/arvo.css" />
+  <link rel="stylesheet" type="text/css" href="./static/css/style.css" />
+  <!-- END LOADED_SRC src/head.src.html -->
+</head>
+<body>
+  <div id="wrapper">
+
+    <div id="header">
+      <div id="logo">
+        <h2>PFP :: course info (listed as CSCI 4830-016) </h2>
+      </div>
+      <!-- BEGIN LOADED_SRC src/menu.src.html -->
+      <div id="menu">
+        <ul>
+          <li class="first current_page_item"><a href="./index.html">Home</a></li>
+          <li><a href="./schedule.html">Schedule</a></li>
+      <!--
+          <li><a href="./showcase/index.html">Showcase</a></li>
+      -->
+          <li><a href="./courseinfo.html">Course Info</a></li>
+          <li class="last"><a href="https://piazza.com/class/jcgi6oe2qya6hv" target="_blank">Piazza</a></li>
+        </ul>
+        <br class="clearfix" />
+      </div>
+      <!-- END LOADED_SRC src/menu.src.html -->
+    </div>
+
+    <div id="page">
+
+      <h3 style="margin-top:0em;"><a href="syllabus-statements.html">Syllabus Statements</a></h3>
+
+      <div class="content">
+      <div class="post1">
+        <h3 style="margin-top:0em;">Staff and Office Hours</h3>
+
+<table cellpadding=0 cellspacing=10 style="text-align: center;">
+  <tr>
+    <th>Instructor</th>
+    <th colspan=3>Teaching Assistants and Graders</th>
+  </tr>
+  <tr>
+    <td width=130>
+      <a href="http://matthewhammer.org">
+      <img width=100 src="http://matthewhammer.org/MatthewHammer.jpg"/>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b><a href="mailto:matthew.hammer+PFP@colorado.edu">Matthew<br>Hammer</a></b>
+    </td>
+  </tr>
+  <tr>
+    <td>Tue<br>14:30&ndash;15:20<br>ECCS 112</td>
+    <td>Wed<br>9:30&ndash;10:30<br>ECCS 112</td>
+    <td colspan=2></td>
+  </tr>
+</table>
+
+      </div>
+      </div>
+
+      <div class="content_next">
+      <div class="post1">
+        <h3 style="margin-top:0em;">Course Communication</h3>
+
+<p>
+We will use <a href="https://piazza.com/class/jcgi6oe2qya6hv">Piazza</a>
+for announcements and student Q&As.
+Make sure to sign up and check often!
+If you have a question, then almost certainly other students do, too.
+</p>
+</p>
+For individual issues, you can contact the instructor and/or TAs via email.
+If you do, please say or enter the string "[PFP]" in the subject line
+to help direct your call.
+<p>
+
+      </div>
+      </div>
+
+      <div class="content_next">
+      <div class="post1">
+        <h3 style="margin-top:0em;">Grading</h3>
+
+<p>
+Grades will be based on programming assignments, written exams, and a
+course project according to the following weights:
+
+<ul>
+  <li><tt>40%</tt> : Labs (~5-7)</li>
+  <li><tt>30%</tt> : Course Project</li>
+  <li><tt>30%</tt> : Exams (2)</li>
+</ul>
+</p>
+
+<h4>Labs</h4>
+
+Programming assignments will be released approximately every week
+or two and will be your primary vehicle for digging deeply into the
+course material.
+
+<h4>Late Days</h4>
+
+<p>
+You may not turn in your work late.</br>
+(Late assignments recieve zero credit.)
+</p>
+
+<h4>Course Project</h4>
+
+<p>
+The course project will be your opportunity to design and implement
+something of your choice. You will find more details
+<a href="./assignments/project/index.html">here</a>,
+but generally the idea is to work
+in groups of one or two and build something fun and interesting in Elm
+that makes use of web programming and data structures in some way. Set your
+aims high, to contribute an interesting project to the Elm community!
+</p>
+<p>
+The project will be split into several milestones, culminating in
+demos at the end of the quarter.
+</p>
+
+<h4>Exams</h4>
+
+<p>
+We will have two in-class written exams, each of which will
+cover roughly half of the course material. The exams will be
+equally weighted.
+</p>
+
+      </div>
+      </div>
+
+      <div class="content_next">
+      <div class="post1">
+        <h3 style="margin-top:0em;">Textbook and Other Resources</h3>
+
+<img height=150px align="left" src="./static/images/Oka.jpg"/ style="padding-right: 20px">
+
+<p>
+The required textbook for the course is
+Chris Okasaki's
+<a
+href="http://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki/dp/0521663504">Purely
+Functional Data Structures</a>, which is a time-honored classic.
+Although we will not cover the book in its entirety this quarter,
+it will serve as a trusty reference on your bookshelf going forward...
+assuming you still have a physical bookshelf!
+</p>
+<p>
+In addition to the textbook, we will use various other electronic
+references that will be linked to in the lecture notes. Because we
+will be doing our programming in <a href="http://elm-lang.org/">Elm</a>,
+the language documentation &mdash; including the
+<a href="https://guide.elm-lang.org/">Elm Guide</a>,
+<a href="http://elm-lang.org/docs/syntax">Syntax Reference</a>,
+<a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/">Core Library Documentation</a>,
+and <a href="http://elm-lang.org/examples">Examples</a>
+pages &mdash; will become good friends of yours before long.
+</p>
+
+      </div>
+      </div>
+
+      <div class="content_next">
+      <div class="post1">
+        <h3 style="margin-top:0em;">Academic Integrity</h3>
+	
+	
+      </div>
+      </div>
+
+      <div id="sidebar">
+        <h3 style="margin-top:0em;">meetings</h3>
+        Mondays/Fridays<br>1:30&ndash;2:50pm, Ryerson 276
+      </div>
+
+      <br class="clearfix" />
+
+    </div> <!-- end id="page" -->
+
+  </div> <!-- end id="wrapper" -->
+
+  <!-- BEGIN LOADED_SRC src/footer.src.html -->
+  <div id="footer">
+    &copy; 2018 matthew hammer; original materials by ravi chugh, adapted (stolen) with express permission.
+    </br>
+    &copy; 2015 &ndash; 2017 ravi chugh |
+  	stylesheet based on
+    <a href="http://www.freecsstemplates.org/preview/resolved/">Resolved</a>
+  </div>
+  <!-- END LOADED_SRC src/footer.src.html -->
+
+</body>
+</html>
