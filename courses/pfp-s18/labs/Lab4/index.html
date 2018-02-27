@@ -140,25 +140,6 @@ makePass   : List (Heap comparable) -&gt; List (Heap comparable)</code></pre>
 <p>and that it can be compiled to a standalone HTML file:</p>
 <pre><code>% elm-make Foo.elm --output=Foo.html
 Successfully generated Foo.html</code></pre>
-<h3 id="submitting-your-code">Submitting Your Code</h3>
-<p>Start by navigating to the folder where you checked out your repo. Next, create a subfolder for this assignment and populate it with the skeleton code:</p>
-<pre><code>% svn mkdir hw4
-% cd hw4
-% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/THeaps.elm
-% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/LHeaps.elm
-% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/BHeaps.elm
-% wget http://www.classes.cs.uchicago.edu/current/22300-1/assignments/hw4/ExplicitMin.elm</code></pre>
-<p>If <code>wget</code> or a similar tool (such as <code>curl</code>) is not available on your machine, download and save the skeleton files provided above in some other way. Then add <em>only</em> these files to your repo:</p>
-<pre><code>% svn add THeaps.elm
-% svn add LHeaps.elm
-% svn add BHeaps.elm
-% svn add ExplicitMin.elm</code></pre>
-<p>Make sure you choose the <em>same exact</em> names for directories and files that you create. Once you are ready to submit:</p>
-<pre><code>% svn commit -m &quot;hw4 submission&quot;</code></pre>
-<p>You can resubmit as many times as you wish, and we will grade the most recent versions submitted. Late days, if any, will be computed based on your submission times.</p>
-<p>As a sanity check, you can visit the Web-based frontend for your repository to make sure that you have submitted your files as intended:</p>
-<pre><code>https://phoenixforge.cs.uchicago.edu/projects/USER-cs223-spr-17/repository</code></pre>
-<p><br> <br></p>
 <p><a name="hints"></a></p>
 <h1 id="hints">Hints</h1>
 <h4 id="and-4.0.3">4.0.2 and 4.0.3</h4>
