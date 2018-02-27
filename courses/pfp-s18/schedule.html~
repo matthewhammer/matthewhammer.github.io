@@ -64,8 +64,8 @@
 </ul>
 <h3 id="week-5">Week 5:</h3>
 <ul>
-<li>[Tu, Feb 13] Lab 3 Discussion</li>
-<li>[Th, Feb 15] Lab 3 Discussion</li>
+<li>[Tu, Feb 13] <a href="lectures/MoreRandomElm/index.html">More Random Elm</a></li>
+<li>[Th, Feb 14 ] </li>
 </ul>
 <h3 id="week-6">Week 6:</h3>
 <ul>
@@ -75,12 +75,14 @@
 <h3 id="week-7">Week 7:</h3>
 <ul>
 <li>[Tu, Feb 27 ] <a href="lectures/TailRecursion/index.html">Tail Recursion</a>, <a href="lectures/Laziness/index.html">Laziness</a> and <a href="lectures/LazyLists/index.html">Lazy Lists</a></li>
-<li>[Th, Mar 1 ] Guest Lecture: <a href="http://kyleheadley.github.io/PHDWebsite/">Kyle Headley</a>, <a href="https://arxiv.org/abs/1608.06009">The Random Access Zipper</a></li>
+<li>[Th, Mar 1 ] Guest Lecture: 
+  <a href="http://kyleheadley.github.io/PHDWebsite/">Kyle Headley</a>,
+  <a href="https://arxiv.org/abs/1608.06009">The Random Access Zipper</a>
 </ul>
 <h3 id="week-8">Week 8:</h3>
 <ul>
-<li>[Tu, Mar 6] <a href="lectures/Queues/index.html">Queues</a> and <a href="lectures/AmortizedAnalysis/index.html">Amortized Analysis</a> <a href="lectures/LazyQueues/index.html">Lazy Queues</a> and <a href="lectures/RealTimeQueues/index.html">Real-Time Queues</a></li>
-<li>[Th, Mar 8]</li>
+<li>[Tu, Mar 6] <a href="lectures/Queues/index.html">Queues</a> and <a href="lectures/AmortizedAnalysis/index.html">Amortized Analysis</a></li>
+<li>[Th, Mar 8] <a href="lectures/LazyQueues/index.html">Lazy Queues</a> and <a href="lectures/RealTimeQueues/index.html">Real-Time Queues</a></li>
 </ul>
 <h3 id="week-9">Week 9:</h3>
 <ul>
@@ -89,6 +91,7 @@
 </ul>
 <h3 id="week-10">Week 10:</h3>
 <ul>
+<!-- <a href="lectures/TestingAndBeyond/index.html">Testing and Beyond</a></li> -->
 <li>[Th, Mar 20 ] TBA</li>
 <li>[Th, Mar 22 ] TBA</li>
 </ul>
@@ -100,7 +103,7 @@
 <p>TBA</p>
 <!--
 
-[Testing and Beyond](lectures/TestingAndBeyond/index.html)
+
 
  Analysis ?
 
@@ -130,8 +133,8 @@
 <li><a href="labs/Lab1/index.html">Lab 1: Functional Programming Warmup</a> — Due: Thu, Jan 25</li>
 <li><a href="labs/Lab2/index.html">Lab 2: Estimating Pi</a> — Due: Thu, Feb 3</li>
 <li><a href="labs/Lab3/index.html">Lab 3: Lists and Trees</a> — Due: Thu, Feb 17</li>
-<li><a href="labs/Lab4/index.html">Lab 4: Heaps</a> — Due: Thu, Mar 7</li>
-<li><a href="labs/Lab5/index.html">Lab 5: Red-Black Trees</a> — Due: Thu, Mar 17</li>
+<li><a href="labs/Lab4/index.html">Lab 4: Heaps</a> — Due: Thu, Mar 3</li>
+<li><a href="labs/Lab5/index.html">Lab 5: Red-Black Trees</a> — Due: Thu, Mar 10</li>
 <li><a href="labs/Lab6/index.html">Lab 6: Lazy Lists and Deques</a> — Due: Thu, Mar 24</li>
 </ul>
 <h4 id="ballots">Ballots</h4>
