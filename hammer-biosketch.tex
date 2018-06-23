@@ -1,0 +1,489 @@
+\documentclass[letterpaper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Packages
+%
+\usepackage{array}      % pkg tools - additional column types
+\usepackage{tabularx}   % pkg tools - equal width columns
+  \tracingtabularx        % debugging
+\usepackage{calc}       % pkg tools - infix arithmetic
+\usepackage{fancyhdr}   % pkg fancyhdr - for headers and footers
+\usepackage{lastpage}   % pkg lastpage - last page number
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Macros
+%
+
+\newcommand{\IGNORE}[1]{}
+
+%\newcommand\section{\@startsection {section}{1}{\z@}%
+%                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+%                                   {2.3ex \@plus.2ex}%
+%                                   {\normalfont\Large\bfseries}}
+%\newcommand\subsection{\@startsection{subsection}{2}{\z@}%
+%                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+%                                     {1.5ex \@plus .2ex}%
+%                                     {\normalfont\large\bfseries}}
+%\newcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+%                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+%                                     {1.5ex \@plus .2ex}%
+%                                     {\normalfont\normalsize\bfseries}}
+%\newcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+%                                    {3.25ex \@plus1ex \@minus.2ex}%
+%                                    {-1em}%
+%                                    {\normalfont\normalsize\bfseries}}
+%\newcommand\subparagraph{\@startsection{subparagraph}{5}{\parindent}%
+%                                       {3.25ex \@plus1ex \@minus .2ex}%
+%                                       {-1em}%
+%                                      {\normalfont\normalsize\bfseries}}
+
+% Sectioning
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+                                      {\z@}%
+                                      {\z@}%
+                                      {\normalfont}}
+\usepackage{hyperref}
+
+\newcommand{\cvsection}[1]{%
+\par%
+\vspace{3.25ex\@plus 1ex \@minus .2ex}%
+\noindent{\normalfont\large\scshape%
+\phantomsection                    % set section anchor
+\addcontentsline{toc}{section}{#1} % add to bookmark
+\colorbox[gray]{0.9}{\parbox{\linewidth-8pt}{#1}}}
+\vspace{1.5ex \@plus .2ex}%
+\par\noindent\ignorespaces%
+}
+\makeatother
+%\newcommand{\cvsection}[1]{%
+%\section*{#1}
+%}
+
+% Indention
+\newlength{\cvindent}
+\setlength{\cvindent}{0.75\parindent}
+
+% Layout
+\newcommand{\cvname}[2]{%
+\noindent{\normalfont\Large\sffamily\bfseries #1}%
+\hfill%
+{\normalfont\large #2}%
+\par\noindent\rule{\linewidth}{1pt}
+}
+
+\newenvironment{cvlines}{
+ %\begin{tabular}[t]{@{}p{\linewidth}@{}}
+ \hspace{\cvindent}\begin{tabular}[t]{@{}>{\setlength{\parindent}{-\cvindent}}p{\linewidth-\cvindent}@{}}
+}{
+ \end{tabular}
+}
+
+\newenvironment{cvlist}[1][]{
+ \setlength{\leftmargini}{\cvindent}
+ \setlength{\leftmarginii}{\cvindent}
+ \setlength{\leftmarginiii}{\cvindent}
+ \setlength{\leftmarginiv}{\cvindent}
+ \begin{list}{}{
+  \setlength{\topsep}{0pt}
+  \setlength{\partopsep}{0pt}
+  #1
+ }
+}{
+ \end{list}
+}
+
+\newenvironment{cvcompactlist}{
+  \begin{cvlist}[
+   \setlength{\itemsep}{0pt}
+   \setlength{\parsep}{0pt}
+  ]
+}{
+  \end{cvlist}
+}
+
+\newenvironment{cvhanginglist}{
+ \setlength{\leftmargini}{2\cvindent}
+ \setlength{\leftmarginii}{2\cvindent}
+ \setlength{\leftmarginiii}{2\cvindent}
+ \setlength{\leftmarginiv}{2\cvindent}
+ \begin{list}{}{
+  \setlength{\topsep}{0pt}
+  \setlength{\partopsep}{0pt}
+  \setlength{\itemindent}{-\cvindent}
+ }
+}{
+ \end{list}
+}
+
+\newcommand{\unindent}{\hspace*{-\cvindent}}
+
+% Row Separation
+\newlength{\rowsep}
+\setlength{\rowsep}{\itemsep+\parsep}
+
+% Formatting
+\newcommand{\finstitute}[1]{\textbf{#1}}
+\newcommand{\fthesis}[1]{\emph{#1}}
+%\newcommand{\flocation}[2]{\makebox[0pt][l]{#1} \hspace{0.45\bodywidth} #2}
+\newcommand{\flocation}[2]{#1 (#2)}
+\newcommand{\fmytitle}[1]{\textbf{#1}}
+\newcommand{\fproj}[1]{\textbf{#1}}
+\newcommand{\fjoint}[1]{(#1)}
+\newcommand{\fconf}[1]{In \emph{Proceedings of the #1}}
+\newcommand{\ftalk}[1]{#1}
+\newcommand{\fme}[1]{#1}
+\newcommand{\faward}[1]{\textbf{#1}}
+\newcommand{\ftitle}[1]{\textit{#1}}
+\newcommand{\factivity}[1]{\emph{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Formatting
+%
+
+%\usepackage{palatino}
+
+% margins
+\setlength{\topmargin}{-0.2in}       % top: 1 in + margin
+\setlength{\oddsidemargin}{-0.2in}   % left: 1 in + margin
+\setlength{\evensidemargin}{-0.2in}  % left: 1 in + margin
+\setlength{\textwidth}{6.9in}
+\setlength{\textheight}{9.4in}
+\setlength{\headheight}{0pt}
+\setlength{\headsep}{0pt}
+
+% indention
+\setlength{\parindent}{\cvindent}
+
+\begin{document}
+
+% set bodywidth
+\newlength{\bodywidth}
+\setlength{\bodywidth}{\linewidth-\cvindent}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Header
+%
+
+%%% PDF meta-data
+\ifx\pdfoutput\undefined%
+\else%
+  \hypersetup{pdftitle={Matthew A. Hammer: Biographical Sketch}}%
+  \hypersetup{pdfauthor={Matthew A. Hammer}}%
+  \hypersetup{pdfsubject={Biographical Sketch}}%
+\fi%
+
+
+%%% Name
+\cvname{Matthew A. Hammer}{Biographical Sketch}
+
+
+%%% Contact Information
+\begin{tabularx}{\bodywidth}{@{}XX@{}}
+\begin{cvlines}
+Matthew.Hammer@colorado.edu \\
+http://matthewhammer.org \\
++1 (970) 231-9213 (phone) \\
++1 (303) 492-2844 (fax)
+\end{cvlines}
+&
+\begin{cvlines}
+Department of Computer Science \\
+University of Colorado, Boulder \\
+430 UCB \\
+Boulder, CO 80309-0430 USA
+\end{cvlines}
+\end{tabularx}
+
+%%% Running Footer
+%\pagestyle{fancy}
+%\fancyhf{} % clear header and footer fields
+%\renewcommand{\headrulewidth}{0pt}
+%\renewcommand{\footrulewidth}{0pt}
+%\lfoot{\it Matthew A. Hammer}
+%\cfoot{\it Curriculum Vitae}
+%\rfoot{\it page \thepage{} of \pageref*{LastPage}}
+%\thispagestyle{empty}
+\pagestyle{plain}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Body
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cvsection{Professional Preparation}
+
+\begin{tabularx}{\bodywidth}{@{}X@{}}
+    \begin{cvlines}
+      \finstitute{University of Wisconsin, Madison} \qquad Madison, WI \qquad
+        Computer Science \hfill BS 2005 \\
+      %Thesis: \fthesis{Realizing a Certified Grid Computing Framework from a Programmer's Perspective} \\
+      %Committee: Robert Harper and Frank Pfenning
+    \end{cvlines}
+  \\[\rowsep]
+
+    \begin{cvlines}
+      \finstitute{Toyota Technological Institute at Chicago} \qquad Chicago, IL \qquad
+        Computer Science %, 3.915 GPA
+        \hfill MS 2007 \\
+      %Thesis: \fthesis{Type-Based Verification of Assembly Language} \\
+      %Committee: George C. Necula (chair) and Rastislav Bodik
+    \end{cvlines}
+  \\[\rowsep]
+    \begin{cvlines}
+      \finstitute{University of Chicago} \qquad Chicago, IL \qquad
+        Computer Science \hfill PhD 2012 \\
+      %Dissertation: \fthesis{End-User Program Analysis} \\
+      %Committee: George C. Necula (chair), Koushik Sen, and Jack Silver \\
+    \end{cvlines}
+   \\[\rowsep]
+     \begin{cvlines}
+     \finstitute{University of Maryland, College Park} \qquad College Park, MD \qquad
+     Computer Science \hfill Postdoc 2015 \\
+     %Sponsor: Jeffrey S. Foster
+     \end{cvlines}
+\end{tabularx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cvsection{Appointments}
+
+\begin{cvlist}
+  \item
+    \flocation{University of Colorado, Boulder}{Boulder, CO}
+    \hfill 2015--present \\
+    \fmytitle{Assistant Professor},
+    Department of Computer Science
+%  \item
+%    \flocation{University of Maryland, College Park}{College Park, MD}
+%    \hfill 2008 \\
+%    \fmytitle{Postdoctoral Researcher},
+%    Department of Computer Science
+    %Sponsor: Jeffrey S. Foster
+  % \item
+  %   \flocation{University of California, Berkeley}{Berkeley, CA}
+  %   \hfill 2002--2008 \\
+  %   \fmytitle{Graduate Student Researcher},
+  %   Department of Electrical Engineering and Computer Sciences
+\end{cvlist}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cvsection{Publications}
+
+{\bf Five Publications Most Relevant to Proposed Work}
+\begin{enumerate}\itemsep 0pt
+
+\item
+  Cyrus Omar, Ian Voysey, Michael Hilton, Jonathan Aldrich,
+  \fme{Matthew A. Hammer}.
+  %
+  Hazelnut: A Bidirectionally Typed Structure Editor Calculus
+  %
+  \fconf{Principles of Programming Languages (POPL)}, 2017.
+
+\item
+  \fme{Matthew A. Hammer}, Bor-Yuh Evan Chang, David Van Horn
+  %
+  A Vision for Online Verification-Validation.
+  %
+  \fconf{International Conference on Generative Programming and Component Engineering (GPCE) 2016}
+
+\item
+  \fme{Matthew A. Hammer}, Joshua Dunfield, Kyle Headley, Nicholas Labich,
+  Jeffrey S. Foster and Michael Hicks.
+  %
+  Incremental Computation with Names.
+  %
+  \fconf{Object-Oriented Programming, Systems, Languages, and Applications
+    (OOPSLA)}, 2015.
+
+\item
+  \fme{Matthew A. Hammer}, Yit Phang Khoo, Michael Hicks and Jeffrey S. Foster.
+  %
+  Adapton: Composable, Demand-driven Incremental Computation
+  %
+  \fconf{Programming Language Design and Implementation (PLDI)}, 2014.
+
+\item
+  Yan Chen, Joshua Dunfield, \fme{Matthew A. Hammer} and Umut A. Acar.
+  %
+  Implicit Self-Adjusting Computation for Purely Functional Programs.
+  %
+  Journal of Functional Programming (JFP), 2014.
+
+\end{enumerate}
+
+\newcommand{\fpaper}[1]{#1}
+\newcommand{\fstudent}[1]{#1}
+
+\clearpage
+{\bf Five Other Publications}
+\begin{enumerate}\itemsep 0pt
+
+\item
+  Aseem Rastogi, \fme{Matthew A. Hammer} and Michael Hicks.
+  %
+  Wysteria: A Programming Language for Generic, Mixed-Mode Multiparty Computations
+  %
+  \fconf{35th IEEE Symposium on Security and Privacy (IEEE~S\&P)}, 2014.
+
+\item
+  Aseem Rastogi, Piotr Mardziel, \fme{Matthew A. Hammer} and Michael Hicks.
+  %
+  Knowledge Inference for Optimizing Secure Multi-party Computation.
+  %
+  \fconf{Programming Languages and Analysis for Security (PLAS)}, 2013.
+
+%% \item
+%%   Yan Chen, Joshua Dunfield, \fme{Matthew A. Hammer} and Umut A. Acar.
+%%   %
+%%   Implicit Self-Adjusting Computation for Purely Functional Programs.
+%%   %
+%%   International Conference on Functional Programming (ICFP), 2011.
+
+\item
+  \fme{Matthew A. Hammer}, Georg Neis, Yan Chen and Umut A. Acar.
+  %
+  Self-Adjusting Stack Machines
+  %
+  \fconf{Object-Oriented Programming, Systems, Languages, and Applications (OOPSLA)},
+  2011.
+
+  
+\item
+  \fme{Matthew A. Hammer}, Umut A. Acar and Yan Chen.
+  %
+  \textsc{Ceal}: A C-Based Language for Self-Adjusting Computation.
+  %
+  \fconf{Programming Language Design and Implementation (PLDI)}, 2009.
+
+
+\item
+  \fme{Matthew A. Hammer} and Umut A. Acar.
+  %
+  Memory Management for Self-Adjusting Computation.
+  %
+  \fconf{International Symposium on Memory Management (ISMM)}, 2008.
+  
+%% \item
+%%   \fme{Matthew Hammer}, Umut A. Acar, Mohan Rajagopalan, Anwar Ghuloum.
+%%   %  
+%%   A Proposal for Parallel Self-Adjusting Computation.
+%%   %
+%%   \fconf{Workshop on Declarative Aspects of Multicore Programming (DAMP)}, 2007.
+
+%% \item
+%%   G. Deen, \fme{M. Hammer}, J. Bethencourt, I. Eiron, J. Thomas, and J. H. Kaufman.
+%%   %
+%%   Running Quake II on a grid.
+%%   %
+%%   IBM Systems Journal, 2006. 
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cvsection{Synergistic Activities}
+
+\begin{enumerate}\itemsep 0pt
+
+\item Co-Developing \textsc{VMF}, a VM architecture and semantics for
+  online verification-validation. Papers to appear in GPCE 2016, and
+  under submission.
+
+\item Co-Developing \textsc{Adapton}, a general framework for writing
+  libraries and runtime systems for incremental computation.  Papers
+  appeared in PLDI 2014 and OOPSLA 2015.
+  
+\item Co-Devloped \textsc{Wysteria}, a functional programming language
+  for secure multi-party computation.  Papers appeared in
+  IEEE~S\&P~2014 and PLAS 2013.
+
+\item Developed \textsf{CEAL}, a C-Based language for incremental
+  computation.  Papers appeared at OOPSLA 2011, PLDI 2009 and ISMM
+  2008.
+
+\end{enumerate}
+
+  
+%% \item Co-Developing Fissile, an analysis that intertwines
+%%   dependent-refinement type checking and symbolic separation
+%%   logic-based analyses. Paper appeared in POPL 2014.
+
+%% \item Co-Developing Thresher, an alarm triage analysis for
+%%   heap-oriented properties on large-scale, object-oriented programs.
+%%   Papers appeared in PLDI 2013, SAS 2011.
+
+%% \item Developed the Xisa analyzer, an extensible, developer-oriented, and
+%% automatic program analysis tool for reasoning about heap structures.
+%% Papers appeared in POPL 2011, ESOP 2010, POPL 2008, and SAS 2007.
+
+%% \item Developed the Coolaid assembly-level type checker, a program
+%%   analysis tool targeted to compiler design students.  Paper appeared
+%%   in TLDI 2005.  Has been used at the University of California,
+%%   Berkeley, Stanford University, and Tel Aviv University.
+
+%% \item Served as Treasurer for the Symposium on Principles of
+%%   Programming Languages (POPL) (January 2009--January 2014).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \cvsection{Collaborators and Other Affiliations}
+
+%% \begin{minipage}{\linewidth-\cvindent}
+%% \begin{description}
+%% \item[Collaborators in the Last 48 Months (15 Total).]
+
+%% \textit{Jonathan Aldrich}, Carnegie Mellon University;
+%% \textit{William Byrd}, University of Utah;
+%% \textit{Joshua Dunfield}, University of British Columbia;
+%% \textit{Jeffrey S. Foster}, University of Maryland, College Park;
+%% \textit{Michael Hicks}, University of Maryland, College Park;
+%% \textit{Michael Hilton}, Oregon State University;
+%% \textit{Nicholas Labich}, University of Maryland, College Park;
+%% \textit{Piotr Mardziel}, University of Maryland, College Park.
+%% \textit{Matthew Might}, University of Utah;
+%% \textit{Andrew Miller}, University of Maryland, College Park;
+%% \textit{Cyrus Omar}, Carnegie Mellon University;
+%% \textit{Khoo Yit Phang}, MathWorks;
+%% \textit{Aseem Rastogi}, University of Maryland, College Park;
+%% \textit{David Van Horn}, University of Maryland, College Park;
+%% \textit{Ian Yoysey}, Carnegie Mellon University;
+  
+%% \item[Graduate Advisors and Postdoctoral Sponsors (3 Total).]
+%% \textit{Michael Hicks}, University of Maryland, College Park;
+%% \textit{Umut A. Acar}, Carnegie Mellon University.
+%% \textit{John Reppy}, University of Chicago.
+
+%% \item[PhD Advisees (3 Total).]
+%% \textit{Kyle Headley}, University of Colorado Boulder.
+%% \textit{Monal Narasimhamurthy}, University of Colorado Boulder.
+%% \textit{Jared Wright}, University of Colorado Boulder.
+%% \end{description}
+%% \end{minipage}
+
+\IGNORE{
+\cvsection{Select Awards and Honors}
+
+\begin{cvhanginglist}
+\item
+\faward{National Science Foundation CAREER Award}
+\hfill December 2010
+\item
+\faward{College of Engineering Graduate Student Prize}
+\hfill December 2008
+\\ University of California, Berkeley
+
+\item
+\faward{National Science Foundation Graduate Research Fellowship}
+\hfill 2004--2007
+%Aug 2004-Aug 2007
+\end{cvhanginglist}
+}
+
+\end{document}
