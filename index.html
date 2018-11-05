@@ -103,10 +103,14 @@ information</strong>.
 <tr><td></br></td></tr>
 
 <tr>
-<td>
-<a href="http://matthewhammer.org/fungi-lang-2018.pdf"><i>Fungi: Typed incremental computation with names</i> (in submission)</a>
-</td>
+  <td>
+    <a href="https://arxiv.org/abs/1808.07826">      
+      <i>Fungi: Typed incremental computation with names</i></a>.</br>Latest draft: Aug 2018.</br>
+    Work-in-progress implementation: <a href="https://github.com/Adapton/fungi-lang.rust"><img src="http://adapton.org/fungi-lang-logo/Fungi-lang-logo-notext-64.png" width=20/>
+      github.com/Adapton/fungi-lang.rust</a>
+  </td>
 </tr>
+<tr><td height="10px"></td></tr>
 
 <tr>
 <td>
@@ -124,21 +128,24 @@ information</strong>.
 </i>
 </p>
 
-<p><div class="parhd">Incremental computations</div> consume and produce
-information whose content or structure changes <i>slowly</i> over time
-by <i>small</i> changes.  In these settings, programs exploit cached
-work from the past to respond more efficiently than naive
-re-computation that is oblivious to past work.
+<p><div class="parhd">Incremental computations</div>
+attempt to exploit input <b>similarities over time</b>,
+reusing work that is unaffected by input changes.
 </p>
-
-<p>Many prior programming-language-based approaches to incremental
-computation, including <b>self-adjusting computation</b>, assume
-a <i>non-interactive</i> model.
-
-As it turns out, efficient interactive computation often requires
-a <b>demand-driven</b> approach to caching past computation.
+<p>
+Adapton offers a unified model for eager and lazy incremental computation,
+including a general-purpose <b>demand-driven</b> change propagation algorithm.
 </p>
-
+<p>
+To maximize this reuse in a general-purpose programming setting, 
+programmers need a mechanism to identify dynamic allocations 
+(of data and subcomputations) that <i>correspond over time</i>.
+Nominal Adapton (<a href="http://arxiv.org/abs/1503.07792">OOPSLA 2015</a>) offers a notion of <i>names</i> 
+which is formal and general.
+<a href="https://github.com/Adapton/fungi-lang.rust">The Fungi language</a> 
+offers an associated type and effects system for programs that 
+deterministically generate and use unique names.
+</p>
 </div>
 <div class="hicolumn">
 
@@ -157,7 +164,7 @@ a <b>demand-driven</b> approach to caching past computation.
 
 <tr>
 <td>
-<a href="https://arxiv.org/abs/1805.00155"><i>Live Functional Programming with Typed Holes</i> (In submission; July 2018)</a>
+<a href="https://arxiv.org/abs/1805.00155"><i>Live Functional Programming with Typed Holes</i> (POPL 2019)</a>
 </td>
 </tr>
 
