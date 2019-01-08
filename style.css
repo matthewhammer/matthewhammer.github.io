@@ -31,6 +31,26 @@ body
   font-weight: bold;
 }
 
+.parintroWarn
+{
+  /*max-width: 4in;*/
+  font-size: 110%;
+  background: rgb(255, 200, 200);
+  foreground: rgb(100, 1, 1);
+  border-width: 2px 2px 2px 2px;
+  border-color: black;
+  border-style: solid;
+  padding: 10px;
+ /*text-align:justify;*/
+}
+
+.parintroStale
+{
+  max-width: 4in;
+  font-size: 110%;
+ /*text-align:justify;*/
+}
+
 .parintro1
 {
   max-width: 4in;
