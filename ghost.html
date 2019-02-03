@@ -1,0 +1,402 @@
+<html>
+<head>
+  <meta name="author" content="Matthew A. Hammer" />
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <link rel="shortcut icon" href="http://lambda-the-ultimate.org/favicon.ico" />
+  <title>Matthew A. Hammer</title>
+</head>
+<body>
+
+<div class="pagecontent">
+
+<table><tr>
+<td class="textcolumn">
+<h1>Matthew A. Hammer</h1>
+
+<p class="parintroWarn">
+  <b>Notice</b>:
+    As of Jan 2019, I am a researcher and engineer at <a href="http://dfinity.org">Dfinity</a>.
+    </br>
+    The rest of this page consists of a stale, outdated academic homepage from my days as a tenure-track professor at CU Boulder.
+  </p>
+
+<div class="figure">
+<img height=280 src="MatthewHammer.jpg"
+     alt"Matthew Hammer (March 2015)" />
+
+<table>
+
+<tr><td><b>email</b>:</td>
+<td><a href="mailto:pubmah@nym.hush.com">pubmah@nym.hush.com</a></td>
+<tr></tr>
+
+<tr><td><strike>email:</strike></td>
+<td><strike><a href="mailto:Matthew.Hammer@Colorado.Edu">Matthew.Hammer@Colorado.Edu</a></strike></td>
+<tr></tr>
+
+<tr><td><b>papers:</b></td>
+    <td>
+    <a href="http://scholar.google.com/citations?user=zVXQcSsAAAAJ">Google Scholar</a> | 
+    <a href="http://dblp.uni-trier.de/db/indices/a-tree/h/Hammer:Matthew_A=.html">DBLP</a>
+    <!-- 
+    <a href="http://dblp.uni-trier.de/db/indices/a-tree/h/Hammer:Matthew_A=.html">DBLP<sub>1</sub></a> | 
+    <a href="http://dblp.uni-trier.de/db/indices/a-tree/h/Hammer:Matthew.html">DBLP<sub>2</sub></a> -->
+    <td>
+</tr>
+
+
+<tr><td>
+      <b>twitter</b>:</td><td>
+    <strike>
+      <a href="https://twitter.com/matthewhammer">@matthewhammer</a>
+      <!--
+	  "Everyone is a data scientist, of themselves, and their life experiences.
+	  We need better tools for representing and processing this information.
+	  Clown computering should elevate us in this journey, not the other way around.
+	  Goodbye Twitter."
+
+	  --Some approximation of my last tweet, April 1 2018.
+	    I would reread it to correct any inconsistencies, but I cannot.
+	    Twitter no long displays it, when asked.
+	-->
+    </strike>
+</td></tr>
+
+<!--<tr><td><b>rust-lang</b>:</td><td><a href="https://users.rust-lang.org/users/matthewhammer">matthewhammer</a></td></tr>-->
+<!--(<a href="pubkey.txt">public key</a>)--></td>
+<!--</tr>
+<tr><td><b>post</b>: </td><td>Dept. of Computer Science</td></tr>
+<tr><td></td>             <td>University of Maryland</td></tr>
+<tr><td></td>             <td>A.V. Williams Building</td></tr>
+<tr><td></td>             <td>College Park, MD 20742</td></tr>
+-->
+</table>
+
+</div>  
+<p>  
+  I am a co-director of the 
+  <a href="http://pl.cs.colorado.edu">CU Programming Languages and
+  Verification group (CUPLV)</a>.
+  </p>
+
+  <p class="parintroStale">
+  As of Fall 2015, I am an assistant professor in
+  the <a href="http://cs.colorado.edu">Department of Computer Science
+  at University of Colorado Boulder</a>.
+</p>
+<p>  
+  I am a co-director of the 
+  <a href="http://pl.cs.colorado.edu">CU Programming Languages and
+  Verification group (CUPLV)</a>.
+  </p>
+
+<div class="hicolumn">
+
+<h2>Research Interests</h2>
+
+(Also see my <a href="./pubs.html">drafts and publications</a> page).
+
+<p class="parintro1">
+Research on <b>programming languages</b> provides invaluable lenses
+that connect human understanding with computational phenomena.
+</p>
+<p class="parintro2">
+In particular, I'm interested in designing <i>PL-based abstractions</i> for
+settings in which <strong>humans</strong> and <strong>computers</strong> <strong>cooperate to create and process
+information</strong>.
+</p>
+
+</div>
+<div class="hicolumn">
+<p>
+<table>
+<tr><td rowspan="100"><img style="margin:10px" width="100px" src="http://adapton.org/adapton-logo-bonsai-notext.png" /></td>
+  <td>
+    <a style="font-size:140%" href="http://adapton.org">The <strong>Adapton</strong> project</a>
+    </br>
+    Foundational semantics for <strong>incremental computations</strong>
+  </td>
+</tr>
+
+<tr><td></br></td></tr>
+
+<tr>
+  <td>
+    <a href="https://arxiv.org/abs/1808.07826">      
+      <i>Fungi: Typed incremental computation with names</i></a>.</br>Latest draft: Aug 2018.</br>
+    Work-in-progress implementation: <a href="https://github.com/Adapton/fungi-lang.rust"><img src="http://adapton.org/fungi-lang-logo/Fungi-lang-logo-notext-64.png" width=20/>
+      github.com/Adapton/fungi-lang.rust</a>
+  </td>
+</tr>
+<tr><td height="10px"></td></tr>
+
+<tr>
+<td>
+<a href="http://arxiv.org/abs/1503.07792"><i>Incremental Computation with Names</i> (OOPSLA 2015)</a>
+</td>
+</tr>
+
+<tr>
+<td>
+<a href="adapton"><i>Adapton: Composable demand-driven incremental computation</i> (PLDI 2014)</a>
+</td>
+</tr>
+
+</table>
+</i>
+</p>
+
+<p><div class="parhd">Incremental computations</div>
+attempt to exploit input <b>similarities over time</b>,
+reusing work that is unaffected by input changes.
+</p>
+<p>
+Adapton offers a unified model for eager and lazy incremental computation,
+including a general-purpose <b>demand-driven</b> change propagation algorithm.
+</p>
+<p>
+To maximize this reuse in a general-purpose programming setting, 
+programmers need a mechanism to identify dynamic allocations 
+(of data and subcomputations) that <i>correspond over time</i>.
+Nominal Adapton (<a href="http://arxiv.org/abs/1503.07792">OOPSLA 2015</a>) offers a notion of <i>names</i> 
+which is formal and general.
+<a href="https://github.com/Adapton/fungi-lang.rust">The Fungi language</a> 
+offers an associated type and effects system for programs that 
+deterministically generate and use unique names.
+</p>
+</div>
+<div class="hicolumn">
+
+<p>
+<table>
+<tr><td rowspan="100"><img style="margin:10px" width="120px" src="https://github.com/hazelgrove/graphics/raw/master/hazelnutlogo/fromPOPLPaper/hazel-no-box-large.png"/>
+</td>
+  <td>
+    <a style="font-size:130%" href="http://hazelgrove.github.io">The <strong>Hazelgrove</strong> project</a>
+    </br>
+    Foundational semantics for <strong>interactive programming</strong>
+  </td>
+</tr>
+
+<tr><td></br></td></tr>
+
+<tr>
+<td>
+<a href="https://arxiv.org/abs/1805.00155"><i>Live Functional Programming with Typed Holes</i> (POPL 2019)</a>
+</td>
+</tr>
+
+<!-- <tr><td></br></td></tr> -->
+
+<tr>
+<td>
+<a href="http://drops.dagstuhl.de/opus/frontdoor.php?source_opus=7127"><i>Toward Semantic Foundations of Program Editors</i> (SNAPL 2017)</a>
+</td>
+</tr>
+
+<tr>
+<td>
+<a href="https://arxiv.org/abs/1607.04180"><i>Hazelnut: A Bidirectionally Typed Structure Editor Calculus</i> (POPL 2017)</a>
+</td>
+</tr>
+
+<tr>
+<td>
+<a href="https://hazelgrove.github.io/implementation/hz.html"><i>HZ</i>: prototype and live demo (POPL 2017 Artifact)</a>
+</td>
+</tr>
+
+<tr><td></br></td></tr>
+
+<tr>
+<td><a href="https://arxiv.org/abs/1703.05410">
+    <i>Languages of Play</i> paper (FDG 2017)</a></td>
+</tr>
+</table>
+</p>
+
+<p><div class="parhd">Interactive computations</div> 
+reside in an <i>open world</i>, where future states are explored
+collaboratively with an external user.
+Common examples include spreadsheets, development environments, video games and
+media processing (graphics and sound).
+</p>
+
+</div>
+<div class="hicolumn">
+
+<h2>Past projects</h2>
+
+<p>
+<div class="parhd">Secure multi-party computation</div> consists of
+computation performed by mutually-distrusting agents; together, they
+cooperatively compute functions over their private data, while only
+ever learning certain prearranged results and while remaining
+otherwise <i>oblivious</i> to the computational steps necessary to
+produce them.
+</p>
+
+<p>
+<table>
+<tr><td>See also:</td>
+
+<td><a href="#wysteria">Our <i>Wysteria</i> paper (OAKLAND 2014)
+  </a>
+</td>
+</tr>
+
+<tr><td></td>
+<td><a href="#plas2013">Our <i>Knowledge Inference</i> paper (PLAS 2013)
+  </a>
+</td>
+</tr>
+
+<tr><td></td>
+<td>
+<a href="http://en.wikipedia.org/wiki/Secure_multi-party_computation">
+<i>Secure multi-party computation</i> (wikipedia)
+</a>
+<td>
+</tr>
+</table>
+</div>
+
+<br/>
+
+<h2><a href="pubs.html">Publications List</a> &larr;</h2>
+
+<h2>Students</h2>
+<table>
+<tr><td><a href="http://kyleheadley.github.io/PHDWebsite/">Kyle Headley</a></td>   <td>(PhD student, since Fall 2015)</td></tr>
+<tr><td><a href="http://monal.github.io/">Monal Narasimhamurthy</a> &dagger;</td>         <td>(PhD student, since Fall 2016)</td></tr>
+<tr><td>Jared Wright &Dagger;</td>                                                        <td>(PhD student, since Fall 2016)</td></tr>
+<tr><td><a href="https://www.linkedin.com/in/willmtemple">William Temple</a> &dagger;</td><td>(PhD student, since Fall 2017)</td></tr>
+<tr><td><a href="http://plv.colorado.edu/dmoon/">David Moon</a></td>                                                        <td>(PhD student, since Fall 2018)</td></tr>
+<!-------->
+<tr><td></td></tr>
+<tr><td></td></tr>
+<!-------->
+<!-------->
+<tr><td></td></tr>
+<tr><td></td></tr>
+<!-------->
+<tr><td  colspan=2>&dagger;: Co-advised with <a href="http://benshapi.ro/">Ben Shapiro</a>,
+      from the <a href="https://www.colorado.edu/atlas/laboratory-playful-computation-lpc">Laboratory for Playful Computation (LPC)</a>
+</td></tr>
+<tr><td colspan=2>&Dagger;: Co-advised with <a href="http://www.cs.colorado.edu/~bec/">Bor-Yuh Evan Chang</a>
+    from <a href="http://plv.colorado.edu/">CUPLV</a>
+</td></tr>
+</table>
+
+<h2>Former students</h2>
+
+<table>
+<tr><td><a href="https://www.linkedin.com/in/byron-becker-676076102">Byron Becker</a> &dagger;</td><td>(Undergraduate thesis, May 2018)</td></tr>
+</table>
+
+<h2>Teaching</h2>
+
+<table>
+<colgroup width="15%"/>
+<colgroup width="30%"/>
+<colgroup width="60%"/>
+<thead align="left">
+  <tr>
+    <th>Semester</th>
+    <th>Number</th>
+    <th>Title</th>
+  </tr>
+</thead>
+<tbody>
+
+<tr>
+<td>2018 Spring</td>
+<td><a href="courses/pfp-s18">CSCI 4830-16</td>
+<td>Principles of Functional Programming</td>
+</tr>
+
+<tr>
+<td>2017 Fall</td>
+<td><a href="http://csci3155.cs.colorado.edu/f17/">CSCI 3155</td>
+<td>Principles of Programming Languages</td>
+</tr>
+
+<tr>
+<td>2017 Spring</td>
+<td><a href="courses/csci7000-s17">CSCI 7000</td>
+<td>Advanced programming language techniques for incremental computation</td>
+</tr>
+
+<tr>
+<td>2016 Fall</td>
+<td><a href="courses/csci5535-f16">CSCI 5535 / ECEN 5533</td>
+<td>Fundamentals of Programming Languages</td>
+</tr>
+
+<tr>
+<td>2016 Spring</td>
+<td><a href="https://git.cs.colorado.edu/pl-act-s16/home">CSCI 7000</td>
+<td>Programming Language Design for Interaction</td>
+</tr>
+
+<tr>
+<td>2015 Fall</td>
+<td><a href="https://www.cs.colorado.edu/~maha2973/csci5535/f15/">CSCI 5535 / ECEN 5533</td>
+<td>Fundamentals of Programming Languages</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Funded Projects</h2>
+
+<table>
+<tr>
+<td>
+<a href="http://www.nsf.gov/awardsearch/showAward?AWD_ID=1619282"><b>Online Verification-Validation</b> (PI)
+</td></tr>
+<tr><td>
+<a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1817145"><b>Semantic Foundations for Hole-Driven Development</b> (PI)
+</td></tr>
+
+</table>
+
+<h2>Funding Acknowledgments</h2>
+My research  has been funded through various sources, both past and present:<br/>
+Facebook Faculty Research Award (2017)<br/>
+<a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1619282">Online Verification-Validation (NSF project, Sept 2016--2019)</a><br/>
+Mozilla Research Grant (2015)
+
+<h2>Short biography</h2>
+
+Before joining CU, I was a postdoc researcher working with <a href="http://www.cs.umd.edu/~mwh/">Michael Hicks</a>,
+<a href="http://www.cs.umd.edu/~jfoster/">Jeff Foster</a>,
+<a href="http://www.cs.umd.edu/~dvanhorn/">David Van Horn</a>
+and the
+<a href="http://www.cs.umd.edu/projects/PL/">PLUM group</a> at the
+<a href="http://www.cs.umd.edu">University of Maryland</a>.
+
+As a PhD student, I was advised by <a href="http://mpi-sws.org/~umut/">Umut
+Acar</a> at the <a href="http://cs.uchicago.edu">University of
+Chicago</a> as well as a visiting student at
+the <a href="http://mpi-sws.org">Max Planck Institute for Software
+Systems</a>
+in <a href="http://en.wikipedia.org/wiki/Kaiserslautern">Kaiserslautern,
+Germany</a>.
+
+<p>
+As a student intern, I spent summers
+at <a href="http://almaden.ibm.com">IBM Research in Almaden</a> and
+Intel Research in Santa Clara.
+
+I received my B.S. in 2005 from
+the <a href="http://cs.wisc.edu/">University of Wisconsin</a> with a
+major and honors in computer science.  
+</p>
+
+</table>
+
+<div class="clearboth"></div>
+</div>
+
+</body>
+</html>
