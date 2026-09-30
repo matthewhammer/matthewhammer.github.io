@@ -1,89 +1,293 @@
-/* style.css - Minimal Professional (Responsive Edition) */
+/* style.css - the layout and type of fumola.org, in a light palette: the
+   outline beside the page, and text that grows with the screen while the
+   column keeps a readable line length. */
 
 :root {
-  --bg: #fafafa;
-  --text: #222;
-  --accent: #0056b3;
-  --max-width: 750px;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg:     #fbfaf7;
+  --panel:  #f2f0ea;
+  --rule:   #dedad0;
+  --fg:     #2b2b30;
+  --dim:    #6e6d72;
+
+  --green:  #3f7a36;  /* comment    */
+  --blue:   #1f63a8;  /* keyword, links */
+  --type:   #6b46b0;  /* type name  */
+  --sym:    #7a4f86;  /* symbol, list markers */
+  --str:    #a0522d;  /* string     */
+  --ink:    #16161a;  /* headings, strong */
+  --accent: #b8503a;  /* where the reader is, in the outline */
+
+  /* Whatever the reader already has. Nothing is fetched. */
+  --ui:   system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", "DejaVu Sans Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+/* The page is sized in rem, so this is the only knob: text and column widen
+   together on a big screen, keeping line length steady, and a phone gets
+   16px text rather than a scaled-down desktop. */
+html {
+  background: var(--bg);
+  font-size: clamp(16px, 11px + 0.55vw, 22px);
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  line-height: 1.7;
   margin: 0;
-  padding: 2rem;
-  display: flex;
-  justify-content: center;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 0.95rem/1.65 var(--ui);
 }
 
 main {
-  max-width: var(--max-width);
-  width: 100%;
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 8rem;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 2rem;
+/* ---- masthead ------------------------------------------------- */
+
+header { margin-bottom: 4.5rem; }
+
+h1, h2, h3 { color: var(--ink); font-family: var(--ui); font-weight: 600; }
+
+h1 {
+  font-size: 2.4rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.9rem;
 }
 
-h1, h2, h3 {
-  font-weight: 600;
-  line-height: 1.3;
-  margin-top: 0;
+.tagline {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 1.06rem;
+  color: var(--fg);
 }
 
-a {
-  color: var(--accent);
+/* The links someone came for, directly under the tagline. */
+header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.4rem;
+}
+
+header nav a {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  color: var(--ink);
   text-decoration: none;
-  transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
 
-a:hover {
-  text-decoration: underline;
+header nav a:hover { border-color: #c4bfb2; background: var(--panel); color: var(--ink); }
+
+/* ---- sections -------------------------------------------------- */
+
+section { border-top: 1px solid var(--rule); padding-top: 2rem; margin-top: 3.25rem; }
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  margin: 0 0 1.2rem;
 }
 
-nav {
-  margin-top: 1rem;
+h3 {
+  font-size: 1.08rem;
+  line-height: 1.35;
+  margin: 1.8rem 0 0.6rem;
 }
 
-nav a {
-  margin: 0 0.5rem;
-  font-weight: 500;
-}
+p { margin: 0 0 1.05rem; }
+p:last-child { margin-bottom: 0; }
 
-section {
-  margin-bottom: 2rem;
-}
+a { color: var(--blue); text-decoration: none; border-bottom: 1px solid #b9cde3; }
+a:hover { color: #154a80; border-bottom-color: var(--blue); }
+
+:focus-visible { outline: 1px solid var(--dim); outline-offset: 3px; }
+
+b, strong { font-weight: 600; color: var(--ink); }
+em, i { color: var(--fg); }
+
+ul, ol { margin: 0 0 1.05rem; padding-left: 1.4rem; }
+li { margin-bottom: 0.35rem; }
+li > ul { margin-top: 0.35rem; }
+li::marker { color: var(--sym); }
+
+code { font-family: var(--mono); font-size: 0.9em; }
 
 footer {
-  text-align: center;
-  font-size: 0.9em;
-  color: #666;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  font-size: 0.84rem;
+  color: var(--dim);
 }
 
-/* --- Responsive tweaks --- */
-@media (max-width: 800px) {
-  body {
-    padding: 1.5rem;
-  }
+@media (max-width: 34rem) {
+  main { padding-top: 3rem; }
+  h1 { font-size: 2rem; }
 }
 
-@media (max-width: 600px) {
-  body {
-    padding: 1rem;
-  }
+/* ---- copyable heading anchors ---------------------------------- */
 
-  nav a {
-    display: inline-block;
-    margin: 0.25rem 0.5rem;
-  }
+.anchor {
+  margin-left: 0.45rem;
+  border-bottom: none;
+  color: var(--dim);
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
+.anchor:hover { color: var(--blue); border-bottom: none; }
+.anchor[data-copied]::after {
+  content: " copied";
+  font: 400 0.7rem var(--mono);
+  color: var(--green);
+}
 
-  h1 {
-    font-size: 1.6rem;
-  }
+/* ---- the outline ------------------------------------------------
+   Three layouts, as on fumola.org, and the outline is reachable in all.
+
+   Wide (78rem and up): main is 45rem centred, so the space either side is
+   already empty. The outline sits in it and nothing else moves.
+
+   Sidebar (48rem to 78rem): the gutter can no longer hold the outline
+   beside a centred column, but the viewport can still hold the two side by
+   side, so the column starts where the outline ends.
+
+   Below 48rem there is no room for two columns, so the outline becomes the
+   whole page, behind the button at the top left: hidden until asked for,
+   then everything. */
+.outline {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 15rem;
+  height: 100vh;
+  padding: 5rem 1rem 3rem 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  z-index: 15;
+}
+/* The scrollbar is noise beside body text; the outline still scrolls. */
+.outline { scrollbar-width: none; }
+.outline::-webkit-scrollbar { display: none; }
+
+/* Opened on a narrow screen: the whole viewport, not a column in it. */
+.outline.is-open {
+  display: block;
+  width: auto;
+  right: 0;
+  padding: 4.25rem 1.5rem 3rem 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.outline.is-open .outline-label { font-size: 0.72rem; }
+.outline.is-open a,
+.outline.is-open .outline-pages .here { padding: 0.45rem 0.8rem; }
+body.outline-open { overflow: hidden; }
+
+@media (min-width: 48rem) {
+  .outline { display: block; }
+  /* margin-right stays auto, so the column takes the width it needs. */
+  main { margin-left: 15rem; }
+}
+@media (min-width: 78rem) {
+  main { margin-left: auto; }
+}
+
+/* The button that opens it: top left, and only where the outline is not
+   already beside the page. main's padding-top is 5rem, so it sits above
+   the first line of content rather than on it. */
+.outline-toggle {
+  display: flex;
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 20;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  color: var(--fg);
+  cursor: pointer;
+}
+.outline-toggle:hover { border-color: #c4bfb2; }
+.outline-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.outline-toggle svg { width: 1.15rem; height: 1.15rem; display: block; }
+.outline-toggle .bars { display: block; }
+.outline-toggle .ex { display: none; }
+.outline-toggle[aria-expanded="true"] .bars { display: none; }
+.outline-toggle[aria-expanded="true"] .ex { display: block; }
+@media (min-width: 48rem) {
+  .outline-toggle { display: none; }
+}
+
+.outline-label {
+  font: 400 0.66rem/1.6 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 0.5rem;
+}
+
+.outline ul {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  border-left: 1px solid var(--rule);
+}
+.outline li { margin: 0; }
+.outline a {
+  display: block;
+  padding: 0.2rem 0.6rem;
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  border-bottom: none;
+  color: var(--dim);
+  text-decoration: none;
+}
+.outline a:hover { color: var(--fg); border-bottom: none; }
+/* The h3s under a section, one step in and a shade quieter. */
+.outline li.sub a { padding-left: 1.5rem; font-size: 0.76rem; }
+.outline.is-open li.sub a { padding-left: 2rem; font-size: 0.88rem; }
+
+/* Where the reader is: aria-current for a screen reader, the colour and
+   the rule for everyone else. */
+.outline a[aria-current="true"] {
+  color: var(--ink);
+  border-left-color: var(--accent);
+}
+.outline li.sub a[aria-current="true"] { color: var(--fg); }
+
+/* The page list: the current page named but not a link, so the outline
+   always says which page you are reading. */
+.outline-pages a { color: var(--blue); }
+.outline-pages .here {
+  display: block;
+  padding: 0.2rem 0.6rem;
+  color: var(--ink);
+  border-left: 1px solid var(--accent);
+  margin-left: -1px;
+}
+
+/* An in-page jump should not pin the heading to the very top edge. */
+:target { scroll-margin-top: 2rem; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
 }

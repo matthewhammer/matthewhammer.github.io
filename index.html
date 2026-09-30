@@ -4,62 +4,144 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Matthew Hammer</title>
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Matthew Hammer — independent researcher and educator working on programming language design, semantics, and implementation.">
+  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
+  <script src="outline.js" defer></script>
 </head>
 <body>
+  <button class="outline-toggle" id="outline-toggle" type="button"
+          aria-controls="outline" aria-expanded="false" aria-label="Open page outline">
+    <svg class="bars" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M2 4h12M2 8h12M2 12h12"/>
+    </svg>
+    <svg class="ex" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>
+    </svg>
+  </button>
+  <nav class="outline" id="outline" aria-label="Page outline">
+    <p class="outline-label">Pages</p>
+    <ul class="outline-pages">
+      <li><span class="here">Home</span></li>
+      <li><a href="pubs.html">Publications</a></li>
+      <li><a href="hammer-cv.pdf">CV</a></li>
+      <li><a href="https://fumola.org/">fumola.org</a></li>
+      <li><a href="https://adapton.org/">adapton.org</a></li>
+      <li><a href="https://hazel.org/">hazel.org</a></li>
+    </ul>
+    <p class="outline-label">On this page</p>
+    <ul id="outline-list"></ul>
+  </nav>
   <main>
     <header>
       <h1>Matthew Hammer</h1>
-      <p>Independent Researcher • Educator</p>
-      <nav>
+      <p class="tagline">Independent Researcher &bull; Educator</p>
+      <nav aria-label="Profile links">
         <a href="hammer-cv.pdf">CV</a>
-        |
         <a href="https://github.com/matthewhammer">GitHub</a>
-        |
-        <a href="https://scholar.google.com/citations?user=zVXQcSsAAAAJ&hl=en">Papers (Google)</a>
-        |
+        <a href="https://fumola.org/">Fumola</a>
+        <a href="https://scholar.google.com/citations?user=zVXQcSsAAAAJ&amp;hl=en">Papers (Google)</a>
         <a href="http://dblp.uni-trier.de/db/indices/a-tree/h/Hammer:Matthew_A=.html">Papers (DBLP)</a>
-    </nav>
+      </nav>
     </header>
 
-    <section>
-      <h2>Welcome</h2>
+    <section id="welcome">
+      <h2>Welcome<a class="anchor" href="#welcome" aria-label="Copy link to this heading">#</a></h2>
       <p>
-        I’m Matthew Hammer, an independent researcher excited by <b>modern programming languages</b>,
-        including their mathematical designs and practical implementations.
-        </p>
-        <p>In the past, I've been: 
-        <ul>
-            <li>A <b>student</b>, learning at <ul>
-                <li>University of Chicago (PhD)</li>
-                <li>MPI-SWS (PhD, visiting student) and</li>
-                <li>UMD (post doc researcher).</li>
-                </ul>
-            </li>
-            <li>An <b>assistant professor</b>, at CU Boulder, 2015 to 2019</li>
-            <li>A <b>researcher and engineer</b>, at DFINITY Foundation, 2019 to 2023</li>
-            <li>An <b>independent researcher</b>, 2023 to today.</li>
-        </ul>
+        I&rsquo;m Matthew Hammer, an independent researcher excited by <b>modern programming
+        languages</b>, including their mathematical designs and practical implementations.
+      </p>
+
+      <p>Along the way, I&rsquo;ve been:</p>
+      <ul>
+        <li>
+          A <b>student</b>, learning at
+          <ul>
+            <li>University of Chicago (PhD),</li>
+            <li>MPI-SWS (PhD, visiting student), and</li>
+            <li>UMD (postdoctoral researcher).</li>
+          </ul>
+        </li>
+        <li>An <b>assistant professor</b>, at CU Boulder, 2015 to 2019.</li>
+        <li>A <b>researcher and engineer</b>, at DFINITY Foundation, 2019 to 2023.</li>
+        <li>An <b>independent researcher</b>, 2023 to today.</li>
+      </ul>
+    </section>
+
+    <section id="languages">
+      <h2>Languages<a class="anchor" href="#languages" aria-label="Copy link to this heading">#</a></h2>
+
+      <p>
+        Languages are tools for linking thoughts and actions;
+        <i>programming languages</i> are communication tools that link our thoughts and
+        actions with machines.
+      </p>
+
+      <p>
+        The following is an incomplete list of languages that play a unique role in my life,
+        and thought processes:
+      </p>
+
+      <ol>
+        <li>
+          <a href="https://fumola.org/">Fumola</a> mixes my favorite language
+          features with room for me to grow and play.
+        </li>
+        <li>
+          <a href="https://ocaml.org/">OCaml</a> has historically played a significant role in
+          my thinking about programming language design and implementation. Learning about
+          OCaml, and later <a href="https://smlfamily.github.io/history/SML-history.pdf">SML</a>
+          and <a href="https://people.cs.uchicago.edu/~jhr/papers/cml.html">CML</a>, helped
+          inspire me to wait for graduate school responses in Spring 2005, rather than decide
+          in Fall 2004 to join Amazon after my CS undergrad in Madison.
+        </li>
+        <li>
+          <a href="https://rust-lang.org/">Rust</a> uniquely blends system-level ideas with
+          layers of practical abstractions.
+        </li>
+        <li>
+          <a href="https://github.com/dfinity/motoko">Motoko</a> captures the essence of
+          autonomous internet agents with a clean, actor-based design.
+        </li>
+      </ol>
+
+      <p>
+        <i>Every</i> programming language was created for some reason. The variety of ideas
+        that coexist together in each one language, and across distinct ones, gives each a
+        deeper sense of identity.
       </p>
     </section>
 
-    <section>
-        <h2>Languages</h2>
+    <section id="projects">
+      <h2>Projects<a class="anchor" href="#projects" aria-label="Copy link to this heading">#</a></h2>
 
-        <p>Languages are tools for linking thoughts and actions; 
-            <i>programming languages</i> are communication tools that link our thoughts and actions with machines.</p>
+      <h3 id="hazel">Hazel<a class="anchor" href="#hazel" aria-label="Copy link to this heading">#</a></h3>
+      <p>
+        <a href="https://hazel.org/">Hazel</a> is a live functional programming
+        environment: every edit state has a meaning, so a program has a result even
+        while it is incomplete. I co-authored the first Hazel papers and its founding
+        grants, around 2017.
+      </p>
 
-        <p>The following is an incomplete list of languages that play a unique role in my life, and thought processes:</p>
-        <ol>
-	<li><a href="https://ocaml.org/">OCaml</a> has historically played a significant role in my thinking about programming language design and implementation. Learning about OCaml, and later <a href="https://smlfamily.github.io/history/SML-history.pdf">SML</a> later and <a href="https://people.cs.uchicago.edu/~jhr/papers/cml.html">CML</a>, helped inspire me to wait for graduate school responses in Spring 2005, rather than decide in Fall 2004 to join Amazon after my CS undergrad in Madison.</li>
-        <li><a href="https://rust-lang.org/">Rust</a> uniquely blends system-level ideas with layers of practical abstractions.</li>
-        <li><a href="https://github.com/dfinity/motoko">Motoko</a> captures the essence of autonomous internet agents with a clean, actor-based design.</li> 
-	<li><a href="https://github.com/Adapton/Fumola">Fumola</a> mixes my favorite language features with room for me to grow and play.</li>
-        </ol>
-        <p><i>Every</i> programming language was created for some reason. The variety of ideas that coexist together in each one language, and across distinct ones, gives each a deeper sense of identity.</p>
+      <h3 id="adapton">Adapton<a class="anchor" href="#adapton" aria-label="Copy link to this heading">#</a></h3>
+      <p>
+        <a href="https://adapton.org/">Adapton</a> is a programming abstraction for
+        incremental computation: a program's results are kept with the dependencies
+        that produced them, so a change reaches exactly the parts that read it.
+      </p>
+
+      <h3 id="fumola">Fumola<a class="anchor" href="#fumola" aria-label="Copy link to this heading">#</a></h3>
+      <p>
+        <a href="https://fumola.org/">Fumola</a> is my current language, with
+        Adapton's primitives built in. It also runs inside Hazel documents, as
+        described on its <a href="https://fumola.org/hazel-integration/">Hazel
+        integration</a> page.
+      </p>
     </section>
+
     <footer>
-      © 2026 Matthew Hammer — Built with plain HTML + CSS on GitHub Pages
+      &copy; 2026 Matthew Hammer &mdash; Built with plain HTML + CSS on GitHub Pages
     </footer>
   </main>
 </body>
