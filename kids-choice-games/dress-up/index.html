@@ -91,7 +91,8 @@ const DEFAULTS = {
            stars: false, hearts: false, xeyes: false, unibrow: true, eyes: 50, sides: 0,
            rays: 0, teeth: 0, open: 0,
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
-           pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0 },
+           pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
+           faceW: 100, faceH: 100, alien: 0 },
   hair:  { style: "long", color: "#2b2b2b" },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -188,17 +189,14 @@ function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
   return `M48 80 Q68 ${top} 88 ${inner} M152 80 Q132 ${top} 112 ${inner}`;
 }
-const WHOLE_HEAD = "M38 60 A80 80 0 1 0 162 60 A80 80 0 0 0 38 60 Z";
-const LOWER_HEAD = "M38 60 A80 80 0 1 0 162 60 Z";
-const LID = "M38 60 A80 80 0 0 1 162 60 Z";
 const CRACK = "M38 60 L52 52 L66 63 L80 51 L94 63 L108 51 L122 63 L136 51 L150 62 L162 60";
 const CONFETTI = ["deeppink", "orange", "dodgerblue", "limegreen", "gold", "mediumpurple", "red"];
 
-function pieces(shown, burst) {
+function pieces(shown, burst, crackY = 60) {
   let s = "";
   for (let i = 0; i < 40 && i < shown; i++) {
     const x = 100 + idiv((mod(i * 53, 190) - 95) * burst, 100);
-    const y = 60 - idiv((15 + mod(i * 29, 125)) * burst, 100);
+    const y = Math.round(crackY) - idiv((15 + mod(i * 29, 125)) * burst, 100);
     const spin = idiv(mod(i * 67, 360) * burst, 100);
     const kind = mod(i, 5);
     s += `<g transform="translate(${x} ${y}) rotate(${spin})">` + (kind < 3
@@ -250,7 +248,8 @@ function sideLines(v) {
     ray(100, 111, 86, len, width, color, -dx, oy - 100)).join("");
 }
 const UP_FAN = [[100, 100], [134, 94], [66, 94], [164, 77], [36, 77], [187, 50], [13, 50]];
-const raysUp = (len, width) => UP_FAN.map(([ox, up]) => ray(100, 60, 18, len, width, "orange", ox - 100, -up)).join("");
+const raysUp = (len, width, crackY = 60) =>
+  UP_FAN.map(([ox, up]) => ray(100, Math.round(crackY), 18, len, width, "orange", ox - 100, -up)).join("");
 function teeth(n, upper, lower) {
   let s = "";
   for (let j = 1; j <= n; j++) {
@@ -326,21 +325,68 @@ function hairSvg(h) {
   return "";
 }
 
+// The head's outline, around its center (100, 110.6): a circle of radius
+// 80 stretched by face width and height, and, as `alien` goes up, wider
+// across the top and narrowing to a pointed chin, like an alien's head.
+const HEAD_C = 110.6;
+function headPoints(F) {
+  const W = F.faceW / 100, H = F.faceH / 100, a = F.alien / 100, pts = [];
+  for (let i = 0; i < 72; i++) {
+    const t = i * Math.PI / 36, c = Math.cos(t), sn = Math.sin(t);
+    const sx = c * (1 + a * (sn < 0 ? 0.12 : -0.85 * sn));
+    const sy = sn * (1 + a * (sn > 0 ? 0.25 : 0.05));
+    pts.push([100 + 80 * W * sx, HEAD_C + 80 * H * sy]);
+  }
+  return pts;
+}
+// Where the head's outline crosses the line y = Y: its left and right x.
+function acrossAt(pts, Y) {
+  const xs = [];
+  pts.forEach(([x1, y1], i) => {
+    const [x2, y2] = pts[(i + 1) % pts.length];
+    if ((y1 - Y) * (y2 - Y) <= 0 && y1 !== y2) xs.push(x1 + (x2 - x1) * (Y - y1) / (y2 - y1));
+  });
+  return xs.length ? [Math.min(...xs), Math.max(...xs)] : [100, 100];
+}
+const headChin = F => HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
+const headCrown = F => HEAD_C - 80 * (F.faceH / 100) * (1 + 0.05 * F.alien / 100);
+// The head's stretch, for the hair: hair drawn for the round head is
+// stretched the same way about the head's center.
+const hairStretch = F =>
+  `translate(100 ${HEAD_C}) scale(${(F.faceW / 100 * (1 + 0.12 * F.alien / 100)).toFixed(3)} ` +
+  `${(F.faceH / 100).toFixed(3)}) translate(-100 ${-HEAD_C})`;
+
 function faceSvg(F, ground) {
   const b = F.burst, k = F.candy, r = F.rays, o = F.open;
   const rayLen = r === 0 ? 0 : idiv((15 + idiv(r * 6, 10)) * b, 100);
   const shown = k * b >= 2500 ? 40 : idiv(k * b * 40, 2500);
   const lift = idiv(b * 7, 10), tilt = idiv(b, 4);
   const [upper, lower] = lips(F.smile, o);
-  const part = d => `<path d="${d}" fill="${F.color}" stroke="black" stroke-width="3"/>`;
-  return hairSvg(state.hair) +
+  // The head, and when it explodes, split along a crack into a lid and
+  // the rest: the same outline twice, clipped above and below the crack.
+  const pts = headPoints(F);
+  const d = "M" + pts.map(([x, y]) => f1(x) + " " + f1(y)).join(" L") + " Z";
+  const crackY = HEAD_C - 50.6 * F.faceH / 100;
+  const [xl, xr] = acrossAt(pts, crackY);
+  const crack = CRACK.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
+    f1(xl + (Number(x) - 38) * (xr - xl) / 124) + " " + f1(crackY + Number(y) - 60));
+  const part = (clip = "") => `<path d="${d}" fill="${F.color}" stroke="black" stroke-width="3"${clip}/>`;
+  const clips = `<clipPath id="above-crack"><rect x="-2000" y="-4000" width="4200" height="${f1(4000 + crackY)}"/></clipPath>` +
+                `<clipPath id="below-crack"><rect x="-2000" y="${f1(crackY)}" width="4200" height="4000"/></clipPath>`;
+  // Eyes slant about their own middles, mirror images of each other:
+  // tilt up and the outer corners rise, for almond alien eyes.
+  const slant = (x, side, inner) =>
+    `<g transform="rotate(${f1(side * F.tilt)} ${x} 100)">${inner}</g>`;
+  return `<defs>${clips}</defs>` +
+    `<g transform="${hairStretch(F)}">${hairSvg(state.hair)}</g>` +
     sideLines(F.sides) +
-    part(b > 0 ? LOWER_HEAD : WHOLE_HEAD) +
-    raysUp(rayLen, 3 + idiv(r, 25)) +
-    (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 60)">${part(LID)}</g>` : "") +
-    pieces(shown, b) +
-    (b > 0 ? `<path d="${CRACK}" fill="none" stroke="black" stroke-width="2"/>` : "") +
-    eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F) + eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F) +
+    (b > 0 ? part(' clip-path="url(#below-crack)"') : part()) +
+    raysUp(rayLen, 3 + idiv(r, 25), crackY) +
+    (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 ${f1(crackY)})">${part(' clip-path="url(#above-crack)"')}</g>` : "") +
+    pieces(shown, b, crackY) +
+    (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
+    slant(68, 1, eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F)) +
+    slant(132, -1, eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F)) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
       `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
@@ -427,12 +473,13 @@ function draw() {
   // HEAD: its chin on the top of the neck.
   const neckTop = -20 - B.neck;
   const s = F.size / 80;
-  const ty = neckTop + 6 - 190.6 * s, tx = -100 * s;
+  const ty = neckTop + 6 - (headChin(F) - 4) * s, tx = -100 * s;
   faceFrame = { tx, ty, s };
 
   // The picture's frame grows to hold everything.
   const handYs = arms.map(x => x.H[1]);
-  const faceTop = Math.min(-90, 60 - 1.4 * F.burst - 30);
+  // room for big hair on a tall head, a lid blown far off, and candy
+  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40);
   const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - 40));
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
@@ -498,6 +545,9 @@ const TABS = [
   ["😀 Face", "face", [
     ["color", "color", "skin & head color", SKINS],
     ["range", "size", "head size", 8, 150, 36, 64],
+    ["range", "faceW", "face width", 40, 200, 85, 115],
+    ["range", "faceH", "face height", 40, 200, 85, 115],
+    ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
@@ -512,6 +562,7 @@ const TABS = [
   ["👁 Eyes", "face", [
     ["range", "eyes", "eye size", -35, 300, 0, 100],
     ["range", "oval", "eye shape (round ↔ narrow)", 0, 100, 0, 60],
+    ["range", "tilt", "eye angle (flat ↔ slanted)", -60, 60, 0, 0],
     ["pad", "light", "✨ where the light comes from"],
     ["color", "shine", "shine color", ["#ffffff", "#fff3b0", "#ffd1dc", "#aee6ff", "#c8ffc8", "#ffb347"]],
     ["range", "shineMix", "shine (dark ↔ bright)", 0, 100, 60, 100],
@@ -691,6 +742,11 @@ document.getElementById("surprise").addEventListener("click", () => {
   // irises about 4 times in 10, and eye whites around about half of those
   F.iris = Math.random() < 0.4 ? rnd(15, 60) : 0;
   F.whites = F.iris > 0 && Math.random() < 0.5 ? rnd(10, 60) : 0;
+  // now and then, an alien: a pointed head and slanted almond eyes
+  const alien = Math.random() < 0.15;
+  F.alien = alien ? rnd(50, 100) : 0;
+  F.tilt = alien ? rnd(15, 35) : 0;
+  if (alien) F.oval = rnd(45, 75);
   changed();
 });
 document.getElementById("reset").addEventListener("click", () => { state = clone(DEFAULTS); changed(); });
