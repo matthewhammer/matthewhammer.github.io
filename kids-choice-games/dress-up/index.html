@@ -46,6 +46,8 @@
   input[type=range] { width: 100%; height: 28px; accent-color: var(--accent); }
   input[type=color] { width: 40px; height: 34px; border: none; padding: 0; background: none; }
   .hint { color: var(--muted); font-size: 0.9em; }
+  svg.pad { width: 140px; height: 140px; display: block; touch-action: none; cursor: crosshair;
+            border-radius: 14px; border: 2px solid var(--line); }
   /* On a phone the controls are below the picture, so the picture is
      kept small and pinned at the top: a change shows while you make it. */
   @media (max-width: 760px) {
@@ -87,7 +89,9 @@
 const DEFAULTS = {
   face:  { color: "#cfa000", size: 46, smile: 85, brow: 30, sick: 0, burst: 0, candy: 0,
            stars: false, hearts: false, xeyes: false, unibrow: true, eyes: 50, sides: 0,
-           rays: 0, teeth: 0, open: 0 },
+           rays: 0, teeth: 0, open: 0,
+           lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
+           pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0 },
   hair:  { style: "long", color: "#2b2b2b" },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain" },
@@ -199,7 +203,7 @@ function pieces(shown, burst) {
   }
   return s;
 }
-function eye(x, size, stars, hearts, xs) {
+function eye(x, size, stars, hearts, xs, F) {
   const r = 6 + idiv(size, 7);
   const glyph = (g, gx, gy, gs) =>
     `<text x="${gx}" y="${gy}" font-size="${gs}" text-anchor="middle" dominant-baseline="central">${g}</text>`;
@@ -207,7 +211,20 @@ function eye(x, size, stars, hearts, xs) {
                  `stroke="black" stroke-width="${3 + idiv(r, 6)}" stroke-linecap="round"/>`;
   if (hearts) return glyph("❤️", x, 100, r * 3) + (stars ? glyph("⭐", x + r, 100 - r, idiv(r * 3, 2)) : "");
   if (stars) return glyph("⭐", x, 100, r * 3);
-  return `<circle cx="${x}" cy="100" r="${r}"/>`;
+  // A plain eye, as the eye emoji draws one: an eye white, around an
+  // iris, around the pupil -- the white and iris only when chosen -- and
+  // a shine, a small dot on the side the light comes from, colored
+  // somewhere between the pupil's color and the shine color.
+  const irisR = F.iris > 0 ? r + F.iris * 0.25 : 0;
+  const whiteR = irisR > 0 && F.whites > 0 ? irisR + F.whites * 0.25 : 0;
+  const outer = irisR || r;
+  const dot = mix(F.pupil, F.shine, F.shineMix / 100);
+  const dotR = r * F.shineSize / 150;
+  const dx = F.lightX * outer * 0.5, dy = F.lightY * outer * 0.5;
+  return (whiteR ? `<circle cx="${x}" cy="100" r="${f1(whiteR)}" fill="#ffffff" stroke="black" stroke-width="2"/>` : "") +
+    (irisR ? `<circle cx="${x}" cy="100" r="${f1(irisR)}" fill="${F.irisColor}"/>` : "") +
+    `<circle cx="${x}" cy="100" r="${r}" fill="${F.pupil}"/>` +
+    (dotR > 0.3 ? `<circle cx="${f1(x + dx)}" cy="${f1(100 + dy)}" r="${f1(dotR)}" fill="${dot}"/>` : "");
 }
 function ray(cx, cy, r0, len, width, color, dx, dy) {
   if (len <= 0) return "";
@@ -292,7 +309,7 @@ function hairSvg(h) {
       return poly(ps, h.color, stroke, 4);
     }
     case "afro":
-      return `<circle cx="100" cy="92" r="118" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
+      return `<circle cx="100" cy="46" r="104" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
     case "pigtails":
       return `<circle cx="-8" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
              `<circle cx="208" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
@@ -315,7 +332,7 @@ function faceSvg(F, ground) {
     (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 60)">${part(LID)}</g>` : "") +
     pieces(shown, b) +
     (b > 0 ? `<path d="${CRACK}" fill="none" stroke="black" stroke-width="2"/>` : "") +
-    eye(68, F.eyes, F.stars, F.hearts, F.xeyes) + eye(132, F.eyes, F.stars, F.hearts, F.xeyes) +
+    eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F) + eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
       `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
@@ -419,8 +436,9 @@ function draw() {
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern)}${patternDef("pat-pants", P.color, P.pattern)}</defs>`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
 
-  // legs, then pants over them, then shoes
+  // legs, then shoes, then pants over both: long pants cover a boot's top
   for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, B.legW, skin, skinLine);
+  for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, state.shoes, skin);
   const pf = fillOf("pat-pants", P.color, P.pattern), ps = darker(P.color);
   if (P.style === "skirt") {
     const sl = LL * 0.5;
@@ -431,7 +449,6 @@ function draw() {
     svg += poly([[-hw, L - 10], [hw, L - 10], [fx + half, L + len], [fx - half, L + len],
                  [0, L + Math.min(len * 0.3, 40)], [-(fx - half), L + len], [-(fx + half), L + len]], pf, ps);
   }
-  for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, state.shoes, skin);
 
   // neck, behind the shirt so it shows in the collar
   svg += `<rect x="${-B.neckW / 2}" y="${neckTop}" width="${B.neckW}" height="${B.neck + 44}" rx="4" ` +
@@ -475,10 +492,6 @@ const TABS = [
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
-    ["range", "eyes", "eye size", -35, 300, 0, 100],
-    ["toggle", "stars", "⭐ star eyes"],
-    ["toggle", "hearts", "❤️ heart eyes"],
-    ["toggle", "xeyes", "✖ x eyes"],
     ["range", "open", "mouth open", 0, 300, 0, 100],
     ["range", "teeth", "teeth", 0, 15, 0, 5],
     ["range", "sides", "side lines", 0, 300, 0, 100],
@@ -486,6 +499,20 @@ const TABS = [
     ["range", "candy", "🍬 candy", 0, 300, 0, 100],
     ["range", "rays", "head rays", 0, 300, 0, 100],
     ["range", "sick", "🤢 sickness", 0, 300, 0, 100],
+  ]],
+  ["👁 Eyes", "face", [
+    ["range", "eyes", "eye size", -35, 300, 0, 100],
+    ["pad", "light", "✨ where the light comes from"],
+    ["color", "shine", "shine color", ["#ffffff", "#fff3b0", "#ffd1dc", "#aee6ff", "#c8ffc8", "#ffb347"]],
+    ["range", "shineMix", "shine (dark ↔ bright)", 0, 100, 60, 100],
+    ["range", "shineSize", "shine size", 0, 150, 25, 70],
+    ["color", "pupil", "pupil color", ["#000000", "#3b2314", "#1e3a8a", "#14532d", "#7f1d1d", "#4c1d95"]],
+    ["range", "iris", "iris size (0 = no iris)", 0, 150, 0, 0],
+    ["color", "irisColor", "iris color", ["#3b82f6", "#22c55e", "#8b5a2b", "#a0782c", "#9ca3af", "#8b5cf6", "#ef4444"]],
+    ["range", "whites", "eye white size (0 = none)", 0, 150, 0, 0],
+    ["toggle", "stars", "⭐ star eyes"],
+    ["toggle", "hearts", "❤️ heart eyes"],
+    ["toggle", "xeyes", "✖ x eyes"],
   ]],
   ["💇 Hair", "hair", [
     ["choice", "style", "style", [["none", "none"], ["short", "short"], ["long", "long"], ["curly", "curly"],
@@ -541,6 +568,12 @@ function el(tag, attrs = {}, kids = []) {
   return e;
 }
 
+// Iris color and eye whites only mean something once there is an iris.
+const SHOWN_WHEN = {
+  "face.irisColor": f => f.iris > 0,
+  "face.whites": f => f.iris > 0,
+};
+
 function control(part, [kind, key, label, ...rest]) {
   const val = el("span", { class: "val" });
   const box = el("div", { class: "ctl" }, [el("div", { class: "lbl" }, [label, val])]);
@@ -580,7 +613,33 @@ function control(part, [kind, key, label, ...rest]) {
       for (const [c, b] of bs) b.setAttribute("aria-pressed", state[part][key] === c);
       if (state[part][key] !== "skin") pick.value = state[part][key];
     });
+  } else if (kind === "pad") {
+    // A square to tap or drag: the sun marks where the light comes from,
+    // and the shine sits on that side of each eye.
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "-1.2 -1.2 2.4 2.4");
+    svg.setAttribute("class", "pad");
+    svg.innerHTML = `<rect x="-1.2" y="-1.2" width="2.4" height="2.4" rx="0.2" fill="#87ceeb"/>` +
+      `<circle r="0.45" fill="#f5c542" stroke="#333" stroke-width="0.04"/>` +
+      `<circle cx="-0.15" cy="-0.08" r="0.07"/><circle cx="0.15" cy="-0.08" r="0.07"/>` +
+      `<g id="sun"><circle r="0.16" fill="#fff59d" stroke="#f59e0b" stroke-width="0.05"/></g>`;
+    const sun = svg.querySelector("#sun");
+    const at = e => {
+      const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+      const c = v => Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100;
+      state[part].lightX = c(p.x); state[part].lightY = c(p.y); changed();
+    };
+    let held = false;
+    svg.addEventListener("pointerdown", e => { held = true; svg.setPointerCapture(e.pointerId); at(e); });
+    svg.addEventListener("pointermove", e => { if (held) at(e); });
+    svg.addEventListener("pointerup", () => { held = false; });
+    svg.addEventListener("pointercancel", () => { held = false; });
+    box.append(svg);
+    syncs.push(() => sun.setAttribute("transform", `translate(${state[part].lightX} ${state[part].lightY})`));
   }
+  const when = SHOWN_WHEN[part + "." + key];
+  if (when) syncs.push(() => { box.hidden = !when(state[part]); });
   return box;
 }
 
