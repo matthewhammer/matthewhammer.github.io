@@ -669,6 +669,9 @@ document.getElementById("surprise").addEventListener("click", () => {
   const F = state.face;
   if (Math.random() < 0.75) F.sick = 0;
   if (Math.random() < 0.6) { F.burst = 0; F.rays = 0; }
+  // irises about 4 times in 10, and eye whites around about half of those
+  F.iris = Math.random() < 0.4 ? rnd(15, 60) : 0;
+  F.whites = F.iris > 0 && Math.random() < 0.5 ? rnd(10, 60) : 0;
   changed();
 });
 document.getElementById("reset").addEventListener("click", () => { state = clone(DEFAULTS); changed(); });
