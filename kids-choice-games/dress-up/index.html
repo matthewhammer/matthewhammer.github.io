@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dress Up</title>
+<style>
+  :root { --ink: #222; --muted: #666; --line: #d6d6d6; --paper: #fffdf7; --bg: #f3f0ff;
+          --panel: #ffffff; --accent: #7c3aed; --accent-ink: #fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #eee; --muted: #aaa; --line: #444; --paper: #fffdf7; --bg: #1d1a26;
+            --panel: #29253a; --accent: #a78bfa; --accent-ink: #1d1a26; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+         font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif; }
+  h1 { margin: 0 0 10px; font-size: 1.6em; letter-spacing: 0.02em; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px;
+         max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 760px) { .app { grid-template-columns: minmax(0, 1fr); } }
+  .stage { position: sticky; top: 8px; align-self: start; }
+  @media (max-width: 760px) { .stage { position: static; } }
+  svg#pic { display: block; width: 100%; height: auto; max-height: 82vh;
+            background: var(--paper); border-radius: 18px; border: 2px solid var(--line);
+            touch-action: none; user-select: none; }
+  .caption { text-align: center; margin-top: 6px; font-size: 1.2em; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+  button { font: inherit; cursor: pointer; border-radius: 12px; border: 2px solid var(--line);
+           background: var(--panel); color: var(--ink); padding: 6px 12px; }
+  button.big { background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+               font-weight: 600; padding: 8px 16px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tabs button { font-weight: 600; }
+  .tabs button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .panel { background: var(--panel); border-radius: 18px; padding: 12px 14px; border: 2px solid var(--line); }
+  .ctl { margin: 10px 0; }
+  .ctl > .lbl { font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .ctl > .lbl .val { color: var(--muted); font-weight: 400; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 3px solid var(--line); }
+  .swatch[aria-pressed=true] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .swatch.skin { font-size: 0.6em; }
+  input[type=range] { width: 100%; height: 28px; accent-color: var(--accent); }
+  input[type=color] { width: 40px; height: 34px; border: none; padding: 0; background: none; }
+  .hint { color: var(--muted); font-size: 0.9em; }
+</style>
+</head>
+<body>
+<h1>Dress Up</h1>
+<div class="app">
+  <div class="stage">
+    <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="caption" id="mood"></div>
+    <div class="actions">
+      <button class="big" id="surprise">🎲 Surprise me!</button>
+      <button id="save">💾 Save picture</button>
+      <button id="reset">↺ Start over</button>
+    </div>
+    <p class="hint" style="text-align:center">Drag the mouth or the eyebrows on the face, too!</p>
+  </div>
+  <div>
+    <div class="tabs" id="tabs"></div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ===================== STATE =====================
+
+const DEFAULTS = {
+  face:  { color: "#cfa000", size: 46, smile: 85, brow: 30, sick: 0, burst: 0, candy: 0,
+           stars: false, hearts: false, xeyes: false, unibrow: true, eyes: 50, sides: 0,
+           rays: 0, teeth: 0, open: 0 },
+  hair:  { style: "long", color: "#2b2b2b" },
+  body:  { neck: 22, neckW: 26, arms: 55 },
+  shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain" },
+  hands: { style: "round", size: 14, color: "skin" },
+  pants: { style: "long", length: 140, color: "#34495e", pattern: "plain" },
+  shoes: { style: "sneaker", size: 100, color: "#c0392b" },
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+let state = clone(DEFAULTS);
+try {
+  const saved = JSON.parse(localStorage.getItem("dress-up-v1") || "null");
+  if (saved) for (const k of Object.keys(DEFAULTS)) state[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
+} catch (_) { /* no storage: start fresh */ }
+function persist() { try { localStorage.setItem("dress-up-v1", JSON.stringify(state)); } catch (_) {} }
+
+// ===================== HELPERS =====================
+
+const idiv = (a, b) => Math.trunc(a / b);           // Hazel's Int division
+const mod = (a, n) => a - idiv(a, n) * n;
+const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
+const f1 = x => (Math.round(x * 10) / 10).toString();
+const pts = ps => ps.map(([x, y]) => f1(x) + "," + f1(y)).join(" ");
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function rgbToHex([r, g, b]) { return "#" + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, "0")).join(""); }
+const mix = (h, to, t) => { const a = hexToRgb(h), b = hexToRgb(to); return rgbToHex(a.map((v, i) => v + (b[i] - v) * t)); };
+const darker = h => mix(h, "#000000", 0.45);
+const lighter = h => mix(h, "#ffffff", 0.45);
+
+function line(x1, y1, x2, y2, w, color, outline) {
+  const l = (ww, c) => `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" ` +
+                       `stroke="${c}" stroke-width="${f1(ww)}" stroke-linecap="round"/>`;
+  return (outline ? l(w + 5, outline) : "") + l(w, color);
+}
+const poly = (ps, fill, stroke, sw = 2.5) =>
+  `<polygon points="${pts(ps)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+
+// A fill for a part: its color, or a pattern of it.
+function patternDef(id, color, kind) {
+  const lt = lighter(color);
+  const inner = {
+    stripes: `<rect width="14" height="6" fill="${lt}"/>`,
+    dots:    `<circle cx="7" cy="7" r="3" fill="${lt}"/>`,
+    hearts:  `<text x="7" y="11" font-size="11" text-anchor="middle" fill="${lt}">♥</text>`,
+    stars:   `<text x="7" y="11" font-size="11" text-anchor="middle" fill="${lt}">★</text>`,
+  }[kind];
+  if (!inner) return "";
+  return `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse">` +
+         `<rect width="14" height="14" fill="${color}"/>${inner}</pattern>`;
+}
+const fillOf = (id, color, kind) => (kind === "plain" ? color : `url(#${id})`);
+
+// ===================== THE FACE (Kids' Choice, ported) =====================
+// Drawn in its own units: 0..200 across, the head a circle of radius 80
+// centered at (100, 110.6), its chin at (100, 190.6).
+
+const PRESETS = [[220, 20, 60], [140, 190, 50], [170, 178, 186], [207, 160, 0]];
+function family(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  const d = PRESETS.map(([pr, pg, pb]) => (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2);
+  return d.indexOf(Math.min(...d));
+}
+function mood(f, brow, smile) {
+  const up = brow < 50, smiling = smile >= 50;
+  const table = [
+    ["disgusted", "shocked", "mischievous", "angry"],
+    ["sick", "relieved", "queasy", "grumpy"],
+    ["curious", "puzzled", "scheming", "homesick"],
+    ["happy", "worried", "determined", "sulky"],
+  ][f];
+  return table[(up ? 0 : 2) + (smiling ? 0 : 1)];
+}
+
+const mouthPath = v => `M60 150 Q100 ${110 + idiv(4 * v, 5)} 140 150`;
+function lips(v, o) {
+  const q = 110 + idiv(4 * v, 5), bend = q - 150, dir = bend < 0 ? -1 : 1;
+  const extreme = Math.abs(bend), even = idiv(36 * o * (40 - extreme), 4000);
+  const far = q + dir * even, near = q + idiv((150 - q) * o, 100) - dir * even;
+  return far < near ? [far, near] : [near, far];
+}
+function openMouth(v, o) {
+  if (o === 0) return mouthPath(v);
+  const [upper, lower] = lips(v, o);
+  return `M60 150 Q100 ${lower} 140 150 Q100 ${upper} 60 150 Z`;
+}
+const browPath = v => `M55 78 Q100 ${50 + idiv(2 * v, 5)} 145 78`;
+function browPair(v) {
+  const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
+  return `M48 80 Q68 ${top} 88 ${inner} M152 80 Q132 ${top} 112 ${inner}`;
+}
+const WHOLE_HEAD = "M38 60 A80 80 0 1 0 162 60 A80 80 0 0 0 38 60 Z";
+const LOWER_HEAD = "M38 60 A80 80 0 1 0 162 60 Z";
+const LID = "M38 60 A80 80 0 0 1 162 60 Z";
+const CRACK = "M38 60 L52 52 L66 63 L80 51 L94 63 L108 51 L122 63 L136 51 L150 62 L162 60";
+const CONFETTI = ["deeppink", "orange", "dodgerblue", "limegreen", "gold", "mediumpurple", "red"];
+
+function pieces(shown, burst) {
+  let s = "";
+  for (let i = 0; i < 40 && i < shown; i++) {
+    const x = 100 + idiv((mod(i * 53, 190) - 95) * burst, 100);
+    const y = 60 - idiv((15 + mod(i * 29, 125)) * burst, 100);
+    const spin = idiv(mod(i * 67, 360) * burst, 100);
+    const kind = mod(i, 5);
+    s += `<g transform="translate(${x} ${y}) rotate(${spin})">` + (kind < 3
+      ? `<text font-size="${16 + mod(i * 7, 11)}" text-anchor="middle" dominant-baseline="middle">${["🍬", "🍭", "🍫"][kind]}</text>`
+      : `<rect x="-6" y="-3" width="12" height="6" fill="${CONFETTI[mod(i, 7)]}"/>`) + "</g>";
+  }
+  return s;
+}
+function eye(x, size, stars, hearts, xs) {
+  const r = 6 + idiv(size, 7);
+  const glyph = (g, gx, gy, gs) =>
+    `<text x="${gx}" y="${gy}" font-size="${gs}" text-anchor="middle" dominant-baseline="central">${g}</text>`;
+  if (xs) return `<path d="M${x - r} ${100 - r} L${x + r} ${100 + r} M${x - r} ${100 + r} L${x + r} ${100 - r}" ` +
+                 `stroke="black" stroke-width="${3 + idiv(r, 6)}" stroke-linecap="round"/>`;
+  if (hearts) return glyph("❤️", x, 100, r * 3) + (stars ? glyph("⭐", x + r, 100 - r, idiv(r * 3, 2)) : "");
+  if (stars) return glyph("⭐", x, 100, r * 3);
+  return `<circle cx="${x}" cy="100" r="${r}"/>`;
+}
+function ray(cx, cy, r0, len, width, color, dx, dy) {
+  if (len <= 0) return "";
+  return `<line x1="${cx + idiv(r0 * dx, 100)}" y1="${cy + idiv(r0 * dy, 100)}" ` +
+         `x2="${cx + idiv((r0 + len) * dx, 100)}" y2="${cy + idiv((r0 + len) * dy, 100)}" ` +
+         `stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
+}
+const FAN = [[100, 100], [94, 134], [94, 66], [77, 164], [77, 36]];
+function sideLines(v) {
+  const shown = v === 0 ? 0 : 1 + idiv(v * 4, 100);
+  const len = 8 + idiv(v * 35, 100), width = 2 + idiv(v, 25);
+  const color = ["#999999", "#666666", "#333333", "black", "black"][idiv(v, 26)];
+  return FAN.slice(0, shown).map(([dx, oy]) =>
+    ray(100, 111, 86, len, width, color, dx, oy - 100) +
+    ray(100, 111, 86, len, width, color, -dx, oy - 100)).join("");
+}
+const UP_FAN = [[100, 100], [134, 94], [66, 94], [164, 77], [36, 77], [187, 50], [13, 50]];
+const raysUp = (len, width) => UP_FAN.map(([ox, up]) => ray(100, 60, 18, len, width, "orange", ox - 100, -up)).join("");
+function teeth(n, upper, lower) {
+  let s = "";
+  for (let j = 1; j <= n; j++) {
+    const d = n + 1, x = 60 + idiv(80 * j, d), up = j % 2 === 1;
+    const q = up ? lower : upper;
+    const y = 150 + idiv(2 * j * (d - j) * (q - 150), d * d);
+    const tip = up ? y - 10 : y + 10;
+    s += `<polygon points="${x - 6},${y} ${x + 6},${y} ${x},${tip}" fill="white" stroke="black" stroke-width="2"/>`;
+  }
+  return s;
+}
+const SICK = ["yellowgreen", "#c8c84a", "olivedrab", "#b5c22e"];
+const BUMPS = [[8, 15, 7], [20, 40, 8], [30, 62, 8], [40, 88, 9], [50, 96, 8],
+               [60, 88, 9], [70, 62, 8], [80, 40, 8], [92, 15, 7], [25, 12, 6]];
+// Sickness, as in Kids' Choice, but the pile lands on the ground the
+// friend stands on (`ground`, in face units) rather than under the chin.
+function sickPile(s, mouthY, ground) {
+  if (s <= 0) return "";
+  const blob = (x, y, r, i) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${SICK[mod(i, 4)]}" stroke="#6b7a1f" stroke-width="1"/>`;
+  const p = s > 30 ? idiv((s - 30) * 100, 70) : 0;
+  const rx = (6 + idiv(p * 84, 100)) * 1.6, ry = (3 + idiv(p * 42, 100)) * 1.6;
+  const top = ground - ry;
+  const reach = mouthY + idiv((top - mouthY) * Math.min(s, 40), 40);
+  const size = 3 + idiv(s, 12);
+  let out = `<path d="M100 ${mouthY} Q93 ${idiv(mouthY + reach, 2)} 100 ${reach}" fill="none" stroke="yellowgreen" ` +
+            `stroke-width="${4 + idiv(s, 10)}" stroke-linecap="round"/>`;
+  if (p > 0) {
+    out += `<path d="M${100 - rx} ${ground} A${rx} ${ry} 0 0 1 ${100 + rx} ${ground} Z" fill="#a8b83a" stroke="#6b7a1f" stroke-width="2"/>`;
+    BUMPS.forEach(([bx, by, br], i) =>
+      out += blob(100 + (bx - 50) * 2 * rx / 100, ground - by * ry / 100, 1 + idiv(br * p, 100) * 1.6, i));
+  }
+  for (let j = 0; j < 6; j++)
+    out += blob(100 + (j % 2 === 0 ? -4 : 4), mouthY + idiv((reach - mouthY) * (j + 1), 6), size - mod(j, 3), j);
+  if (s === 100)
+    out += `<circle cx="84" cy="${ground - 38}" r="7"/><circle cx="116" cy="${ground - 38}" r="7"/>` +
+           `<path d="M82 ${ground - 12} Q100 ${ground - 28} 118 ${ground - 12}" fill="none" stroke="black" stroke-width="4" stroke-linecap="round"/>`;
+  return out;
+}
+
+// ===================== HAIR (in face units) =====================
+// The Shoes and Hair hairdos, each placed by its crown on the top of the
+// head (100, 30.6) and scaled from that slide's head (radius 36) to this one.
+
+const HAIRDOS = {
+  short: { crown: [55, 84], pts: [[15,124],[13,98],[23,76],[41,68],[55,67],[69,68],[87,76],[97,98],[95,124]] },
+  long:  { crown: [160, 84], pts: [[116,194],[114,104],[126,76],[146,67],[160,66],[174,67],[194,76],[206,104],[204,194],[184,188],[188,124],[160,84],[132,124],[136,188]] },
+  curly: { crown: [265, 84], pts: [[221,120],[215,104],[221,90],[217,78],[229,70],[235,60],[249,62],[257,54],[265,60],[273,54],[281,62],[295,60],[301,70],[313,78],[309,90],[315,104],[309,120]] },
+};
+function hairSvg(h) {
+  const k = 80 / 36, stroke = darker(h.color);
+  const fromDo = d => d.pts.map(([x, y]) => [100 + (x - d.crown[0]) * k, 30.6 + (y - d.crown[1]) * k]);
+  switch (h.style) {
+    case "short": case "long": case "curly":
+      return poly(fromDo(HAIRDOS[h.style]), h.color, stroke, 4);
+    case "spiky": {
+      const ps = [];
+      for (let i = 0; i <= 14; i++) {
+        const a = Math.PI * (1.05 + i * 0.9 / 14), r = i % 2 ? 128 : 84;
+        ps.push([100 + r * Math.cos(a), 110.6 + r * Math.sin(a)]);
+      }
+      ps.push([100, 120]);
+      return poly(ps, h.color, stroke, 4);
+    }
+    case "afro":
+      return `<circle cx="100" cy="92" r="118" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
+    case "pigtails":
+      return `<circle cx="-8" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
+             `<circle cx="208" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
+             poly(fromDo(HAIRDOS.short), h.color, stroke, 4);
+  }
+  return "";
+}
+
+function faceSvg(F, ground) {
+  const b = F.burst, k = F.candy, r = F.rays, o = F.open;
+  const rayLen = r === 0 ? 0 : idiv((15 + idiv(r * 6, 10)) * b, 100);
+  const shown = k * b >= 2500 ? 40 : idiv(k * b * 40, 2500);
+  const lift = idiv(b * 7, 10), tilt = idiv(b, 4);
+  const [upper, lower] = lips(F.smile, o);
+  const part = d => `<path d="${d}" fill="${F.color}" stroke="black" stroke-width="3"/>`;
+  return hairSvg(state.hair) +
+    sideLines(F.sides) +
+    part(b > 0 ? LOWER_HEAD : WHOLE_HEAD) +
+    raysUp(rayLen, 3 + idiv(r, 25)) +
+    (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 60)">${part(LID)}</g>` : "") +
+    pieces(shown, b) +
+    (b > 0 ? `<path d="${CRACK}" fill="none" stroke="black" stroke-width="2"/>` : "") +
+    eye(68, F.eyes, F.stars, F.hearts, F.xeyes) + eye(132, F.eyes, F.stars, F.hearts, F.xeyes) +
+    `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
+      `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
+    `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
+      `stroke-width="5" stroke-linejoin="round"/>` +
+    teeth(F.teeth, upper, lower) +
+    sickPile(F.sick, 150 + idiv(lower - 150, 2), ground);
+}
+
+// ===================== THE BODY =====================
+// Body units: the collar's top at y = -20, centered on x = 0. Every part
+// is placed by an anchor of the part before it: the neck on the collar,
+// the head's chin on the neck, hands at the ends of the arms, the pants'
+// hips under the shirt's, and shoes on the pants' feet.
+
+const SHOES = {
+  sneaker: [[-2,0],[12,0],[14,12],[40,16],[44,26],[-12,26],[-14,10]],
+  boot:    [[-12,-34],[12,-34],[13,8],[38,12],[42,26],[-13,26]],
+  clown:   [[-10,0],[10,0],[14,8],[62,4],[74,16],[64,30],[-14,30],[-18,14]],
+};
+function shoeSvg(x, y, side, sh, skin) {
+  const sc = sh.size / 100;
+  if (sh.style === "bare")
+    return `<ellipse cx="${f1(x + side * 12 * sc)}" cy="${f1(y + 8 * sc)}" rx="${f1(22 * sc)}" ry="${f1(10 * sc)}" ` +
+           `fill="${skin}" stroke="${darker(skin)}" stroke-width="2.5"/>`;
+  const ps = SHOES[sh.style].map(([dx, dy]) => [x + side * dx * sc, y + dy * sc]);
+  let s = poly(ps, sh.color, darker(sh.color));
+  if (sh.style === "sneaker")
+    s += line(x + side * -10 * sc, y + 22 * sc, x + side * 40 * sc, y + 22 * sc, 3 * sc, "#ffffff");
+  if (sh.style === "clown")
+    s += `<circle cx="${f1(x + side * 40 * sc)}" cy="${f1(y + 4 * sc)}" r="${f1(6 * sc)}" fill="#ffffff" stroke="${darker(sh.color)}" stroke-width="2"/>`;
+  return s;
+}
+function handSvg(x, y, angle, side, h, skin) {
+  const c = h.color === "skin" ? skin : h.color, st = darker(c), r = h.size;
+  const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${inner}</g>`;
+  switch (h.style) {
+    case "round":
+      return g(`<circle r="${r}" fill="${c}" stroke="${st}" stroke-width="2.5"/>`);
+    case "mitten":
+      return g(`<ellipse cx="${r * 0.4}" rx="${r * 1.2}" ry="${r * 0.85}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
+               `<ellipse cx="${r * 0.1}" cy="${-r * 0.9}" rx="${r * 0.35}" ry="${r * 0.5}" fill="${c}" stroke="${st}" stroke-width="2.5"/>`);
+    case "star": {
+      const ps = [];
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.55 : r * 1.4;
+        ps.push([rr * Math.cos(a), rr * Math.sin(a)]);
+      }
+      return g(poly(ps, c, st));
+    }
+    case "claw":
+      return g(`<circle r="${r * 0.6}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
+               `<path d="M${r * 0.4} ${-r * 0.4} Q${r * 1.8} ${-r * 1.2} ${r * 2} ${-r * 0.1} M${r * 0.4} ${r * 0.4} ` +
+               `Q${r * 1.8} ${r * 1.2} ${r * 2} ${r * 0.1}" fill="none" stroke="${st}" stroke-width="${r * 0.45 + 2}" stroke-linecap="round"/>` +
+               `<path d="M${r * 0.4} ${-r * 0.4} Q${r * 1.8} ${-r * 1.2} ${r * 2} ${-r * 0.1} M${r * 0.4} ${r * 0.4} ` +
+               `Q${r * 1.8} ${r * 1.2} ${r * 2} ${r * 0.1}" fill="none" stroke="${c}" stroke-width="${r * 0.45}" stroke-linecap="round"/>`);
+  }
+  return "";
+}
+
+let faceFrame = { tx: 0, ty: 0, s: 1 };   // where the face is, for dragging it
+
+function draw() {
+  const { face: F, body: B, shirt: SH, pants: P } = state;
+  const skin = F.color, skinLine = darker(skin);
+  const w = SH.width, L = SH.length;
+  const nw = Math.max(22, B.neckW / 2 + 6);           // the collar fits the neck
+
+  // ARMS: from each shoulder, at the arms angle, to a hand.
+  const a = B.arms * Math.PI / 180, armLen = 95, armW = 16;
+  const arms = [1, -1].map(side => {
+    const A = [side * (w - 6), 8];
+    return { side, A, H: [A[0] + side * armLen * Math.cos(a), A[1] + armLen * Math.sin(a)],
+             angle: side > 0 ? B.arms : 180 - B.arms };
+  });
+  const sleeve = { tee: 0.38, long: 0.95, tank: 0 }[SH.style];
+
+  // PANTS: their hips under the shirt's hem, their feet under the legs.
+  const hw = w - 2, LL = P.length, fx = hw / 2 + 6, feetY = L + LL;
+  const shoeSc = state.shoes.size / 100;
+  const ground = feetY + (state.shoes.style === "bare" ? 18 : 30) * shoeSc;
+
+  // HEAD: its chin on the top of the neck.
+  const neckTop = -20 - B.neck;
+  const s = F.size / 80;
+  const ty = neckTop + 6 - 190.6 * s, tx = -100 * s;
+  faceFrame = { tx, ty, s };
+
+  // The picture's frame grows to hold everything.
+  const handYs = arms.map(x => x.H[1]);
+  const top = Math.min(ty - 90 * s, ...handYs.map(y => y - 40));
+  const bottom = ground + 24;
+  const left = Math.min(-200, ...arms.map(x => x.H[0] - 40), -(hw + 40));
+  const width = -2 * left;
+
+  let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern)}${patternDef("pat-pants", P.color, P.pattern)}</defs>`;
+  svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
+
+  // legs, then pants over them, then shoes
+  for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, 20, skin, skinLine);
+  const pf = fillOf("pat-pants", P.color, P.pattern), ps = darker(P.color);
+  if (P.style === "skirt") {
+    const sl = LL * 0.5;
+    svg += `<path d="M${-hw} ${L - 10} L${hw} ${L - 10} L${hw + 30} ${L + sl} Q0 ${L + sl + 14} ${-hw - 30} ${L + sl} Z" ` +
+           `fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  } else {
+    const len = P.style === "shorts" ? LL * 0.38 : LL;
+    svg += poly([[-hw, L - 10], [hw, L - 10], [hw + 6, L + len], [6, L + len], [0, L + Math.min(len * 0.3, 40)],
+                 [-6, L + len], [-hw - 6, L + len]], pf, ps);
+  }
+  for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, state.shoes, skin);
+
+  // neck, behind the shirt so it shows in the collar
+  svg += `<rect x="${-B.neckW / 2}" y="${neckTop}" width="${B.neckW}" height="${B.neck + 44}" rx="4" ` +
+         `fill="${skin}" stroke="${skinLine}" stroke-width="2.5"/>`;
+
+  // arms, sleeves and shirt
+  const sf = fillOf("pat-shirt", SH.color, SH.pattern), ss = darker(SH.color);
+  for (const { A, H } of arms) svg += line(A[0], A[1], H[0], H[1], armW, skin, skinLine);
+  const sleeveEnd = ({ A, H }) => [A[0] + (H[0] - A[0]) * sleeve, A[1] + (H[1] - A[1]) * sleeve];
+  if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
+  const collar = { v: [[0, 18]], round: [[-nw * 0.7, -6], [0, -1], [nw * 0.7, -6]], flat: [] }[SH.collar];
+  const shoulder = SH.style === "tank" ? [[nw + 12, -20], [w, 30]] : [[w + 4, -6], [w, 44]];
+  const torso = [[-nw, -20], ...collar, [nw, -20], ...shoulder, [w + 2, L], [-(w + 2), L],
+                 ...shoulder.map(([x, y]) => [-x, y]).reverse()];
+  svg += poly(torso, sf, ss);
+  if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
+
+  for (const { side, H, angle } of arms) svg += handSvg(H[0], H[1], angle, side, state.hands, skin);
+
+  // the face last, on top, in its own units
+  const groundInFace = (ground - ty) / s;
+  svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">${faceSvg(F, groundInFace)}</g>`;
+
+  const pic = document.getElementById("pic");
+  pic.setAttribute("viewBox", `${f1(left)} ${f1(top)} ${f1(width)} ${f1(bottom - top)}`);
+  pic.innerHTML = svg;
+  document.getElementById("mood").textContent = "feeling " + mood(family(F.color), F.brow, F.smile);
+}
+
+// ===================== CONTROLS =====================
+
+const SKINS = ["#cfa000", "#dc143c", "#8cbe32", "#aab2ba", "#ffdbac", "#f1c27d", "#e0ac69", "#c68642", "#8d5524"];
+const BRIGHT = ["#e74c3c", "#ff69b4", "#f39c12", "#f1c40f", "#2ecc71", "#5b8bd0", "#34495e", "#8e44ad", "#ffffff", "#2b2b2b"];
+const HAIRS = ["#2b2b2b", "#6f4e37", "#e8c35a", "#b5562b", "#ff69b4", "#3b82f6", "#22c55e", "#8b5cf6"];
+const PATTERNS = [["plain", "plain"], ["stripes", "stripes"], ["dots", "dots"], ["hearts", "♥ hearts"], ["stars", "★ stars"]];
+
+const TABS = [
+  ["😀 Face", "face", [
+    ["color", "color", "skin & head color", SKINS],
+    ["range", "size", "head size", 28, 80],
+    ["range", "smile", "smile", 0, 100],
+    ["range", "brow", "eyebrows", 0, 100],
+    ["toggle", "unibrow", "one big eyebrow"],
+    ["range", "eyes", "eye size", 0, 100],
+    ["toggle", "stars", "⭐ star eyes"],
+    ["toggle", "hearts", "❤️ heart eyes"],
+    ["toggle", "xeyes", "✖ x eyes"],
+    ["range", "open", "mouth open", 0, 100],
+    ["range", "teeth", "teeth", 0, 5],
+    ["range", "sides", "side lines", 0, 100],
+    ["range", "burst", "💥 explode", 0, 100],
+    ["range", "candy", "🍬 candy", 0, 100],
+    ["range", "rays", "head rays", 0, 100],
+    ["range", "sick", "🤢 sickness", 0, 100],
+  ]],
+  ["💇 Hair", "hair", [
+    ["choice", "style", "style", [["none", "none"], ["short", "short"], ["long", "long"], ["curly", "curly"],
+                                  ["spiky", "spiky"], ["afro", "afro"], ["pigtails", "pigtails"]]],
+    ["color", "color", "color", HAIRS],
+  ]],
+  ["🦒 Neck & arms", "body", [
+    ["range", "neck", "neck length", 0, 140],
+    ["range", "neckW", "neck width", 12, 40],
+    ["range", "arms", "arms (up ↔ down)", -75, 85],
+  ]],
+  ["👕 Shirt", "shirt", [
+    ["choice", "style", "style", [["tee", "t-shirt"], ["long", "long sleeves"], ["tank", "tank top"]]],
+    ["choice", "collar", "collar", [["v", "V"], ["round", "round"], ["flat", "flat"]]],
+    ["color", "color", "color", BRIGHT],
+    ["choice", "pattern", "pattern", PATTERNS],
+    ["range", "width", "width", 40, 80],
+    ["range", "length", "length", 100, 190],
+  ]],
+  ["🖐 Hands", "hands", [
+    ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"]]],
+    ["color", "color", "color", ["skin", ...BRIGHT]],
+    ["range", "size", "size", 6, 28],
+  ]],
+  ["👖 Pants", "pants", [
+    ["choice", "style", "style", [["long", "long"], ["shorts", "shorts"], ["skirt", "skirt"]]],
+    ["color", "color", "color", BRIGHT],
+    ["choice", "pattern", "pattern", PATTERNS],
+    ["range", "length", "leg length", 70, 200],
+  ]],
+  ["👟 Feet", "shoes", [
+    ["choice", "style", "style", [["sneaker", "sneakers"], ["boot", "boots"], ["clown", "clown shoes"], ["bare", "bare feet"]]],
+    ["color", "color", "color", BRIGHT],
+    ["range", "size", "size", 60, 170],
+  ]],
+];
+
+let tab = 0;
+let syncs = [];   // each control's refresh, run after every change
+
+function set(part, key, value) { state[part][key] = value; changed(); }
+function changed() { draw(); for (const f of syncs) f(); persist(); }
+
+function el(tag, attrs = {}, kids = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of [].concat(kids)) e.append(k);
+  return e;
+}
+
+function control(part, [kind, key, label, ...rest]) {
+  const val = el("span", { class: "val" });
+  const box = el("div", { class: "ctl" }, [el("div", { class: "lbl" }, [label, val])]);
+  if (kind === "range") {
+    const [lo, hi] = rest;
+    const input = el("input", { type: "range", min: lo, max: hi,
+                                oninput: e => set(part, key, Number(e.target.value)) });
+    box.append(input);
+    syncs.push(() => { input.value = state[part][key]; val.textContent = state[part][key]; });
+  } else if (kind === "toggle") {
+    const b = el("button", { onclick: () => set(part, key, !state[part][key]) });
+    box.querySelector(".lbl").textContent = "";
+    box.append(b);
+    syncs.push(() => { b.textContent = label + (state[part][key] ? ": on" : ": off");
+                       b.setAttribute("aria-pressed", state[part][key]); });
+  } else if (kind === "choice") {
+    const row = el("div", { class: "row" });
+    const bs = rest[0].map(([v, text]) => {
+      const b = el("button", { onclick: () => set(part, key, v) }, text);
+      row.append(b); return [v, b];
+    });
+    box.append(row);
+    syncs.push(() => { for (const [v, b] of bs) b.setAttribute("aria-pressed", state[part][key] === v); });
+  } else if (kind === "color") {
+    const row = el("div", { class: "row" });
+    const bs = rest[0].map(c => {
+      const b = c === "skin"
+        ? el("button", { class: "swatch skin", title: "same as skin", onclick: () => set(part, key, c) }, "skin")
+        : el("button", { class: "swatch", title: c, style: `background:${c}`, onclick: () => set(part, key, c) });
+      row.append(b); return [c, b];
+    });
+    const pick = el("input", { type: "color", title: "any color",
+                               oninput: e => set(part, key, e.target.value) });
+    row.append(pick);
+    box.append(row);
+    syncs.push(() => {
+      for (const [c, b] of bs) b.setAttribute("aria-pressed", state[part][key] === c);
+      if (state[part][key] !== "skin") pick.value = state[part][key];
+    });
+  }
+  return box;
+}
+
+function showTab() {
+  syncs = [];
+  const tabs = document.getElementById("tabs"), panel = document.getElementById("panel");
+  tabs.replaceChildren(...TABS.map(([name], i) =>
+    el("button", { "aria-pressed": i === tab, onclick: () => { tab = i; showTab(); } }, name)));
+  const [, part, ctls] = TABS[tab];
+  panel.replaceChildren(...ctls.map(c => control(part, c)));
+  changed();
+}
+
+// ===================== SURPRISE, SAVE, START OVER =====================
+
+const pick = xs => xs[Math.floor(Math.random() * xs.length)];
+const rnd = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+document.getElementById("surprise").addEventListener("click", () => {
+  for (const [, part, ctls] of TABS)
+    for (const [kind, key, , ...rest] of ctls) {
+      if (kind === "range") state[part][key] = rnd(rest[0], rest[1]);
+      else if (kind === "toggle") state[part][key] = Math.random() < 0.3;
+      else if (kind === "choice") state[part][key] = pick(rest[0])[0];
+      else if (kind === "color") state[part][key] = pick(rest[0]);
+    }
+  // keep the surprises friendly: mostly not sick, not exploded, a normal-ish head
+  const F = state.face;
+  if (Math.random() < 0.75) F.sick = 0;
+  if (Math.random() < 0.6) { F.burst = 0; F.rays = 0; }
+  F.size = rnd(36, 64);
+  state.body.neck = rnd(4, 60);
+  changed();
+});
+document.getElementById("reset").addEventListener("click", () => { state = clone(DEFAULTS); changed(); });
+document.getElementById("save").addEventListener("click", () => {
+  const pic = document.getElementById("pic");
+  const vb = pic.viewBox.baseVal, scale = 1000 / vb.height;
+  const copy = pic.cloneNode(true);
+  copy.setAttribute("width", Math.round(vb.width * scale));
+  copy.setAttribute("height", 1000);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = Math.round(vb.width * scale); c.height = 1000;
+    const g = c.getContext("2d");
+    g.fillStyle = "#fffdf7"; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(img, 0, 0);
+    c.toBlob(blob => {
+      const a = el("a", { href: URL.createObjectURL(blob), download: "my-friend.png" });
+      document.body.append(a); a.click(); a.remove();
+    });
+  };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(copy));
+});
+
+// ===================== DRAG THE MOUTH AND BROW =====================
+// As in Kids' Choice: a press above the eyes grabs the brow, below them
+// the mouth, and dragging down raises the value: a smile, or a glower.
+
+let drag = null;
+const pic = document.getElementById("pic");
+function faceUnits(e) {
+  const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(pic.getScreenCTM().inverse());
+  return [(p.x - faceFrame.tx) / faceFrame.s, (p.y - faceFrame.ty) / faceFrame.s];
+}
+pic.addEventListener("pointerdown", e => {
+  const [x, y] = faceUnits(e);
+  if ((x - 100) ** 2 + (y - 110) ** 2 > 90 ** 2) return;
+  const feature = y < 88 ? "brow" : "smile";
+  drag = { feature, v0: state.face[feature], y0: e.clientY };
+  pic.setPointerCapture(e.pointerId);
+});
+// One step per screen pixel, however big the picture is drawn.
+pic.addEventListener("pointermove", e => {
+  if (!drag) return;
+  state.face[drag.feature] = clamp(Math.round(drag.v0 + (e.clientY - drag.y0)));
+  changed();
+});
+const letGo = () => { drag = null; };
+pic.addEventListener("pointerup", letGo);
+pic.addEventListener("pointercancel", letGo);
+
+showTab();
+</script>
+</body>
+</html>
