@@ -977,6 +977,10 @@ document.getElementById("surprise").addEventListener("click", () => {
   F.alien = alien ? rnd(50, 100) : 0;
   F.tilt = alien ? rnd(15, 35) : 0;
   if (alien) F.oval = rnd(45, 75);
+  // and on their own, a somewhat alien head about 1 time in 5, and
+  // slanted eyes, up or down, about 1 time in 4
+  if (!alien && Math.random() < 0.2) F.alien = rnd(15, 70);
+  if (!alien && Math.random() < 0.25) F.tilt = rnd(-20, 35);
   // a costume about 1 time in 4, in its natural colors
   state.costume.kind = Math.random() < 0.25 ? pick(Object.keys(ANIMALS)) : "none";
   if (ANIMALS[state.costume.kind]) Object.assign(state.costume, lookOf(state.costume.kind));
