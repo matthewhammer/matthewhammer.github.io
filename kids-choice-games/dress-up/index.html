@@ -205,14 +205,17 @@ function pieces(shown, burst, crackY = 60) {
   }
   return s;
 }
-function eye(x, size, stars, hearts, xs, F) {
+// `angle` slants the eye about its middle (the eye angle, mirrored for
+// the right eye by the caller).
+function eye(x, size, stars, hearts, xs, F, angle = 0) {
   const r = 6 + idiv(size, 7);
+  const turned = inner => `<g transform="rotate(${f1(angle)} ${x} 100)">${inner}</g>`;
   const glyph = (g, gx, gy, gs) =>
     `<text x="${gx}" y="${gy}" font-size="${gs}" text-anchor="middle" dominant-baseline="central">${g}</text>`;
-  if (xs) return `<path d="M${x - r} ${100 - r} L${x + r} ${100 + r} M${x - r} ${100 + r} L${x + r} ${100 - r}" ` +
-                 `stroke="black" stroke-width="${3 + idiv(r, 6)}" stroke-linecap="round"/>`;
-  if (hearts) return glyph("❤️", x, 100, r * 3) + (stars ? glyph("⭐", x + r, 100 - r, idiv(r * 3, 2)) : "");
-  if (stars) return glyph("⭐", x, 100, r * 3);
+  if (xs) return turned(`<path d="M${x - r} ${100 - r} L${x + r} ${100 + r} M${x - r} ${100 + r} L${x + r} ${100 - r}" ` +
+                 `stroke="black" stroke-width="${3 + idiv(r, 6)}" stroke-linecap="round"/>`);
+  if (hearts) return turned(glyph("❤️", x, 100, r * 3) + (stars ? glyph("⭐", x + r, 100 - r, idiv(r * 3, 2)) : ""));
+  if (stars) return turned(glyph("⭐", x, 100, r * 3));
   // A plain eye, as the eye emoji draws one: an eye white, around an
   // iris, around the pupil -- the white and iris only when chosen -- and
   // a shine, a small dot on the side the light comes from, colored
@@ -222,15 +225,25 @@ function eye(x, size, stars, hearts, xs, F) {
   const outer = irisR || r;
   const dot = mix(F.pupil, F.shine, F.shineMix / 100);
   const dotR = r * F.shineSize / 150;
-  const dx = F.lightX * outer * 0.5, dy = F.lightY * outer * 0.5;
   // eye shape: 0 round, 100 a very narrow oval -- the whole eye squashed
-  // top to bottom about its middle
+  // top to bottom about its middle, then slanted
   const k = 1 - 0.88 * F.oval / 100;
-  return `<g transform="translate(${x} 100) scale(1 ${k.toFixed(3)}) translate(${-x} -100)">` +
+  // The shine is placed in the picture's own frame, toward the light, so
+  // both eyes shine from the same side however they are slanted or
+  // squashed: the light's offset is taken into the eye's own (slanted,
+  // unsquashed) frame, kept within half the eye, and brought back out.
+  const t = angle * Math.PI / 180, cs = Math.cos(t), sn = Math.sin(t);
+  const wx = F.lightX * outer * 0.5, wy = F.lightY * outer * 0.5;
+  let ux = cs * wx + sn * wy, uy = (-sn * wx + cs * wy) / k;
+  const len = Math.hypot(ux, uy), most = outer * 0.55;
+  if (len > most) { ux *= most / len; uy *= most / len; }
+  const dx = cs * ux - sn * uy * k, dy = sn * ux + cs * uy * k;
+  const shineR = Math.min(dotR, outer * k * 0.45);
+  return `<g transform="rotate(${f1(angle)} ${x} 100) translate(${x} 100) scale(1 ${k.toFixed(3)}) translate(${-x} -100)">` +
     (whiteR ? `<circle cx="${x}" cy="100" r="${f1(whiteR)}" fill="#ffffff" stroke="black" stroke-width="2"/>` : "") +
     (irisR ? `<circle cx="${x}" cy="100" r="${f1(irisR)}" fill="${F.irisColor}"/>` : "") +
-    `<circle cx="${x}" cy="100" r="${r}" fill="${F.pupil}"/>` +
-    (dotR > 0.3 ? `<circle cx="${f1(x + dx)}" cy="${f1(100 + dy)}" r="${f1(dotR)}" fill="${dot}"/>` : "") + "</g>";
+    `<circle cx="${x}" cy="100" r="${r}" fill="${F.pupil}"/>` + "</g>" +
+    (shineR > 0.3 ? `<circle cx="${f1(x + dx)}" cy="${f1(100 + dy)}" r="${f1(shineR)}" fill="${dot}"/>` : "");
 }
 function ray(cx, cy, r0, len, width, color, dx, dy) {
   if (len <= 0) return "";
@@ -375,8 +388,6 @@ function faceSvg(F, ground) {
                 `<clipPath id="below-crack"><rect x="-2000" y="${f1(crackY)}" width="4200" height="4000"/></clipPath>`;
   // Eyes slant about their own middles, mirror images of each other:
   // tilt up and the outer corners rise, for almond alien eyes.
-  const slant = (x, side, inner) =>
-    `<g transform="rotate(${f1(side * F.tilt)} ${x} 100)">${inner}</g>`;
   return `<defs>${clips}</defs>` +
     `<g transform="${hairStretch(F)}">${hairSvg(state.hair)}</g>` +
     sideLines(F.sides) +
@@ -385,8 +396,8 @@ function faceSvg(F, ground) {
     (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 ${f1(crackY)})">${part(' clip-path="url(#above-crack)"')}</g>` : "") +
     pieces(shown, b, crackY) +
     (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
-    slant(68, 1, eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F)) +
-    slant(132, -1, eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F)) +
+    eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
+    eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F, -F.tilt) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
       `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
