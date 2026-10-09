@@ -89,10 +89,10 @@ const DEFAULTS = {
            stars: false, hearts: false, xeyes: false, unibrow: true, eyes: 50, sides: 0,
            rays: 0, teeth: 0, open: 0 },
   hair:  { style: "long", color: "#2b2b2b" },
-  body:  { neck: 22, neckW: 26, arms: 55 },
+  body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain" },
   hands: { style: "round", size: 14, color: "skin" },
-  pants: { style: "long", length: 140, color: "#34495e", pattern: "plain" },
+  pants: { style: "long", color: "#34495e", pattern: "plain" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -100,6 +100,9 @@ let state = clone(DEFAULTS);
 try {
   const saved = JSON.parse(localStorage.getItem("dress-up-v1") || "null");
   if (saved) for (const k of Object.keys(DEFAULTS)) state[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
+  // pants length moved to the legs (leg length)
+  if (saved && saved.pants && saved.pants.length && !(saved.body && saved.body.legLen))
+    state.body.legLen = saved.pants.length;
 } catch (_) { /* no storage: start fresh */ }
 function persist() { try { localStorage.setItem("dress-up-v1", JSON.stringify(state)); } catch (_) {} }
 
@@ -216,7 +219,7 @@ const FAN = [[100, 100], [94, 134], [94, 66], [77, 164], [77, 36]];
 function sideLines(v) {
   const shown = v === 0 ? 0 : 1 + idiv(v * 4, 100);
   const len = 8 + idiv(v * 35, 100), width = 2 + idiv(v, 25);
-  const color = ["#999999", "#666666", "#333333", "black", "black"][idiv(v, 26)];
+  const color = ["#999999", "#666666", "#333333", "black", "black"][Math.min(idiv(v, 26), 4)];
   return FAN.slice(0, shown).map(([dx, oy]) =>
     ray(100, 111, 86, len, width, color, dx, oy - 100) +
     ray(100, 111, 86, len, width, color, -dx, oy - 100)).join("");
@@ -242,8 +245,10 @@ const BUMPS = [[8, 15, 7], [20, 40, 8], [30, 62, 8], [40, 88, 9], [50, 96, 8],
 function sickPile(s, mouthY, ground) {
   if (s <= 0) return "";
   const blob = (x, y, r, i) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${SICK[mod(i, 4)]}" stroke="#6b7a1f" stroke-width="1"/>`;
-  const p = s > 30 ? idiv((s - 30) * 100, 70) : 0;
-  const rx = (6 + idiv(p * 84, 100)) * 1.6, ry = (3 + idiv(p * 42, 100)) * 1.6;
+  // past 100 the pile keeps growing, at half speed
+  const p = s > 100 ? 100 + idiv(s - 100, 2) : s > 30 ? idiv((s - 30) * 100, 70) : 0;
+  // past 100 it spreads wider but no taller, so the friend is not buried
+  const rx = (6 + idiv(p * 84, 100)) * 1.6, ry = (3 + idiv(Math.min(p, 100) * 42, 100)) * 1.6;
   const top = ground - ry;
   const reach = mouthY + idiv((top - mouthY) * Math.min(s, 40), 40);
   const size = 3 + idiv(s, 12);
@@ -256,7 +261,7 @@ function sickPile(s, mouthY, ground) {
   }
   for (let j = 0; j < 6; j++)
     out += blob(100 + (j % 2 === 0 ? -4 : 4), mouthY + idiv((reach - mouthY) * (j + 1), 6), size - mod(j, 3), j);
-  if (s === 100)
+  if (s >= 100)
     out += `<circle cx="84" cy="${ground - 38}" r="7"/><circle cx="116" cy="${ground - 38}" r="7"/>` +
            `<path d="M82 ${ground - 12} Q100 ${ground - 28} 118 ${ground - 12}" fill="none" stroke="black" stroke-width="4" stroke-linecap="round"/>`;
   return out;
@@ -379,7 +384,7 @@ function draw() {
   const nw = Math.max(22, B.neckW / 2 + 6);           // the collar fits the neck
 
   // ARMS: from each shoulder, at the arms angle, to a hand.
-  const a = B.arms * Math.PI / 180, armLen = 95, armW = 16;
+  const a = B.arms * Math.PI / 180, armLen = B.armLen, armW = B.armW;
   const arms = [1, -1].map(side => {
     const A = [side * (w - 6), 8];
     return { side, A, H: [A[0] + side * armLen * Math.cos(a), A[1] + armLen * Math.sin(a)],
@@ -388,7 +393,9 @@ function draw() {
   const sleeve = { tee: 0.38, long: 0.95, tank: 0 }[SH.style];
 
   // PANTS: their hips under the shirt's hem, their feet under the legs.
-  const hw = w - 2, LL = P.length, fx = hw / 2 + 6, feetY = L + LL;
+  const hw = w - 2, LL = B.legLen, fx = hw / 2 + 6, feetY = L + LL;
+  // each pants leg is wide enough for the leg inside it
+  const half = Math.max(hw / 2, B.legW / 2 + 6);
   const shoeSc = state.shoes.size / 100;
   const ground = feetY + (state.shoes.style === "bare" ? 18 : 30) * shoeSc;
 
@@ -400,16 +407,20 @@ function draw() {
 
   // The picture's frame grows to hold everything.
   const handYs = arms.map(x => x.H[1]);
-  const top = Math.min(ty - 90 * s, ...handYs.map(y => y - 40));
+  const faceTop = Math.min(-90, 60 - 1.4 * F.burst - 30);
+  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - 40));
+  const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
+  const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
   const bottom = ground + 24;
-  const left = Math.min(-200, ...arms.map(x => x.H[0] - 40), -(hw + 40));
+  const left = Math.min(-200, ...arms.map(x => x.H[0] - 40), ...arms.map(x => -x.H[0] - 40),
+                        -(fx + half + 70), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40));
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern)}${patternDef("pat-pants", P.color, P.pattern)}</defs>`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
 
   // legs, then pants over them, then shoes
-  for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, 20, skin, skinLine);
+  for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, B.legW, skin, skinLine);
   const pf = fillOf("pat-pants", P.color, P.pattern), ps = darker(P.color);
   if (P.style === "skirt") {
     const sl = LL * 0.5;
@@ -417,8 +428,8 @@ function draw() {
            `fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
   } else {
     const len = P.style === "shorts" ? LL * 0.38 : LL;
-    svg += poly([[-hw, L - 10], [hw, L - 10], [hw + 6, L + len], [6, L + len], [0, L + Math.min(len * 0.3, 40)],
-                 [-6, L + len], [-hw - 6, L + len]], pf, ps);
+    svg += poly([[-hw, L - 10], [hw, L - 10], [fx + half, L + len], [fx - half, L + len],
+                 [0, L + Math.min(len * 0.3, 40)], [-(fx - half), L + len], [-(fx + half), L + len]], pf, ps);
   }
   for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, state.shoes, skin);
 
@@ -460,55 +471,58 @@ const PATTERNS = [["plain", "plain"], ["stripes", "stripes"], ["dots", "dots"], 
 const TABS = [
   ["😀 Face", "face", [
     ["color", "color", "skin & head color", SKINS],
-    ["range", "size", "head size", 28, 80],
-    ["range", "smile", "smile", 0, 100],
-    ["range", "brow", "eyebrows", 0, 100],
+    ["range", "size", "head size", 8, 150, 36, 64],
+    ["range", "smile", "smile", -100, 200, 0, 100],
+    ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
-    ["range", "eyes", "eye size", 0, 100],
+    ["range", "eyes", "eye size", -35, 300, 0, 100],
     ["toggle", "stars", "⭐ star eyes"],
     ["toggle", "hearts", "❤️ heart eyes"],
     ["toggle", "xeyes", "✖ x eyes"],
-    ["range", "open", "mouth open", 0, 100],
-    ["range", "teeth", "teeth", 0, 5],
-    ["range", "sides", "side lines", 0, 100],
-    ["range", "burst", "💥 explode", 0, 100],
-    ["range", "candy", "🍬 candy", 0, 100],
-    ["range", "rays", "head rays", 0, 100],
-    ["range", "sick", "🤢 sickness", 0, 100],
+    ["range", "open", "mouth open", 0, 300, 0, 100],
+    ["range", "teeth", "teeth", 0, 15, 0, 5],
+    ["range", "sides", "side lines", 0, 300, 0, 100],
+    ["range", "burst", "💥 explode", 0, 300, 0, 100],
+    ["range", "candy", "🍬 candy", 0, 300, 0, 100],
+    ["range", "rays", "head rays", 0, 300, 0, 100],
+    ["range", "sick", "🤢 sickness", 0, 300, 0, 100],
   ]],
   ["💇 Hair", "hair", [
     ["choice", "style", "style", [["none", "none"], ["short", "short"], ["long", "long"], ["curly", "curly"],
                                   ["spiky", "spiky"], ["afro", "afro"], ["pigtails", "pigtails"]]],
     ["color", "color", "color", HAIRS],
   ]],
-  ["🦒 Neck & arms", "body", [
-    ["range", "neck", "neck length", 0, 140],
-    ["range", "neckW", "neck width", 12, 40],
-    ["range", "arms", "arms (up ↔ down)", -75, 85],
+  ["🦒 Neck, arms & legs", "body", [
+    ["range", "neck", "neck length", 0, 420, 4, 60],
+    ["range", "neckW", "neck width", 2, 120, 12, 40],
+    ["range", "arms", "arms (up ↔ down)", -180, 180, -75, 85],
+    ["range", "armLen", "arm length", 10, 300, 60, 130],
+    ["range", "armW", "arm width", 3, 60, 10, 24],
+    ["range", "legLen", "leg length", 20, 420, 70, 200],
+    ["range", "legW", "leg width", 4, 70, 14, 28],
   ]],
   ["👕 Shirt", "shirt", [
     ["choice", "style", "style", [["tee", "t-shirt"], ["long", "long sleeves"], ["tank", "tank top"]]],
     ["choice", "collar", "collar", [["v", "V"], ["round", "round"], ["flat", "flat"]]],
     ["color", "color", "color", BRIGHT],
     ["choice", "pattern", "pattern", PATTERNS],
-    ["range", "width", "width", 40, 80],
-    ["range", "length", "length", 100, 190],
+    ["range", "width", "width", 10, 120, 40, 80],
+    ["range", "length", "length", 20, 300, 100, 190],
   ]],
   ["🖐 Hands", "hands", [
     ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"]]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
-    ["range", "size", "size", 6, 28],
+    ["range", "size", "size", 2, 80, 6, 28],
   ]],
   ["👖 Pants", "pants", [
     ["choice", "style", "style", [["long", "long"], ["shorts", "shorts"], ["skirt", "skirt"]]],
     ["color", "color", "color", BRIGHT],
     ["choice", "pattern", "pattern", PATTERNS],
-    ["range", "length", "leg length", 70, 200],
   ]],
   ["👟 Feet", "shoes", [
     ["choice", "style", "style", [["sneaker", "sneakers"], ["boot", "boots"], ["clown", "clown shoes"], ["bare", "bare feet"]]],
     ["color", "color", "color", BRIGHT],
-    ["range", "size", "size", 60, 170],
+    ["range", "size", "size", 20, 310, 60, 170],
   ]],
 ];
 
@@ -587,7 +601,7 @@ const rnd = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 document.getElementById("surprise").addEventListener("click", () => {
   for (const [, part, ctls] of TABS)
     for (const [kind, key, , ...rest] of ctls) {
-      if (kind === "range") state[part][key] = rnd(rest[0], rest[1]);
+      if (kind === "range") state[part][key] = rnd(rest[2] ?? rest[0], rest[3] ?? rest[1]);
       else if (kind === "toggle") state[part][key] = Math.random() < 0.3;
       else if (kind === "choice") state[part][key] = pick(rest[0])[0];
       else if (kind === "color") state[part][key] = pick(rest[0]);
@@ -596,8 +610,6 @@ document.getElementById("surprise").addEventListener("click", () => {
   const F = state.face;
   if (Math.random() < 0.75) F.sick = 0;
   if (Math.random() < 0.6) { F.burst = 0; F.rays = 0; }
-  F.size = rnd(36, 64);
-  state.body.neck = rnd(4, 60);
   changed();
 });
 document.getElementById("reset").addEventListener("click", () => { state = clone(DEFAULTS); changed(); });
@@ -642,7 +654,7 @@ pic.addEventListener("pointerdown", e => {
 // One step per screen pixel, however big the picture is drawn.
 pic.addEventListener("pointermove", e => {
   if (!drag) return;
-  state.face[drag.feature] = clamp(Math.round(drag.v0 + (e.clientY - drag.y0)));
+  state.face[drag.feature] = clamp(Math.round(drag.v0 + (e.clientY - drag.y0)), -100, 200);
   changed();
 });
 const letGo = () => { drag = null; };
