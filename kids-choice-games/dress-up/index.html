@@ -207,6 +207,24 @@ function pieces(shown, burst, crackY = 60) {
 }
 // `angle` slants the eye about its middle (the eye angle, mirrored for
 // the right eye by the caller).
+// How far up the eyebrows go to clear the eyes: nothing at the usual
+// sizes, and as far as big, tall or slanted eyes need -- above the head,
+// cartoon style, if it comes to that. The eyes' top is found from the
+// same sizes the eye is drawn with.
+function browLift(F) {
+  const r = 6 + idiv(F.eyes, 7);
+  let reach;
+  if (F.xeyes) reach = r;
+  else if (F.stars || F.hearts) reach = r * 1.6;
+  else {
+    const irisR = F.iris > 0 ? r + F.iris * 0.25 : 0;
+    const whiteR = irisR > 0 && F.whites > 0 ? irisR + F.whites * 0.25 : 0;
+    const R = whiteR || irisR || r, k = 1 - 0.88 * F.oval / 100, t = F.tilt * Math.PI / 180;
+    reach = Math.hypot(R * Math.sin(t), R * k * Math.cos(t));
+  }
+  // the brows' ends sit at y = 78; keep them 8 above the eyes' top
+  return Math.max(0, reach - 14);
+}
 function eye(x, size, stars, hearts, xs, F, angle = 0) {
   const r = 6 + idiv(size, 7);
   const turned = inner => `<g transform="rotate(${f1(angle)} ${x} 100)">${inner}</g>`;
@@ -399,7 +417,7 @@ function faceSvg(F, ground) {
     eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
     eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F, -F.tilt) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
-      `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
+      `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round" transform="translate(0 ${f1(-browLift(F))})"/>` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
       `stroke-width="5" stroke-linejoin="round"/>` +
     teeth(F.teeth, upper, lower) +
@@ -800,7 +818,7 @@ function faceUnits(e) {
 pic.addEventListener("pointerdown", e => {
   const [x, y] = faceUnits(e);
   if ((x - 100) ** 2 + (y - 110) ** 2 > 90 ** 2) return;
-  const feature = y < 88 ? "brow" : "smile";
+  const feature = y < 88 - browLift(state.face) ? "brow" : "smile";
   drag = { feature, v0: state.face[feature], y0: e.clientY };
   pic.setPointerCapture(e.pointerId);
 });
