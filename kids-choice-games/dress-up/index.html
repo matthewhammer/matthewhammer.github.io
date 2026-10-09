@@ -19,8 +19,10 @@
          max-width: 1100px; margin: 0 auto; }
   @media (max-width: 760px) { .app { grid-template-columns: minmax(0, 1fr); } }
   .stage { position: sticky; top: 8px; align-self: start; }
-  @media (max-width: 760px) { .stage { position: static; } }
-  svg#pic { display: block; width: 100%; height: auto; max-height: 82vh;
+  /* The picture, its caption and buttons always fit on the screen, so the
+     picture stays in view while the controls scroll. */
+  svg#pic { display: block; width: 100%; height: auto;
+            max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px);
             background: var(--paper); border-radius: 18px; border: 2px solid var(--line);
             touch-action: none; user-select: none; }
   .caption { text-align: center; margin-top: 6px; font-size: 1.2em; }
@@ -44,6 +46,18 @@
   input[type=range] { width: 100%; height: 28px; accent-color: var(--accent); }
   input[type=color] { width: 40px; height: 34px; border: none; padding: 0; background: none; }
   .hint { color: var(--muted); font-size: 0.9em; }
+  /* On a phone the controls are below the picture, so the picture is
+     kept small and pinned at the top: a change shows while you make it. */
+  @media (max-width: 760px) {
+    body { padding-top: 8px; }
+    h1 { display: none; }
+    .stage { top: 0; z-index: 1; background: var(--bg); padding: 4px 0 8px; margin: 0 -16px; padding-inline: 16px; }
+    svg#pic { max-height: 40vh; max-height: 40dvh; }
+    .stage .hint { display: none; }
+    .actions { margin-top: 4px; gap: 6px; flex-wrap: nowrap; }
+    .actions button { padding: 4px 8px; font-size: 0.85em; white-space: nowrap; }
+    .caption { margin-top: 2px; font-size: 1em; }
+  }
 </style>
 </head>
 <body>
