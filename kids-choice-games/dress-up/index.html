@@ -1203,7 +1203,8 @@ function draw() {
   const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem);
   const hairHalf = hr.half * (F.faceW / 100) * (1 + 0.12 * F.alien / 100) * s;
   const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
-                        -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20));
+                        -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
+                        -((80 + (C ? 30 : 0)) * F.faceW / 100 * (1 + 0.12 * F.alien / 100) * s + 20));
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
@@ -1328,7 +1329,7 @@ const TABS = [
   ["😀 Face", "face", [
     ["color", "color", "skin & head color", SKINS],
     ["range", "size", "head size", 8, 150, 36, 64],
-    ["range", "faceW", "face width", 40, 200, 85, 115],
+    ["range", "faceW", "face width", 40, 600, 85, 115],
     ["range", "faceH", "face height", 40, 600, 85, 115],
     ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
     ["range", "smile", "smile", -100, 200, 0, 100],
