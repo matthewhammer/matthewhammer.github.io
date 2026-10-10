@@ -229,10 +229,20 @@ const NOSES = {
   hook:  { side: "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",
            half: "M0.1 0.05 Q0.34 0.45 0.3 0.74 Q0.48 0.92 0.3 1.03 Q0.16 1.08 0.07 0.95" },
 };
+// The top of the mouth, in face units: its lips are quadratic curves from
+// (60, 150) to (140, 150), so a curve's highest point is halfway between
+// the corners' y and its control's.
+function mouthTop(F) {
+  const c = F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0];
+  return Math.min(150, 75 + c / 2) - 2.5;   // (less half the lip's line)
+}
 function noseSvg(F) {
   const N = NOSES[F.nose];
   if (!N) return "";
-  const u = 30 * F.noseSize / 100, sw = f1(3 + F.noseSize / 100);
+  // as big as asked, but ending above the mouth: a wide-open mouth's upper
+  // lip rises toward the nose, and they overlapped
+  const fit = (mouthTop(F) - 5 - 106) / 1.08;
+  const u = Math.max(6, Math.min(30 * F.noseSize / 100, fit)), sw = f1(3 + F.noseSize / 100);
   const at = (sx, d) => `<path d="${d}" transform="translate(100 106) scale(${f1(sx * u)} ${f1(u)})" ` +
     `fill="none" stroke="black" stroke-width="${f1(sw / u)}" stroke-linecap="round" stroke-linejoin="round"/>`;
   if (F.noseDir === "center")
