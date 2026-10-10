@@ -612,14 +612,14 @@ function faceSvg(F, ground) {
   // tilt up and the outer corners rise, for almond alien eyes.
   const C = costumeOn(), kind = state.costume.kind;
   const hoodClips = C ? `<clipPath id="hood-brim"><rect x="-200" y="-400" width="600" height="454"/></clipPath>` +
-                        `<clipPath id="hood-inside"><ellipse ${HOOD}/></clipPath>` : "";
+                        `<clipPath id="hood-inside"><ellipse ${hoodEllipse(F)}/></clipPath>` : "";
   return `<defs>${clips}${hoodClips}</defs>` +
-    `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${C ? hoodBack(C, kind) : hairSvg(state.hair)}</g></g>` +
+    `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${C ? hoodBack(C, kind, F) : hairSvg(state.hair)}</g></g>` +
     sideLines(F.sides) +
     (b > 0 ? part(' clip-path="url(#below-crack)"') : part()) +
     raysUp(rayLen, 3 + idiv(r, 25), crackY) +
     (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 ${f1(crackY)})">${part(' clip-path="url(#above-crack)"')}</g>` : "") +
-    (C ? `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hoodFront(C, kind)}</g></g>` : "") +
+    (C ? `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hoodFront(C, kind, F)}</g></g>` : "") +
     pieces(shown, b, crackY) +
     (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
     `<g transform="translate(0 ${f1(LY.eyeY - 100)})">` +
@@ -711,16 +711,27 @@ function furDefs(C, kind) {
 // THE HOOD, in the round head's units (it stretches with the face, as hair
 // does): behind the head, the hood and its ears (and a lion's mane); over
 // the forehead, the brim, with the animal's face on it.
-const HOOD = `cx="100" cy="108" rx="106" ry="110"`;
-function hoodBack(C, kind) {
+// It hugs the head as drawn: 32.6 above the crown and 27.4 below the chin
+// (which an open mouth moves down), at any height. Drawn inside the
+// face's stretch, so its ends are placed where they land once stretched.
+function hoodEllipse(F) {
+  const H = F.faceH / 100;
+  const top = HEAD_C - 80 - 32.6 / H, bottom = HEAD_C + (80 * H + mouthDrop(F) + 27.4) / H;
+  return `cx="100" cy="${f1((top + bottom) / 2)}" rx="106" ry="${f1((bottom - top) / 2)}"`;
+}
+function hoodBack(C, kind, F) {
+  const HOOD = hoodEllipse(F);
   // a bald eagle's head is white
   const line = darker(C.fur), fill = eagleHead(kind) ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
   let s = "";
   if (kind === "lion") {
     const pts = [];
     for (let i = 0; i < 48; i++) {
-      const t = i * Math.PI / 24, r = i % 2 ? 130 : 150;
-      pts.push([100 + r * Math.cos(t), 110 + r * Math.sin(t)]);
+      // the head's outline plus the mane's own 50-70, however tall the
+      // head (placed where it lands once stretched)
+      const t = i * Math.PI / 24, r = i % 2 ? 130 : 150, H = F.faceH / 100;
+      const below = Math.sin(t) > 0 ? mouthDrop(F) : 0;
+      pts.push([100 + r * Math.cos(t), HEAD_C + ((80 * H + below) * Math.sin(t) + (r - 80) * Math.sin(t)) / H]);
     }
     s += poly(pts, C.marks, darker(C.marks), 3);
   }
@@ -750,7 +761,8 @@ function hoodBack(C, kind) {
            `Q${100 + side * 72} 96 ${100 + side * 72} 52 Z" fill="${C.marks}"/>`;
   return s;
 }
-function hoodFront(C, kind) {
+function hoodFront(C, kind, F) {
+  const HOOD = hoodEllipse(F);
   const brimFill = falconHead(kind) ? C.marks : eagleHead(kind) ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
   let s = `<ellipse ${HOOD} fill="${brimFill}" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-brim)"/>` +
           `<line x1="0" y1="54" x2="200" y2="54" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-inside)"/>`;
