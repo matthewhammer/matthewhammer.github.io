@@ -24,7 +24,7 @@
   svg#pic { display: block; width: 100%; height: auto;
             max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px);
             background: var(--paper); border-radius: 18px; border: 2px solid var(--line);
-            touch-action: none; user-select: none; }
+            user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .caption { text-align: center; margin-top: 6px; font-size: 1.2em; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
   button { font: inherit; cursor: pointer; border-radius: 12px; border: 2px solid var(--line);
@@ -1611,9 +1611,24 @@ function faceUnits(e) {
   const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(pic.getScreenCTM().inverse());
   return [(p.x - faceFrame.tx) / faceFrame.s, (p.y - faceFrame.ty) / faceFrame.s];
 }
-pic.addEventListener("pointerdown", e => {
+const onFace = e => {
   const [x, y] = faceUnits(e);
-  if ((x - 100) ** 2 + (y - 110) ** 2 > 90 ** 2) return;
+  return (x - 100) ** 2 + (y - 110) ** 2 <= 90 ** 2;
+};
+// On a touch screen the picture pinches and pans like the rest of the
+// page; only a one-finger touch that starts on the face is kept for the
+// drag (the page used to opt the whole picture out of zooming). A second
+// finger lets go of the face, so a pinch goes to the browser.
+pic.addEventListener("touchstart", e => {
+  if (e.touches.length === 1 && onFace(e.touches[0])) e.preventDefault();
+  else drag = null;
+}, { passive: false });
+pic.addEventListener("touchmove", e => {
+  if (drag && e.touches.length === 1) e.preventDefault();
+}, { passive: false });
+pic.addEventListener("pointerdown", e => {
+  if (!e.isPrimary || !onFace(e)) return;
+  const [x, y] = faceUnits(e);
   const feature = y < 88 - browLift(state.face) ? "brow" : "smile";
   drag = { feature, v0: state.face[feature], y0: e.clientY };
   pic.setPointerCapture(e.pointerId);
