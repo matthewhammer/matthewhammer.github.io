@@ -446,6 +446,19 @@ function hairSvg(h) {
   }
   return "";
 }
+// Long hair's back layer: the hair seen behind the head and shoulders, the
+// outline of the long hairdo without the gap for the face, a little darker
+// than the hair. Drawn behind everything (head, neck, body, arms), so it
+// fills the space between the two sides.
+function hairBackSvg(h) {
+  if (h.style !== "long") return "";
+  const d = HAIRDOS.long, k = 80 / 36, L = hairLen(h), ear = 124;
+  const outline = [[116, 194], [114, 104], [126, 76], [146, 67], [160, 66], [174, 67], [194, 76], [206, 104], [204, 194]]
+    .map(([x, y]) => [x, y > ear ? ear + (y - ear) * L : y])
+    .map(([x, y]) => [100 + (x - d.crown[0]) * k, 30.6 + (y - d.crown[1]) * k]);
+  const fill = mix(h.color, "#000000", 0.22);
+  return poly(outline, fill, darker(fill), 3);
+}
 // How far hair reaches, in face units (before the head's stretch): its
 // top, its bottom and its half-width about x = 100, to size the picture.
 function hairReach(h) {
@@ -1101,6 +1114,9 @@ function draw() {
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
             `${patternDef("pat-undies", U.color, U.pattern, U.patternSize, U.patternColor)}${C ? furDefs(C, kind) : ""}</defs>`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
+  // behind everything: long hair's back layer, in the face's frame
+  if (!C) svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
+                 `<g transform="${hairStretch(F)}">${hairBackSvg(state.hair)}</g></g>`;
 
   // behind everything: a falcon's wings and tail, or a suit's tail
   // (a bald eagle's: plain dark brown wings and a white tail)
