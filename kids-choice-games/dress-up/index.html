@@ -111,8 +111,10 @@ const DEFAULTS = {
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
-  hands: { style: "round", size: 14, color: "skin" },
-  pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto" },
+  hands: { style: "round", size: 14, color: "skin", fingers: 5 },
+  pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto", skirtLen: 50 },
+  undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
+            patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes" },
@@ -535,7 +537,14 @@ const ANIMALS = {
   lion:   { suit: true,  fur: "#d9a441", marks: "#8a4b1c", belly: "#f1d9a8", eyes: "#c88a1e", accent: "#5a3a2a", furPattern: "none" },
   bear:   { suit: true,  fur: "#6b4226", marks: "#4a2c17", belly: "#b08458", eyes: "#2b1a10", accent: "#1d1410", furPattern: "none" },
   falcon: { suit: false, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
+  raccoon: { suit: true, fur: "#8d9096", marks: "#26262a", belly: "#e4e1da", eyes: "#3b2a1a", accent: "#26262a", furPattern: "none" },
+  bobcat: { suit: true,  fur: "#c79a68", marks: "#4b3020", belly: "#f3e6cf", eyes: "#d9a520", accent: "#d98a8a", furPattern: "spots" },
+  leopard: { suit: true, fur: "#e3b04b", marks: "#2b1d12", belly: "#f7ecd3", eyes: "#9bbf3a", accent: "#c97a7a", furPattern: "rosettes" },
+  eagle:  { suit: false, fur: "#4a3222", marks: "#2a1a10", belly: "#ffffff", eyes: "#f2c230", accent: "#f2b705", furPattern: "none" },
 };
+// cats (pointed ears, a triangle nose) and birds (no suit: wings and a tail)
+const FELINE = { cat: 1, tiger: 1, bobcat: 1, leopard: 1 };
+const isBird = kind => !!ANIMALS[kind] && !ANIMALS[kind].suit;
 const lookOf = kind => { const { suit, ...look } = ANIMALS[kind]; return look; };
 const costumeOn = () => (ANIMALS[state.costume.kind] ? state.costume : null);
 
@@ -547,6 +556,10 @@ function furDefs(C) {
     stripes: `<path d="M0 6 Q12 1 24 8 Q14 10 0 12 Z M16 26 Q29 21 40 27 L40 33 Q29 29 16 31 Z" fill="${m}"/>`,
     spots:   `<circle cx="10" cy="10" r="4.5" fill="${m}"/><circle cx="30" cy="28" r="4" fill="${m}"/><circle cx="28" cy="8" r="2.5" fill="${m}"/>`,
     patches: `<ellipse cx="12" cy="14" rx="11" ry="8" fill="${m}"/><ellipse cx="34" cy="34" rx="9" ry="7" fill="${m}"/>`,
+    // a leopard's rosettes: broken rings with a darker middle
+    rosettes: [[11, 12, 5.5], [31, 30, 5]].map(([x, y, r]) =>
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="${mix(C.fur, "#7a4a10", 0.35)}" stroke="${m}" stroke-width="2.4" stroke-dasharray="5 2.6"/>`).join("") +
+      `<circle cx="31" cy="9" r="2.2" fill="${m}"/><circle cx="9" cy="31" r="2" fill="${m}"/>`,
   }[C.furPattern] || "";
   return `<pattern id="pat-fur" width="40" height="40" patternUnits="userSpaceOnUse">` +
     `<rect width="40" height="40" fill="${C.fur}"/>${marks}` +
@@ -562,7 +575,8 @@ function furDefs(C) {
 // the forehead, the brim, with the animal's face on it.
 const HOOD = `cx="100" cy="108" rx="106" ry="110"`;
 function hoodBack(C, kind) {
-  const line = darker(C.fur), fill = ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
+  // a bald eagle's head is white
+  const line = darker(C.fur), fill = ANIMALS[kind].suit ? "url(#pat-fur)" : kind === "eagle" ? C.belly : C.fur;
   let s = "";
   if (kind === "lion") {
     const pts = [];
@@ -574,10 +588,18 @@ function hoodBack(C, kind) {
   }
   for (const side of [-1, 1]) {
     const x = 100 + side * 68;
-    if (kind === "cat")
+    if (kind === "cat" || kind === "bobcat") {
       s += poly([[100 + side * 36, 16], [100 + side * 92, -46], [100 + side * 96, 40]], C.fur, line, 3) +
-           poly([[100 + side * 50, 12], [100 + side * 86, -30], [100 + side * 88, 26]], C.accent, "none", 0);
-    else if (kind !== "falcon") {
+           poly([[100 + side * 50, 12], [100 + side * 86, -30], [100 + side * 88, 26]],
+                kind === "bobcat" ? C.belly : C.accent, "none", 0);
+      if (kind === "bobcat")  // the black tufts on a bobcat's ear tips
+        s += poly([[100 + side * 88, -38], [100 + side * 96, -74], [100 + side * 95, -36]], C.marks, C.marks, 2);
+    } else if (kind === "raccoon")
+      // smaller, rounder ears with pale rims
+      s += `<ellipse cx="${100 + side * 70}" cy="2" rx="22" ry="28" transform="rotate(${side * 25} ${100 + side * 70} 2)" ` +
+           `fill="${C.belly}" stroke="${line}" stroke-width="3"/>` +
+           `<ellipse cx="${100 + side * 70}" cy="6" rx="13" ry="18" transform="rotate(${side * 25} ${100 + side * 70} 6)" fill="${C.fur}"/>`;
+    else if (!isBird(kind)) {
       const r = kind === "lion" ? 20 : 25;
       s += `<circle cx="${x}" cy="20" r="${r}" fill="${C.fur}" stroke="${line}" stroke-width="3"/>` +
            `<circle cx="${x}" cy="22" r="${r * 0.5}" fill="${kind === "tiger" ? "#ffffff" : C.belly}"/>`;
@@ -591,7 +613,7 @@ function hoodBack(C, kind) {
   return s;
 }
 function hoodFront(C, kind) {
-  const brimFill = kind === "falcon" ? C.marks : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
+  const brimFill = kind === "falcon" ? C.marks : kind === "eagle" ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
   let s = `<ellipse ${HOOD} fill="${brimFill}" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-brim)"/>` +
           `<line x1="0" y1="54" x2="200" y2="54" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-inside)"/>`;
   const shine = (x, y, r) => `<circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.28}" fill="#ffffff"/>`;
@@ -603,11 +625,27 @@ function hoodFront(C, kind) {
          `<path d="M93 36 L107 36 Q109 47 100 58 Q101 47 93 36 Z" fill="#59636e" stroke="#2a2f35" stroke-width="1.5"/>`;
     return s;
   }
+  if (kind === "eagle") {
+    // a stern brow, yellow eyes, and a big hooked yellow beak
+    for (const [x, side] of [[78, -1], [122, 1]])
+      s += `<circle cx="${x}" cy="26" r="9" fill="${C.eyes}" stroke="#4a3a20" stroke-width="2"/>` +
+           `<circle cx="${x}" cy="26" r="4" fill="#111"/>` + shine(x, 26, 6) +
+           `<path d="M${x - side * 14} 14 L${x + side * 10} 19" stroke="#8a7a60" stroke-width="3" stroke-linecap="round"/>`;
+    s += `<path d="M86 34 Q100 26 114 34 Q116 50 104 62 Q100 64 98 58 Q104 52 100 46 Q93 44 86 34 Z" ` +
+         `fill="${C.accent}" stroke="${darker(C.accent)}" stroke-width="2" stroke-linejoin="round"/>`;
+    return s;
+  }
+  if (kind === "raccoon")  // the bandit mask
+    s += `<path d="M58 22 Q66 10 86 16 Q100 22 114 16 Q134 10 142 22 Q138 38 120 36 Q106 34 100 30 ` +
+         `Q94 34 80 36 Q62 38 58 22 Z" fill="${C.marks}"/>`;
+  if (kind === "leopard")  // a few small spots on the brow
+    s += [[86, 6, 2.6], [100, 2, 3], [114, 6, 2.6], [70, 12, 2.2], [130, 12, 2.2]].map(([x, y, r]) =>
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.marks}"/>`).join("");
   if (kind === "tiger")
     s += `<path d="M90 2 L100 14 L110 2 M66 10 L80 18 M134 10 L120 18 M60 24 L74 28 M140 24 L126 28" ` +
          `stroke="${C.marks}" stroke-width="4" stroke-linecap="round" fill="none"/>`;
   for (const x of [78, 122]) {
-    s += `<ellipse cx="${x}" cy="24" rx="9" ry="8" fill="${C.eyes}" stroke="#111" stroke-width="2"/>`;
+    s += `<ellipse cx="${x}" cy="24" rx="9" ry="8" fill="${C.eyes}" stroke="${kind === "raccoon" ? "#cfcfcf" : "#111"}" stroke-width="2"/>`;
     s += kind === "cat" ? `<ellipse cx="${x}" cy="24" rx="2.2" ry="7" fill="#111"/>`
                         : `<circle cx="${x}" cy="24" r="3.6" fill="#111"/>`;
     s += shine(x, 24, 8);
@@ -616,11 +654,11 @@ function hoodFront(C, kind) {
     s += `<ellipse cx="100" cy="42" rx="18" ry="11" fill="${C.belly}"/>`;
   else
     s += `<circle cx="92" cy="44" r="8" fill="${C.belly}"/><circle cx="108" cy="44" r="8" fill="${C.belly}"/>`;
-  s += kind === "cat" || kind === "tiger"
+  s += FELINE[kind]
     ? `<path d="M94 35 L106 35 L100 42 Z" fill="${C.accent}"/>`
     : `<path d="M91 34 Q100 31 109 34 Q105 43 100 44 Q95 43 91 34 Z" fill="${C.accent}"/>`;
   if (kind !== "bear") {
-    const wc = kind === "cat" ? "#e8e8e8" : "#222";
+    const wc = kind === "cat" || kind === "raccoon" ? "#e8e8e8" : "#222";
     s += `<path d="M86 44 L60 40 M86 47 L60 50 M114 44 L140 40 M114 47 L140 50" stroke="${wc}" stroke-width="1.6" stroke-linecap="round"/>`;
   }
   return s;
@@ -632,36 +670,89 @@ function tailSvg(C, kind, hw, L) {
   const line = darker(C.fur), x0 = hw * 0.55, y0 = L + 5;
   if (kind === "bear")
     return `<circle cx="${f1(hw + 4)}" cy="${f1(L - 14)}" r="17" fill="url(#pat-fur)" stroke="${line}" stroke-width="3"/>`;
-  const d = kind === "cat"
+  if (kind === "bobcat")  // a short stubby tail with a black tip
+    return `<ellipse cx="${f1(hw + 10)}" cy="${f1(L - 12)}" rx="13" ry="20" transform="rotate(30 ${f1(hw + 10)} ${f1(L - 12)})" ` +
+           `fill="url(#pat-fur)" stroke="${line}" stroke-width="3"/>` +
+           `<ellipse cx="${f1(hw + 19)}" cy="${f1(L - 27)}" rx="7" ry="8" transform="rotate(30 ${f1(hw + 19)} ${f1(L - 27)})" fill="${C.marks}"/>`;
+  const d = kind === "cat" || kind === "leopard"
     ? `M${f1(x0)} ${f1(y0)} C${f1(hw + 80)} ${f1(L + 30)} ${f1(hw + 110)} ${f1(L - 30)} ${f1(hw + 70)} ${f1(L - 110)}`
     : `M${f1(x0)} ${f1(y0)} C${f1(hw + 70)} ${f1(L + 20)} ${f1(hw + 95)} ${f1(L + 90)} ${f1(hw + 60)} ${f1(L + 150)}`;
-  const wd = { tiger: 16, cat: 11, lion: 10 }[kind];
+  const wd = { tiger: 16, cat: 11, lion: 10, raccoon: 22, leopard: 13 }[kind];
   const path = (stroke, width, extra = "") =>
     `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" ${extra}/>`;
   let s = path(line, wd + 5) + path(C.fur, wd);
   if (kind === "tiger") s += path(C.marks, wd, `stroke-dasharray="7 11"`);
+  if (kind === "raccoon") s += path(C.marks, wd, `stroke-dasharray="11 11"`);   // the rings
+  if (kind === "leopard") s += path(C.marks, wd * 0.45, `stroke-dasharray="1 13"`);  // spots
   if (kind === "lion")
     s += `<circle cx="${f1(hw + 60)}" cy="${f1(L + 156)}" r="14" fill="${C.marks}" stroke="${darker(C.marks)}" stroke-width="2"/>`;
   return s;
 }
-function falconWings(C, w) {
+function falconWings(C, w, fill = "url(#pat-bars)") {
   let s = "";
   for (const side of [-1, 1]) {
     const P = [[18, -2], [w + 20, -62], [w + 95, -88], [w + 175, -70], [w + 140, -40], [w + 120, -8],
                [w + 92, 16], [w + 60, 34], [w + 28, 46], [20, 44]].map(([x, y]) => [side * x, y]);
-    s += poly(P, "url(#pat-bars)", darker(C.fur), 3);
+    s += poly(P, fill, darker(C.fur), 3);
     for (const [x1, y1, x2, y2] of [[w + 60, -40, w + 168, -68], [w + 50, -25, w + 138, -40],
                                     [w + 42, -10, w + 118, -8], [w + 34, 6, w + 90, 16], [w + 26, 20, w + 58, 34]])
       s += `<line x1="${side * x1}" y1="${y1}" x2="${side * x2}" y2="${y2}" stroke="${C.marks}" stroke-width="2.5" stroke-linecap="round"/>`;
   }
   return s;
 }
-function falconTail(C, hw, L, LL) {
+function falconTail(C, hw, L, LL, fill = "url(#pat-bars)") {
   const tl = L + LL * 0.62;
   const fan = [[-hw * 0.45, L - 20], [-(hw + 28), tl - 10], [-hw * 0.5, tl + 8], [0, tl + 12],
                [hw * 0.5, tl + 8], [hw + 28, tl - 10], [hw * 0.45, L - 20]];
-  return poly(fan, "url(#pat-bars)", darker(C.fur), 3) +
+  return poly(fan, fill, darker(fill.startsWith("url") ? C.fur : fill), 3) +
     `<polyline points="${pts(fan.slice(1, 6))}" fill="none" stroke="${C.belly}" stroke-width="6" stroke-linejoin="round"/>`;
+}
+
+// ===================== UNDERWEAR AND SWIMSUITS =====================
+// Cartoon garments over a plain body shape, in body units (as the shirt
+// and pants): the torso is skin from the collar (y = -20) to the waist
+// (L), the hips skin down to the legs. Simple shapes, nothing more.
+
+function undiesBottom(U, hw, fx, half, L, LL) {
+  const f = fillOf("pat-undies", U.color, U.pattern), st = darker(U.color);
+  const P = ps => poly(ps, f, st);
+  switch (U.style) {
+    case "trunks": {           // swim trunks: like short shorts
+      const len = Math.max(34, LL * 0.26);
+      return P([[-hw - 1, L - 12], [hw + 1, L - 12], [fx + half + 3, L + len], [fx - half - 1, L + len],
+                [0, L + 16], [-(fx - half - 1), L + len], [-(fx + half + 3), L + len]]) +
+             line(-hw - 1, L - 8, hw + 1, L - 8, 4, st);
+    }
+    case "briefs":
+      return P([[-hw, L - 8], [hw, L - 8], [fx + half, L + 20], [fx - half * 0.3, L + 32], [0, L + 26],
+                [-(fx - half * 0.3), L + 32], [-(fx + half), L + 20]]);
+    case "bikini":
+    case "onepiece":           // (a one-piece's bottom is drawn with its top)
+      return U.style === "bikini"
+        ? P([[-hw * 0.95, L], [hw * 0.95, L], [fx + 2, L + 18], [3, L + 31], [-3, L + 31], [-(fx + 2), L + 18]])
+        : "";
+  }
+  return "";
+}
+
+function undiesTop(U, w, nw, hw, fx, L) {
+  const f = fillOf("pat-undies", U.color, U.pattern), st = darker(U.color);
+  const strap = side => line(side * w * 0.5, 16, side * (nw + 7), -18, 4.5, st) +
+                        line(side * w * 0.5, 16, side * (nw + 7), -18, 2, U.color);
+  if (U.style === "onepiece") {
+    // from a scooped neckline down over the hips, with straps
+    const d = `M${f1(-w - 2)} 12 Q0 26 ${f1(w + 2)} 12 L${f1(w + 2)} ${f1(L)} L${f1(hw * 0.95)} ${f1(L)} ` +
+              `L${f1(fx + 2)} ${f1(L + 18)} L3 ${f1(L + 31)} L-3 ${f1(L + 31)} L${f1(-(fx + 2))} ${f1(L + 18)} ` +
+              `L${f1(-hw * 0.95)} ${f1(L)} L${f1(-w - 2)} ${f1(L)} Z`;
+    return strap(-1) + strap(1) + `<path d="${d}" fill="${f}" stroke="${st}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  }
+  if (!U.top) return "";
+  // a top: two rounded triangles on a band, with straps
+  let s = strap(-1) + strap(1);
+  for (const side of [-1, 1])
+    s += `<path d="M${f1(side * 2)} 36 Q${f1(side * w * 0.45)} 8 ${f1(side * (w + 1))} 36 Z" fill="${f}" ` +
+         `stroke="${st}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  return s + `<rect x="${f1(-w - 1)}" y="33" width="${f1(2 * w + 2)}" height="8" rx="3" fill="${f}" stroke="${st}" stroke-width="2.5"/>`;
 }
 
 // ===================== THE BODY =====================
@@ -754,9 +845,13 @@ function fingered(r, c, st, fingers, palm = 0.75) {
   });
   const layer = (fill, grow) =>
     `<ellipse rx="${f1(P * 1.05 + grow)}" ry="${f1(P + grow)}" fill="${fill}"/>` +
-    parts.map(p => `<line x1="${f1(p.x1)}" y1="${f1(p.y1)}" x2="${f1(p.x2)}" y2="${f1(p.y2)}" ` +
-                   `stroke="${fill}" stroke-width="${f1(p.w * 2 + 2 * grow)}" stroke-linecap="round"/>` +
-                   (p.tip ? `<circle cx="${f1(p.x2)}" cy="${f1(p.y2)}" r="${f1(p.tip + grow)}" fill="${fill}"/>` : "")).join("");
+    parts.map(p => {
+      // a very thin finger gets a thinner outline, or it would be all outline
+      const g = Math.min(grow, p.w * 0.9);
+      return `<line x1="${f1(p.x1)}" y1="${f1(p.y1)}" x2="${f1(p.x2)}" y2="${f1(p.y2)}" ` +
+             `stroke="${fill}" stroke-width="${f1(p.w * 2 + 2 * g)}" stroke-linecap="round"/>` +
+             (p.tip ? `<circle cx="${f1(p.x2)}" cy="${f1(p.y2)}" r="${f1(p.tip + g)}" fill="${fill}"/>` : "");
+    }).join("");
   return layer(st, lw) + layer(c, 0);
 }
 // How far a hand reaches from where it joins the arm, in any direction,
@@ -764,6 +859,23 @@ function fingered(r, c, st, fingers, palm = 0.75) {
 const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, claw: 2.4,
                      human: 2.3, alien4: 2.7, alien3: 3.2 };
 const handReach = h => (HAND_REACH[h.style] ?? 2) * h.size + 4;
+// A human hand with n fingers, thumb included: the n - 1 fingers fan out
+// wider as there are more of them (and thinner, so each still shows),
+// the middle ones longest, and the thumb just past the first. At 100, a
+// fringe almost all the way round the palm.
+function manyFingers(n) {
+  n = Math.max(1, Math.min(100, Math.round(n)));
+  const k = n - 1, out = [];
+  const span = k <= 1 ? 0 : Math.min(300, 24 * Math.min(k - 1, 3) + Math.max(0, k - 4) * 9);
+  const step = k > 1 ? span / (k - 1) : 0;
+  const w = k > 1 ? Math.max(0.05, Math.min(0.26, 0.75 * Math.sin(step * Math.PI / 360))) : 0.26;
+  for (let i = 0; i < k; i++) {
+    const a = k > 1 ? -span / 2 + i * step : 0, t = span ? Math.abs(a) / (span / 2) : 0;
+    out.push({ a, len: 1.3 - 0.4 * t, w });
+  }
+  out.push({ a: -Math.min(span / 2 + 40, 175), len: 0.85, w: Math.max(w, 0.12), base: 0.5 });
+  return out;
+}
 function handSvg(x, y, angle, side, h, skin) {
   const c = h.color === "skin" ? skin : h.color, st = darker(c), r = h.size;
   const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${inner}</g>`;
@@ -805,6 +917,7 @@ function handSvg(x, y, angle, side, h, skin) {
                `<ellipse cx="${-r * 0.1}" cy="${r * 0.05}" rx="${r * 0.32}" ry="${r * 0.36}" fill="${st}" opacity="0.35"/>`);
     }
     case "human":
+      if ((h.fingers ?? 5) !== 5) return g(fingered(r, c, st, manyFingers(h.fingers)));
       // a palm, four fingers (the middle one longest) and a thumb
       return g(fingered(r, c, st, [
         { a: -36, len: 1.15, w: 0.25 }, { a: -12, len: 1.35, w: 0.26 }, { a: 12, len: 1.25, w: 0.25 },
@@ -842,7 +955,10 @@ function draw() {
     return { side, A, H: [A[0] + side * armLen * Math.cos(a), A[1] + armLen * Math.sin(a)],
              angle: side > 0 ? B.arms : 180 - B.arms };
   });
-  const sleeve = suit ? 0.97 : { tee: 0.38, long: 0.95, tank: 0 }[SH.style];
+  // no clothes: underwear or a swimsuit instead of the shirt and pants
+  // (a full animal suit still covers everything)
+  const U = state.undies, undies = U.on && !suit;
+  const sleeve = suit ? 0.97 : undies ? 0 : { tee: 0.38, long: 0.95, tank: 0 }[SH.style];
 
   // PANTS: their hips under the shirt's hem, their feet under the legs.
   const hw = w - 2, LL = B.legLen, fx = hw / 2 + 6, feetY = L + LL;
@@ -870,17 +986,23 @@ function draw() {
   const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)));
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
-  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach));
+  // and a long skirt or dress, which can reach past the feet
+  const skirtHem = !suit && !undies && (P.style === "skirt" || P.style === "dress")
+    ? L + LL * (P.skirtLen ?? 50) / 100 + 30 : 0;
+  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem);
   const hairHalf = hr.half * (F.faceW / 100) * (1 + 0.12 * F.alien / 100) * s;
   const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20));
   const width = -2 * left;
 
-  let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}${C ? furDefs(C) : ""}</defs>`;
+  let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
+            `${patternDef("pat-undies", U.color, U.pattern, U.patternSize, U.patternColor)}${C ? furDefs(C) : ""}</defs>`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
 
   // behind everything: a falcon's wings and tail, or a suit's tail
+  // (a bald eagle's: plain dark brown wings and a white tail)
   if (kind === "falcon") svg += falconWings(C, w) + falconTail(C, hw, L, LL);
+  else if (kind === "eagle") svg += falconWings(C, w, C.fur) + falconTail(C, hw, L, LL, C.belly);
   else if (suit) svg += tailSvg(C, kind, hw, L);
 
   // legs, then shoes, then pants over both: long pants cover a boot's top
@@ -889,10 +1011,28 @@ function draw() {
   for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, feet, skin);
   const pf = suit ? "url(#pat-fur)" : fillOf("pat-pants", P.color, P.pattern);
   const ps = suit ? darker(C.fur) : darker(P.color);
-  if (!suit && P.style === "skirt") {
-    const sl = LL * 0.5;
-    svg += `<path d="M${-hw} ${L - 10} L${hw} ${L - 10} L${hw + 30} ${L + sl} Q0 ${L + sl + 14} ${-hw - 30} ${L + sl} Z" ` +
-           `fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  if (undies) {
+    // no clothes: plain skin from the waist to the tops of the legs, and
+    // over it the underwear or swimsuit bottom
+    svg += poly([[-hw, L - 10], [hw, L - 10], [fx + half, L + 34], [fx - half, L + 34], [0, L + 14],
+                 [-(fx - half), L + 34], [-(fx + half), L + 34]], limb, limbLine);
+    svg += undiesBottom(U, hw, fx, half, L, LL);
+  } else if (!suit && (P.style === "skirt" || P.style === "dress")) {
+    // a skirt flares a little; a dress flares more as it gets longer and
+    // has a scalloped hem. The length is a share of the legs' length.
+    const sl = LL * (P.skirtLen ?? 50) / 100;
+    if (P.style === "skirt")
+      svg += `<path d="M${-hw} ${L - 10} L${hw} ${L - 10} L${f1(hw + 30)} ${f1(L + sl)} Q0 ${f1(L + sl + 14)} ${f1(-hw - 30)} ${f1(L + sl)} Z" ` +
+             `fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    else {
+      const fl = hw + 26 + sl * 0.25, n = 6;
+      let d = `M${-hw} ${L - 10} L${hw} ${L - 10} L${f1(fl)} ${f1(L + sl)}`;
+      for (let i = 1; i <= n; i++) {
+        const x0 = fl - (i - 1) * 2 * fl / n, x1 = fl - i * 2 * fl / n;
+        d += ` Q${f1((x0 + x1) / 2)} ${f1(L + sl + 16)} ${f1(x1)} ${f1(L + sl)}`;
+      }
+      svg += `<path d="${d} Z" fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    }
   } else {
     const len = !suit && P.style === "shorts" ? LL * 0.38 : LL;
     svg += poly([[-hw, L - 10], [hw, L - 10], [fx + half, L + len], [fx - half, L + len],
@@ -913,7 +1053,15 @@ function draw() {
   const shoulder = !suit && SH.style === "tank" ? [[nw + 12, -20], [w, 30]] : [[w + 4, -6], [w, 44]];
   const torso = [[-nw, -20], ...collar, [nw, -20], ...shoulder, [w + 2, L], [-(w + 2), L],
                  ...shoulder.map(([x, y]) => [-x, y]).reverse()];
-  svg += poly(torso, sf, ss);
+  if (undies) {
+    // a plain body shape in skin, no collar, then the swimsuit or top on it
+    // (outlined on every side but the bottom, so it runs on into the hips
+    // without a line at the waist)
+    const body = [[-(w + 2), L + 2], [-w, 44], [-(w + 4), -6], [-nw, -20], [nw, -20], [w + 4, -6], [w, 44], [w + 2, L + 2]];
+    svg += poly(body, limb, "none", 0) +
+           `<polyline points="${pts(body)}" fill="none" stroke="${limbLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    svg += undiesTop(U, w, nw, hw, fx, L);
+  } else svg += poly(torso, sf, ss);
   if (suit)  // the suit's belly
     svg += `<ellipse cx="0" cy="${f1(L * 0.58)}" rx="${f1(w * 0.55)}" ry="${f1(L * 0.36)}" fill="${C.belly}"/>`;
   if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
@@ -1010,10 +1158,22 @@ const TABS = [
     ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"],
                                   ["human", "✋ 5 fingers"], ["alien4", "👽 4 fingers"], ["alien3", "👽 3 fingers"]]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
+    ["range", "fingers", "✋ number of fingers", 5, 100, 5, 7],
     ["range", "size", "size", 2, 80, 6, 28],
   ]],
   ["👖 Pants", "pants", [
-    ["choice", "style", "style", [["long", "long"], ["shorts", "shorts"], ["skirt", "skirt"]]],
+    ["choice", "style", "style", [["long", "long"], ["shorts", "shorts"], ["skirt", "skirt"], ["dress", "dress"]]],
+    ["range", "skirtLen", "skirt length", 10, 140, 30, 100],
+    ["color", "color", "color", BRIGHT],
+    ["choice", "pattern", "pattern", PATTERNS],
+    ["range", "patternSize", "pattern size", 4, 60, 10, 24],
+    ["color", "patternColor", "pattern color", PATTERN_COLORS],
+  ]],
+  ["🩱 Swim & undies", "undies", [
+    ["toggle", "on", "🩱 no clothes: just underwear or a swimsuit"],
+    ["choice", "style", "style", [["trunks", "swim trunks"], ["briefs", "briefs"], ["bikini", "bikini"],
+                                  ["onepiece", "one-piece"]]],
+    ["toggle", "top", "with a top (bra / bikini top)"],
     ["color", "color", "color", BRIGHT],
     ["choice", "pattern", "pattern", PATTERNS],
     ["range", "patternSize", "pattern size", 4, 60, 10, 24],
@@ -1027,9 +1187,12 @@ const TABS = [
   ]],
   ["🐯 Costume", "costume", [
     ["choice", "kind", "costume", [["none", "none"], ["tiger", "🐯 tiger"], ["cat", "🐈‍⬛ black cat"],
-                                   ["lion", "🦁 lion"], ["bear", "🐻 bear"], ["falcon", "🦅 peregrine falcon"]]],
+                                   ["lion", "🦁 lion"], ["bear", "🐻 bear"], ["falcon", "🦅 peregrine falcon"],
+                                   ["raccoon", "🦝 raccoon"], ["bobcat", "🐈 bobcat"], ["leopard", "🐆 leopard"],
+                                   ["eagle", "🦅 bald eagle"]]],
     ["color", "fur", "fur / feather color", FURS],
-    ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"], ["patches", "patches"]]],
+    ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"],
+                                             ["rosettes", "rosettes"], ["patches", "patches"]]],
     ["color", "marks", "markings color (stripes, mane, bars)", MARKS],
     ["color", "belly", "belly & muzzle color", BELLIES],
     ["color", "eyes", "animal eye color", ANIMAL_EYES],
@@ -1044,6 +1207,11 @@ function set(part, key, value) {
   state[part][key] = value;
   // choosing an animal dresses it in its natural colors
   if (part === "costume" && key === "kind" && ANIMALS[value]) Object.assign(state.costume, lookOf(value));
+  // a skirt starts at skirt length and a dress at dress length
+  if (part === "pants" && key === "style" && value === "skirt") state.pants.skirtLen = 50;
+  if (part === "pants" && key === "style" && value === "dress") state.pants.skirtLen = 95;
+  // a bikini comes with its top; trunks and briefs start without one
+  if (part === "undies" && key === "style") state.undies.top = value === "bikini";
   changed();
 }
 function changed() { draw(); for (const f of syncs) f(); persist(); }
@@ -1070,6 +1238,14 @@ const SHOWN_WHEN = {
   "costume.eyes": c => c.kind !== "none",
   "costume.accent": c => c.kind !== "none",
   "hair.length": h => ["long", "curly", "pigtails", "spiky", "afro"].includes(h.style),
+  "pants.skirtLen": p => p.style === "skirt" || p.style === "dress",
+  "hands.fingers": h => h.style === "human",
+  "undies.style": u => u.on,
+  "undies.top": u => u.on && u.style !== "onepiece",
+  "undies.color": u => u.on,
+  "undies.pattern": u => u.on,
+  "undies.patternSize": u => u.on && u.pattern !== "plain",
+  "undies.patternColor": u => u.on && u.pattern !== "plain",
   "shirt.patternSize": c => c.pattern !== "plain",
   "shirt.patternColor": c => c.pattern !== "plain",
   "pants.patternSize": c => c.pattern !== "plain",
@@ -1184,6 +1360,9 @@ document.getElementById("surprise").addEventListener("click", () => {
   // slanted eyes, up or down, about 1 time in 4
   if (!alien && Math.random() < 0.2) F.alien = rnd(15, 70);
   if (!alien && Math.random() < 0.25) F.tilt = rnd(-20, 35);
+  // swimwear now and then (about 1 time in 10), its top to suit its style
+  state.undies.on = Math.random() < 0.1;
+  state.undies.top = state.undies.style === "bikini" || (state.undies.style !== "onepiece" && Math.random() < 0.2);
   // a costume about 1 time in 4, in its natural colors
   state.costume.kind = Math.random() < 0.25 ? pick(Object.keys(ANIMALS)) : "none";
   if (ANIMALS[state.costume.kind]) Object.assign(state.costume, lookOf(state.costume.kind));
