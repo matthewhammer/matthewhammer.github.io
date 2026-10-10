@@ -63,6 +63,8 @@
   .formats { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: center;
              margin-top: 8px; font-size: 13px; color: var(--muted); }
   .formats label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+  .saved { text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 1em; }
+  .saved a { color: inherit; font-weight: 600; margin: 0 4px; }
 </style>
 </head>
 <body>
@@ -84,6 +86,7 @@
       <label><input type="checkbox" value="svg" checked> drawing (.svg)</label>
       <label><input type="checkbox" value="json" checked> settings (.json)</label>
     </div>
+    <div class="saved" id="saved" aria-live="polite"></div>
     <p class="hint" style="text-align:center">Drag the mouth or the eyebrows on the face, too!</p>
   </div>
   <div>
@@ -1208,6 +1211,11 @@ for (const b of formatBoxes) b.addEventListener("change", () => {
   try { localStorage.setItem("dress-up-save-off", JSON.stringify(formatBoxes.filter(x => !x.checked).map(x => x.value))); } catch (_) {}
 });
 const wanted = f => formatBoxes.some(b => b.value === f && b.checked);
+// Several downloads from one click: some browsers let only the first
+// through, ask first ("allow multiple downloads?"), or drop ones that
+// start after the click has finished (the .png is drawn first). So the
+// .svg and .json start during the click, the .png right after, and each
+// file also gets a link under the buttons: a click on a link always works.
 document.getElementById("save").addEventListener("click", () => {
   if (!formatBoxes.some(b => b.checked)) { alert("Check at least one kind of file to save."); return; }
   const d = new Date(), two = n => String(n).padStart(2, "0");
@@ -1221,20 +1229,29 @@ document.getElementById("save").addEventListener("click", () => {
   copy.setAttribute("width", Math.round(vb.width * scale));
   copy.setAttribute("height", 1000);
   const svgText = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(copy);
+  const saved = document.getElementById("saved");
+  saved.replaceChildren("Saved:");
+  const files = [];
+  const give = (blob, file) => {
+    download(blob, file);
+    const a = el("a", { href: URL.createObjectURL(blob), download: file, title: "save " + file }, file.split(".").pop());
+    files.push(a);
+    saved.replaceChildren("Saved ", ...files.flatMap((x, k) => k ? [" · ", x] : [x]),
+                          " — not in your downloads? click each one.");
+  };
+  if (wanted("svg")) give(new Blob([svgText], { type: "image/svg+xml" }), name + ".svg");
+  if (wanted("json"))
+    give(new Blob([JSON.stringify({ app: "dress-up", version: 1, saved: d.toISOString(), state }, null, 2)],
+                  { type: "application/json" }), name + ".json");
+  if (!wanted("png")) return;
   const img = new Image();
   img.onload = () => {
     const c = document.createElement("canvas");
     c.width = Math.round(vb.width * scale); c.height = 1000;
-    const g = c.getContext("2d");
-    g.drawImage(img, 0, 0);
-    c.toBlob(blob => {
-      if (wanted("png")) download(blob, name + ".png");
-      if (wanted("svg")) download(new Blob([svgText], { type: "image/svg+xml" }), name + ".svg");
-      if (wanted("json"))
-        download(new Blob([JSON.stringify({ app: "dress-up", version: 1, saved: d.toISOString(), state }, null, 2)],
-                          { type: "application/json" }), name + ".json");
-    });
+    c.getContext("2d").drawImage(img, 0, 0);
+    c.toBlob(blob => give(blob, name + ".png"));
   };
+  img.onerror = () => saved.append(" (the .png couldn't be drawn)");
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
 });
 // LOAD: a saved .json (or a bare state object); anything it lacks keeps
