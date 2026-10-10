@@ -81,7 +81,7 @@
       <button id="reset">↺ Start over</button>
     </div>
     <div class="formats" id="formats">
-      <span>save as:</span>
+      <span id="formats-label">save as:</span>
       <label><input type="checkbox" value="png" checked> picture (.png)</label>
       <label><input type="checkbox" value="svg" checked> drawing (.svg)</label>
       <label><input type="checkbox" value="json" checked> settings (.json)</label>
@@ -1494,13 +1494,32 @@ function download(blob, name) {
 // which files Save writes: all three to start with; unchecking one is
 // remembered on this device
 const formatBoxes = [...document.querySelectorAll("#formats input")];
-try {
-  const off = JSON.parse(localStorage.getItem("dress-up-save-off") || "[]");
-  for (const b of formatBoxes) b.checked = !off.includes(b.value);
-} catch (_) {}
-for (const b of formatBoxes) b.addEventListener("change", () => {
-  try { localStorage.setItem("dress-up-save-off", JSON.stringify(formatBoxes.filter(x => !x.checked).map(x => x.value))); } catch (_) {}
-});
+// Tablets and phones save one file per tap: an iPad kept only the last of
+// three downloads (the .png). There Save writes ONE file, chosen with
+// radio buttons (the settings, to load again, unless changed), and the
+// other two are a tap away in the links under the buttons. (iPadOS's
+// Safari says it is a Mac; its touch points give it away.)
+const oneFile = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) ||
+                (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+if (oneFile) {
+  document.getElementById("formats-label").textContent = "save (one file per tap here):";
+  let chosen = "json";
+  try { chosen = localStorage.getItem("dress-up-save-one") || "json"; } catch (_) {}
+  for (const b of formatBoxes) {
+    b.type = "radio"; b.name = "save-format"; b.checked = b.value === chosen;
+    b.addEventListener("change", () => {
+      try { localStorage.setItem("dress-up-save-one", b.value); } catch (_) {}
+    });
+  }
+} else {
+  try {
+    const off = JSON.parse(localStorage.getItem("dress-up-save-off") || "[]");
+    for (const b of formatBoxes) b.checked = !off.includes(b.value);
+  } catch (_) {}
+  for (const b of formatBoxes) b.addEventListener("change", () => {
+    try { localStorage.setItem("dress-up-save-off", JSON.stringify(formatBoxes.filter(x => !x.checked).map(x => x.value))); } catch (_) {}
+  });
+}
 const wanted = f => formatBoxes.some(b => b.value === f && b.checked);
 // Several downloads from one click: some browsers let only the first
 // through, ask first ("allow multiple downloads?"), or drop ones that
@@ -1523,18 +1542,26 @@ document.getElementById("save").addEventListener("click", () => {
   const saved = document.getElementById("saved");
   saved.replaceChildren("Saved:");
   const files = [];
+  // each file: saved now if it is wanted, and a link either way when only
+  // one file can be saved per tap (so the others are one tap away)
   const give = (blob, file) => {
-    download(blob, file);
-    const a = el("a", { href: URL.createObjectURL(blob), download: file, title: "save " + file }, file.split(".").pop());
-    files.push(a);
-    saved.replaceChildren("Saved ", ...files.flatMap((x, k) => k ? [" · ", x] : [x]),
-                          " — not in your downloads? click each one.");
+    const kind = file.split(".").pop();
+    if (wanted(kind)) download(blob, file);
+    else if (!oneFile) return;
+    const a = el("a", { href: URL.createObjectURL(blob), download: file, title: "save " + file }, kind);
+    files.push([kind, a]);
+    const order = ["json", "png", "svg"];
+    const links = files.slice().sort((x, y) => order.indexOf(x[0]) - order.indexOf(y[0])).map(x => x[1]);
+    saved.replaceChildren(...(oneFile
+      ? ["Saved the ." + formatBoxes.find(b => b.checked).value + " — tap to save: ",
+         ...links.flatMap((x, k) => k ? [" · ", x] : [x])]
+      : ["Saved ", ...links.flatMap((x, k) => k ? [" · ", x] : [x]), " — not in your downloads? click each one."]));
   };
-  if (wanted("svg")) give(new Blob([svgText], { type: "image/svg+xml" }), name + ".svg");
-  if (wanted("json"))
+  if (wanted("svg") || oneFile) give(new Blob([svgText], { type: "image/svg+xml" }), name + ".svg");
+  if (wanted("json") || oneFile)
     give(new Blob([JSON.stringify({ app: "dress-up", version: 1, saved: d.toISOString(), state }, null, 2)],
                   { type: "application/json" }), name + ".json");
-  if (!wanted("png")) return;
+  if (!wanted("png") && !oneFile) return;
   const img = new Image();
   img.onload = () => {
     const c = document.createElement("canvas");
