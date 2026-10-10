@@ -209,11 +209,17 @@ function mood(f, brow, smile) {
 }
 
 const mouthPath = v => `M60 150 Q100 ${110 + idiv(4 * v, 5)} 140 150`;
+// The lips' two control points (the mouth's top and bottom curves), for a
+// smile v and an opening o. Closed, both are the smile's own curve. A smile
+// (or a flat mouth) opens like a D: its top flattens to a straight line and
+// stops there, and its bottom drops deeper the more it opens. A frown opens
+// the other way up: the bottom flattens and the top rises.
 function lips(v, o) {
-  const q = 110 + idiv(4 * v, 5), bend = q - 150, dir = bend < 0 ? -1 : 1;
-  const extreme = Math.abs(bend), even = idiv(36 * o * (40 - extreme), 4000);
-  const far = q + dir * even, near = q + idiv((150 - q) * o, 100) - dir * even;
-  return far < near ? [far, near] : [near, far];
+  const q = 110 + idiv(4 * v, 5), gap = Math.round(o * 0.4), t = Math.min(1, o / 100);
+  const [u, l] = q >= 150
+    ? [Math.round(q + (150 - q) * t), q + gap]
+    : [q - gap, Math.round(q + (150 - q) * t)];
+  return [Math.min(u, l), Math.max(u, l)];
 }
 function openMouth(v, o) {
   if (o === 0) return mouthPath(v);
@@ -266,10 +272,15 @@ function faceLayout(F) {
   const mouthY0 = HEAD_C + (150 - HEAD_C) * ky;
   const flatTop = mouthY0 - 14.5 * ky;
   const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 5 - flatTop) : 0;
-  const openDrop = F.open === 0 ? 0
+  // a frown's top rises as it opens: keep it where the closed mouth's was
+  const riseDrop = F.open === 0 ? 0
     : Math.max(0, lipTop(110 + idiv(4 * F.smile, 5)) - mouthTopAsDrawn(F)) * ky;
-  const stretch = Math.round(noseDrop + openDrop);
-  return { kx, ky, eyeY, eyeDX, noseTop, uh, uw, mouthY: mouthY0 + stretch, stretch };
+  const mouthY = mouthY0 + noseDrop + riseDrop;
+  // and the chin makes room below a deep mouth
+  const bottom = mouthY + (75 + lips(F.smile, F.open)[1] / 2 + 2.5 - 150) * ky;
+  const chin = HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
+  const stretch = Math.round(Math.max(noseDrop + riseDrop, bottom + 12 - chin, 0));
+  return { kx, ky, eyeY, eyeDX, noseTop, uh, uw, mouthY, stretch };
 }
 const mouthDrop = F => faceLayout(F).stretch;
 function noseSvg(F) {
@@ -280,8 +291,11 @@ function noseSvg(F) {
   // as tall as asked: the mouth makes room (faceLayout)
   const { noseTop, uh, uw } = faceLayout(F);
   const sw = f1(3 + (F.noseH + F.noseW) / 200);
+  // from the front, width spreads the nostrils (the bottom) much more than
+  // the bridge (the top), for a broad nose
+  const wAt = y => front ? 30 + (uw * 1.7 - 30) * Math.max(0, Math.min(1, y)) : uw;
   const at = (sx, d) => `<path d="${d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
-      f1(100 + sx * uw * Number(x)) + " " + f1(noseTop + uh * Number(y)))}" ` +
+      f1(100 + sx * wAt(Number(y)) * Number(x)) + " " + f1(noseTop + uh * Number(y)))}" ` +
     `fill="none" stroke="black" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
   if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
   return at(view === "left" ? -1 : 1, shape);
