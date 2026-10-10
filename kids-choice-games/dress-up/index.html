@@ -108,7 +108,7 @@ const DEFAULTS = {
            rays: 0, teeth: 0, open: 0,
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
-           faceW: 100, faceH: 100, alien: 0, nose: "none", noseDir: "right", noseSize: 100 },
+           faceW: 100, faceH: 100, alien: 0, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100 },
   hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -122,6 +122,16 @@ const DEFAULTS = {
              accent: "#e89aa0", furPattern: "stripes", spot: "auto" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
+// before the nose views: a nose was a shape (or "none"), a direction and
+// one size
+function upgradeFace(f, saved) {
+  if (!saved || saved.noseView !== undefined || saved.nose === undefined) return;
+  f.noseView = saved.nose === "none" ? "none"
+             : saved.noseDir === "left" ? "left" : saved.noseDir === "center" ? "front" : "right";
+  f.nose = saved.nose === "none" ? "L" : saved.nose;
+  f.noseFront = saved.nose === "angle" ? "pointed" : "round";
+  if (saved.noseSize !== undefined) f.noseW = f.noseH = saved.noseSize;
+}
 // before the alien finger slider there were two alien styles
 function upgradeHands(h) {
   if (h.style === "alien4" || h.style === "alien3") { h.alienFingers = h.style === "alien4" ? 4 : 3; h.style = "alien"; }
@@ -131,6 +141,7 @@ try {
   const saved = JSON.parse(localStorage.getItem("dress-up-v1") || "null");
   if (saved) for (const k of Object.keys(DEFAULTS)) state[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
   upgradeHands(state.hands);
+  upgradeFace(state.face, saved.face);
   // pants length moved to the legs (leg length)
   if (saved && saved.pants && saved.pants.length && !(saved.body && saved.body.legLen))
     state.body.legLen = saved.pants.length;
@@ -211,52 +222,57 @@ function openMouth(v, o) {
 }
 const browPath = v => `M55 78 Q100 ${50 + idiv(2 * v, 5)} 145 78`;
 
-// THE NOSE: lines between the eyes and the mouth, from the bridge's top
-// at (100, 106) down about 30 face units at size 100. In profile, an L
-// or a < in one of a few curves, pointing right (the letter L) or left (a
-// backwards L); centered, both sides of the nose and the two nostrils.
-// Each path is in nose units: x across (+ = the way it points), y down,
-// 1 = the nose's height.
+// THE NOSE: lines between the eyes and the mouth, from the bridge's top at
+// (100, 106) down, in a box of nose width x nose height (30 x 30 face units
+// at 100). Seen from the SIDE it is an L or a < in one of a few curves,
+// pointing right (the letter L) or left (a backwards L); from the FRONT,
+// both sides of the bridge, the nostrils, and the tip between them. Paths
+// are in nose units: x across (+ = the way it points), y down, 1 = the
+// box's height.
 const NOSES = {
-  // profile; centered: one side of the bridge, flaring into a nostril
-  // that curls back up (drawn twice, mirrored, with a gap at the tip)
-  L:     { side: "M0 0 L0 1 L0.5 1",
-           half: "M0.12 0.05 L0.16 0.72 Q0.34 0.86 0.24 1 Q0.14 1.06 0.06 0.94" },
-  angle: { side: "M0 0 L0.55 0.72 L0.08 1",
-           half: "M0.06 0.05 L0.26 0.72 Q0.42 0.88 0.28 1 Q0.16 1.06 0.07 0.94" },
-  soft:  { side: "M0 0 Q0 1 0.2 1 Q0.48 1 0.5 0.8",
-           half: "M0.1 0.05 Q0.12 0.55 0.24 0.74 Q0.4 0.9 0.26 1.01 Q0.15 1.07 0.07 0.95" },
-  hook:  { side: "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",
-           half: "M0.1 0.05 Q0.34 0.45 0.3 0.74 Q0.48 0.92 0.3 1.03 Q0.16 1.08 0.07 0.95" },
+  // tilted so the bottom, where the nostril would be, sits near the middle
+  L:     "M-0.2 0 L-0.06 1 L0.2 1",
+  angle: "M0 0 L0.55 0.72 L0.08 1",
+  soft:  "M-0.2 0 Q-0.1 1 0.06 1 Q0.3 1 0.32 0.8",
+  hook:  "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",     // "bulbous"
 };
+// from the front: one side of the bridge flaring into a nostril that curls
+// back up (drawn twice, mirrored), and the tip, drawn once between them
+const FRONT_NOSES = {
+  pointed: "M0.08 0.05 L0.26 0.72 Q0.42 0.88 0.28 1 Q0.16 1.06 0.07 0.94",
+  round:   "M0.1 0.05 Q0.12 0.55 0.24 0.74 Q0.4 0.9 0.26 1.01 Q0.15 1.07 0.07 0.95",
+};
+const NOSE_TIP = "M-0.07 0.95 Q0 1.1 0.07 0.95";
 // The top of the mouth, in face units: its lips are quadratic curves from
 // (60, 150) to (140, 150), so a curve's highest point is halfway between
 // the corners' y and its control's.
+const lipTop = c => Math.min(150, 75 + c / 2) - 2.5;   // (less half the lip's line)
 function mouthTopAsDrawn(F) {
-  const c = F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0];
-  return Math.min(150, 75 + c / 2) - 2.5;   // (less half the lip's line)
+  return lipTop(F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0]);
 }
-// A wide-open mouth's upper lip rises toward the nose (or, with no nose,
-// the eyes). Then the mouth moves down this far, and the head's lower
-// half stretches by as much, so there is room for both.
+// An open mouth grows DOWNWARD: its upper lip stays where the closed
+// mouth's was, the mouth moves down by however far the opening would have
+// raised it, and the head's lower half stretches by as much. Smiling and
+// frowning only bend the mouth.
 function mouthDrop(F) {
-  const clear = NOSES[F.nose] ? 106 + 1.08 * 30 * F.noseSize / 100 + 5 : 114;
-  return Math.max(0, Math.round(clear - mouthTopAsDrawn(F)));
+  if (F.open === 0) return 0;
+  return Math.max(0, Math.round(lipTop(110 + idiv(4 * F.smile, 5)) - mouthTopAsDrawn(F)));
 }
 const mouthTop = F => mouthTopAsDrawn(F) + mouthDrop(F);
 function noseSvg(F) {
-  const N = NOSES[F.nose];
-  if (!N) return "";
-  // as big as asked, but ending above the mouth: a wide-open mouth's upper
-  // lip rises toward the nose, and they overlapped
-  const fit = (mouthTop(F) - 5 - 106) / 1.08;
-  const u = Math.max(6, Math.min(30 * F.noseSize / 100, fit)), sw = f1(3 + F.noseSize / 100);
-  const at = (sx, d) => `<path d="${d}" transform="translate(100 106) scale(${f1(sx * u)} ${f1(u)})" ` +
-    `fill="none" stroke="black" stroke-width="${f1(sw / u)}" stroke-linecap="round" stroke-linejoin="round"/>`;
-  if (F.noseDir === "center")
-    // both halves, mirror images
-    return at(1, N.half) + at(-1, N.half);
-  return at(F.noseDir === "left" ? -1 : 1, N.side);
+  const view = F.noseView;
+  if (!view || view === "none") return "";
+  const front = view === "front";
+  const shape = front ? FRONT_NOSES[F.noseFront] || FRONT_NOSES.round : NOSES[F.nose] || NOSES.L;
+  // as tall as asked, but ending above the mouth
+  const fit = (mouthTop(F) - 5 - 106) / 1.1;
+  const uh = Math.max(6, Math.min(30 * F.noseH / 100, fit)), uw = 30 * F.noseW / 100;
+  const sw = f1(3 + (F.noseH + F.noseW) / 200);
+  const at = (sx, d) => `<path d="${d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
+      f1(100 + sx * uw * Number(x)) + " " + f1(106 + uh * Number(y)))}" ` +
+    `fill="none" stroke="black" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
+  return at(view === "left" ? -1 : 1, shape);
 }
 function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
@@ -522,6 +538,16 @@ const hairStretch = F =>
   `translate(100 ${HEAD_C}) scale(${(F.faceW / 100 * (1 + 0.12 * F.alien / 100)).toFixed(3)} ` +
   `${(F.faceH / 100).toFixed(3)}) translate(-100 ${-HEAD_C})`;
 
+// What sits on top of the head (hair, or a costume's hood) when the head
+// explodes: it flies off with the lid, tilting as the lid does, and higher
+// than the lid, more so the bigger the explosion, as if they were coming
+// apart. (Empty when the head is whole.)
+function topFlies(F) {
+  const b = F.burst;
+  if (b <= 0) return "";
+  const lift = idiv(b * 7, 10) + idiv(b * 4, 10), tilt = idiv(b, 4);
+  return `translate(0 ${-lift}) rotate(${-tilt} 100 ${f1(HEAD_C - 50.6 * F.faceH / 100)})`;
+}
 function faceSvg(F, ground) {
   const b = F.burst, k = F.candy, r = F.rays, o = F.open;
   const rayLen = r === 0 ? 0 : idiv((15 + idiv(r * 6, 10)) * b, 100);
@@ -545,12 +571,12 @@ function faceSvg(F, ground) {
   const hoodClips = C ? `<clipPath id="hood-brim"><rect x="-200" y="-400" width="600" height="454"/></clipPath>` +
                         `<clipPath id="hood-inside"><ellipse ${HOOD}/></clipPath>` : "";
   return `<defs>${clips}${hoodClips}</defs>` +
-    `<g transform="${hairStretch(F)}">${C ? hoodBack(C, kind) : hairSvg(state.hair)}</g>` +
+    `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${C ? hoodBack(C, kind) : hairSvg(state.hair)}</g></g>` +
     sideLines(F.sides) +
     (b > 0 ? part(' clip-path="url(#below-crack)"') : part()) +
     raysUp(rayLen, 3 + idiv(r, 25), crackY) +
     (b > 0 ? `<g transform="translate(0 ${-lift}) rotate(${-tilt} 100 ${f1(crackY)})">${part(' clip-path="url(#above-crack)"')}</g>` : "") +
-    (C ? `<g transform="${hairStretch(F)}">${hoodFront(C, kind)}</g>` : "") +
+    (C ? `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hoodFront(C, kind)}</g></g>` : "") +
     pieces(shown, b, crackY) +
     (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
     eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
@@ -1117,7 +1143,9 @@ function draw() {
   // and hair, stretched with the head (it hangs and spreads in face units)
   const hr = C ? { top: 0, bottom: 0, half: 0 } : hairReach(state.hair);
   const hairY = y => HEAD_C + (y - HEAD_C) * F.faceH / 100;
-  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40, hairY(hr.top) - 20);
+  const flying = F.burst > 0 ? idiv(F.burst * 7, 10) + idiv(F.burst * 4, 10) + 40 : 0;   // see topFlies
+  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40,
+                           hairY(hr.top) - 40 - flying, (C ? -90 : 0) - flying);
   const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)));
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
@@ -1135,7 +1163,7 @@ function draw() {
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
   // behind everything: long hair's back layer, in the face's frame
   if (!C) svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
-                 `<g transform="${hairStretch(F)}">${hairBackSvg(state.hair)}</g></g>`;
+                 `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hairBackSvg(state.hair)}</g></g></g>`;
 
   // behind everything: a falcon's wings and tail, or a suit's tail
   // (a bald eagle's: plain dark brown wings and a white tail)
@@ -1249,9 +1277,11 @@ const TABS = [
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
-    ["choice", "nose", "👃 nose", [["none", "none"], ["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "hook"]]],
-    ["choice", "noseDir", "nose points", [["right", "L →"], ["left", "← backwards L"], ["center", "centered"]]],
-    ["range", "noseSize", "nose size", 20, 300, 70, 150],
+    ["choice", "noseView", "👃 nose", [["none", "none"], ["right", "side, L →"], ["left", "side, ← backwards L"], ["front", "front"]]],
+    ["choice", "nose", "side shape", [["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "bulbous"]]],
+    ["choice", "noseFront", "front shape", [["pointed", "pointed"], ["round", "round"]]],
+    ["range", "noseH", "nose height", 20, 300, 70, 150],
+    ["range", "noseW", "nose width", 20, 300, 70, 150],
     ["range", "open", "mouth open", 0, 300, 0, 100],
     ["range", "teeth", "teeth", 0, 15, 0, 5],
     ["range", "sides", "side lines", 0, 300, 0, 100],
@@ -1379,8 +1409,10 @@ function el(tag, attrs = {}, kids = []) {
 // Iris color and eye whites only mean something once there is an iris.
 const SHOWN_WHEN = {
   "face.irisColor": f => f.iris > 0,
-  "face.noseDir": f => f.nose !== "none",
-  "face.noseSize": f => f.nose !== "none",
+  "face.nose": f => f.noseView === "right" || f.noseView === "left",
+  "face.noseFront": f => f.noseView === "front",
+  "face.noseH": f => f.noseView !== "none",
+  "face.noseW": f => f.noseView !== "none",
   "face.whites": f => f.iris > 0,
   "costume.fur": c => c.kind !== "none",
   "costume.furPattern": c => !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
@@ -1631,6 +1663,7 @@ document.getElementById("load-file").addEventListener("change", async e => {
     const next = clone(DEFAULTS);
     for (const k of Object.keys(DEFAULTS)) next[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
     upgradeHands(next.hands);
+    upgradeFace(next.face, saved.face);
     state = next;
     changed();
   } catch (err) {
