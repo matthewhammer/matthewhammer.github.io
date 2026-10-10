@@ -232,10 +232,18 @@ const NOSES = {
 // The top of the mouth, in face units: its lips are quadratic curves from
 // (60, 150) to (140, 150), so a curve's highest point is halfway between
 // the corners' y and its control's.
-function mouthTop(F) {
+function mouthTopAsDrawn(F) {
   const c = F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0];
   return Math.min(150, 75 + c / 2) - 2.5;   // (less half the lip's line)
 }
+// A wide-open mouth's upper lip rises toward the nose (or, with no nose,
+// the eyes). Then the mouth moves down this far, and the head's lower
+// half stretches by as much, so there is room for both.
+function mouthDrop(F) {
+  const clear = NOSES[F.nose] ? 106 + 1.08 * 30 * F.noseSize / 100 + 5 : 114;
+  return Math.max(0, Math.round(clear - mouthTopAsDrawn(F)));
+}
+const mouthTop = F => mouthTopAsDrawn(F) + mouthDrop(F);
 function noseSvg(F) {
   const N = NOSES[F.nose];
   if (!N) return "";
@@ -488,12 +496,12 @@ function hairReach(h) {
 // across the top and narrowing to a pointed chin, like an alien's head.
 const HEAD_C = 110.6;
 function headPoints(F) {
-  const W = F.faceW / 100, H = F.faceH / 100, a = F.alien / 100, pts = [];
+  const W = F.faceW / 100, H = F.faceH / 100, a = F.alien / 100, pts = [], drop = mouthDrop(F);
   for (let i = 0; i < 72; i++) {
     const t = i * Math.PI / 36, c = Math.cos(t), sn = Math.sin(t);
     const sx = c * (1 + a * (sn < 0 ? 0.12 : -0.85 * sn));
     const sy = sn * (1 + a * (sn > 0 ? 0.25 : 0.05));
-    pts.push([100 + 80 * W * sx, HEAD_C + 80 * H * sy]);
+    pts.push([100 + 80 * W * sx, HEAD_C + 80 * H * sy + (sn > 0 ? drop * sn : 0)]);
   }
   return pts;
 }
@@ -506,7 +514,7 @@ function acrossAt(pts, Y) {
   });
   return xs.length ? [Math.min(...xs), Math.max(...xs)] : [100, 100];
 }
-const headChin = F => HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
+const headChin = F => HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100) + mouthDrop(F);
 const headCrown = F => HEAD_C - 80 * (F.faceH / 100) * (1 + 0.05 * F.alien / 100);
 // The head's stretch, for the hair: hair drawn for the round head is
 // stretched the same way about the head's center.
@@ -550,10 +558,11 @@ function faceSvg(F, ground) {
     noseSvg(F) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
       `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round" transform="translate(0 ${f1(-browLift(F))})"/>` +
+    `<g transform="translate(0 ${mouthDrop(F)})">` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
       `stroke-width="5" stroke-linejoin="round"/>` +
     teeth(F.teeth, upper, lower) +
-    sickPile(F.sick, 150 + idiv(lower - 150, 2), ground);
+    sickPile(F.sick, 150 + idiv(lower - 150, 2), ground - mouthDrop(F)) + `</g>`;
 }
 
 // ===================== COSTUMES =====================
