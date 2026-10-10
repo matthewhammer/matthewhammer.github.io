@@ -192,8 +192,22 @@ const fillOf = (id, color, kind) => (kind === "plain" ? color : `url(#${id})`);
 // centered at (100, 110.6), its chin at (100, 190.6).
 
 const PRESETS = [[220, 20, 60], [140, 190, 50], [170, 178, 186], [207, 160, 0]];
+// A colour anywhere in the range of human skin, pale to very dark: an
+// orange-ish hue, some colour but not a vivid one. Generous on purpose.
+function isSkin([r, g, b]) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max < 20 || max === min) return false;
+  const s = (max - min) / max;
+  const h = max === r ? 60 * ((g - b) / (max - min)) : max === g ? 120 + 60 * ((b - r) / (max - min))
+    : 240 + 60 * ((r - g) / (max - min));
+  return h >= 3 && h <= 55 && s >= 0.12 && s <= 0.85;
+}
+// Which row of feelings: every skin tone has the everyday ones (the
+// cartoon yellow's row), so a skin colour never changes the feeling; an
+// unnatural colour (red, green, grey) has its own silly ones.
 function family(hex) {
   const [r, g, b] = hexToRgb(hex);
+  if (isSkin([r, g, b])) return 3;
   const d = PRESETS.map(([pr, pg, pb]) => (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2);
   return d.indexOf(Math.min(...d));
 }
@@ -1285,6 +1299,15 @@ function draw() {
   const pic = document.getElementById("pic");
   pic.setAttribute("viewBox", `${f1(left)} ${f1(top)} ${f1(width)} ${f1(bottom - top)}`);
   pic.innerHTML = svg;
+  // a blown lid tilts about the crack, and on a tall head its top (and
+  // long hair or a hood's back below it) swings far out: frame what was
+  // drawn, kept centred
+  if (F.burst > 0) {
+    const b = pic.getBBox(), l = Math.min(left, b.x - 12, -(b.x + b.width + 12));
+    const t = Math.min(top, b.y - 12), btm = Math.max(bottom, b.y + b.height + 12);
+    if (l < left || t < top || btm > bottom)
+      pic.setAttribute("viewBox", `${f1(l)} ${f1(t)} ${f1(-2 * l)} ${f1(btm - t)}`);
+  }
   document.getElementById("mood").textContent = "feeling " + mood(family(F.color), F.brow, F.smile);
 }
 
@@ -1306,7 +1329,7 @@ const TABS = [
     ["color", "color", "skin & head color", SKINS],
     ["range", "size", "head size", 8, 150, 36, 64],
     ["range", "faceW", "face width", 40, 200, 85, 115],
-    ["range", "faceH", "face height", 40, 200, 85, 115],
+    ["range", "faceH", "face height", 40, 600, 85, 115],
     ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
