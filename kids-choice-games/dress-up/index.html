@@ -14,7 +14,9 @@
   * { box-sizing: border-box; }
   body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
          font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif; }
-  h1 { margin: 0 0 10px; font-size: 1.6em; letter-spacing: 0.02em; }
+  /* over the picture, centered on it (at the window's edge it hung far out
+     to the left of a picture centered in its column) */
+  h1 { margin: 0 0 10px; font-size: 1.6em; letter-spacing: 0.02em; text-align: center; }
   .app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px;
          max-width: 1100px; margin: 0 auto; }
   @media (max-width: 760px) { .app { grid-template-columns: minmax(0, 1fr); } }
@@ -22,7 +24,7 @@
   /* The picture, its caption and buttons always fit on the screen, so the
      picture stays in view while the controls scroll. */
   svg#pic { display: block; width: 100%; height: auto;
-            max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px);
+            max-height: calc(100vh - 195px); max-height: calc(100dvh - 195px);
             background: var(--paper); border-radius: 18px; border: 2px solid var(--line);
             user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .caption { text-align: center; margin-top: 6px; font-size: 1.2em; }
@@ -68,9 +70,9 @@
 </style>
 </head>
 <body>
-<h1>Messed Up Dress Up</h1>
 <div class="app">
   <div class="stage">
+    <h1>Messed Up Dress Up</h1>
     <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="caption" id="mood"></div>
     <div class="actions">
