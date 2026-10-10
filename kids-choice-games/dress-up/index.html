@@ -546,6 +546,8 @@ const ANIMALS = {
   bobcat: { suit: true,  fur: "#c79a68", marks: "#4b3020", belly: "#f3e6cf", eyes: "#d9a520", accent: "#d98a8a", furPattern: "spots" },
   leopard: { suit: true, fur: "#e3b04b", marks: "#2b1d12", belly: "#f7ecd3", eyes: "#9bbf3a", accent: "#c97a7a", furPattern: "rosettes" },
   eagle:  { suit: false, fur: "#4a3222", marks: "#2a1a10", belly: "#ffffff", eyes: "#f2c230", accent: "#f2b705", furPattern: "none" },
+  // a black jaguar: nearly black, its rosettes just showing
+  jaguar: { suit: true, fur: "#1e1c22", marks: "#3d3944", belly: "#2b2830", eyes: "#d4c23a", accent: "#3a363f", furPattern: "rosettes" },
   cheetah: { suit: true, fur: "#e8b54a", marks: "#1c1410", belly: "#f8eed8", eyes: "#c88a1e", accent: "#2a1d14", furPattern: "spots" },
   // a whole falcon suit: feathers all over, wings on the arms, talons
   falconsuit: { suit: true, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
@@ -553,7 +555,7 @@ const ANIMALS = {
   eaglesuit: { suit: true, fur: "#4a3222", marks: "#2a1a10", belly: "#ffffff", eyes: "#f2c230", accent: "#f2b705", furPattern: "none" },
 };
 // cats (pointed ears, a triangle nose) and birds (no suit: wings and a tail)
-const FELINE = { cat: 1, tiger: 1, bobcat: 1, leopard: 1, cheetah: 1 };
+const FELINE = { cat: 1, tiger: 1, bobcat: 1, leopard: 1, cheetah: 1, jaguar: 1 };
 const BIRDS = { falcon: 1, eagle: 1, falconsuit: 1, eaglesuit: 1 };
 // the bird suits: feathers all over, wings on the arms, talons
 const BIRD_SUIT = { falconsuit: 1, eaglesuit: 1 };
@@ -685,7 +687,7 @@ function hoodFront(C, kind) {
     ? `<path d="M94 35 L106 35 L100 42 Z" fill="${C.accent}"/>`
     : `<path d="M91 34 Q100 31 109 34 Q105 43 100 44 Q95 43 91 34 Z" fill="${C.accent}"/>`;
   if (kind !== "bear") {
-    const wc = kind === "cat" || kind === "raccoon" ? "#e8e8e8" : "#222";
+    const wc = kind === "cat" || kind === "raccoon" || kind === "jaguar" ? "#e8e8e8" : "#222";
     s += `<path d="M86 44 L60 40 M86 47 L60 50 M114 44 L140 40 M114 47 L140 50" stroke="${wc}" stroke-width="1.6" stroke-linecap="round"/>`;
   }
   return s;
@@ -701,16 +703,16 @@ function tailSvg(C, kind, hw, L) {
     return `<ellipse cx="${f1(hw + 10)}" cy="${f1(L - 12)}" rx="13" ry="20" transform="rotate(30 ${f1(hw + 10)} ${f1(L - 12)})" ` +
            `fill="url(#pat-fur)" stroke="${line}" stroke-width="3"/>` +
            `<ellipse cx="${f1(hw + 19)}" cy="${f1(L - 27)}" rx="7" ry="8" transform="rotate(30 ${f1(hw + 19)} ${f1(L - 27)})" fill="${C.marks}"/>`;
-  const d = kind === "cat" || kind === "leopard" || kind === "cheetah"
+  const d = kind === "cat" || kind === "leopard" || kind === "cheetah" || kind === "jaguar"
     ? `M${f1(x0)} ${f1(y0)} C${f1(hw + 80)} ${f1(L + 30)} ${f1(hw + 110)} ${f1(L - 30)} ${f1(hw + 70)} ${f1(L - 110)}`
     : `M${f1(x0)} ${f1(y0)} C${f1(hw + 70)} ${f1(L + 20)} ${f1(hw + 95)} ${f1(L + 90)} ${f1(hw + 60)} ${f1(L + 150)}`;
-  const wd = { tiger: 16, cat: 11, lion: 10, raccoon: 22, leopard: 13, cheetah: 12 }[kind];
+  const wd = { tiger: 16, cat: 11, lion: 10, raccoon: 22, leopard: 13, cheetah: 12, jaguar: 14 }[kind];
   const path = (stroke, width, extra = "") =>
     `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" ${extra}/>`;
   let s = path(line, wd + 5) + path(C.fur, wd);
   if (kind === "tiger") s += path(C.marks, wd, `stroke-dasharray="7 11"`);
   if (kind === "raccoon") s += path(C.marks, wd, `stroke-dasharray="11 11"`);   // the rings
-  if (kind === "leopard" || kind === "cheetah") s += path(C.marks, wd * 0.45, `stroke-dasharray="1 13"`);  // spots
+  if (kind === "leopard" || kind === "cheetah" || kind === "jaguar") s += path(C.marks, wd * 0.45, `stroke-dasharray="1 13"`);  // spots
   if (kind === "lion")
     s += `<circle cx="${f1(hw + 60)}" cy="${f1(L + 156)}" r="14" fill="${C.marks}" stroke="${darker(C.marks)}" stroke-width="2"/>`;
   return s;
@@ -934,7 +936,7 @@ function talons(r, R, clawLen = 100) {
   }).join("");
 }
 // The cat costumes (lion too) have claws on their paws.
-const CLAWED = { cat: 1, tiger: 1, lion: 1, bobcat: 1, leopard: 1, cheetah: 1 };
+const CLAWED = { cat: 1, tiger: 1, lion: 1, bobcat: 1, leopard: 1, cheetah: 1, jaguar: 1 };
 // A suit's hands: paws in the fur color, with claws on a cat.
 const suitHands = (C, kind) => ({ style: "paw", size: Math.max(state.hands.size, 12), color: C.fur, pad: C.accent,
                                   claws: !!CLAWED[kind], clawLen: state.hands.clawLen ?? 100 });
@@ -1295,7 +1297,7 @@ const TABS = [
     ["choice", "kind", "costume", [["none", "none"], ["tiger", "🐯 tiger"], ["cat", "🐈‍⬛ black cat"],
                                    ["lion", "🦁 lion"], ["bear", "🐻 bear"], ["falcon", "🦅 peregrine falcon"],
                                    ["raccoon", "🦝 raccoon"], ["bobcat", "🐈 bobcat"], ["leopard", "🐆 leopard"],
-                                   ["eagle", "🦅 bald eagle"], ["cheetah", "🐆 cheetah"],
+                                   ["eagle", "🦅 bald eagle"], ["cheetah", "🐆 cheetah"], ["jaguar", "🐈‍⬛ black jaguar"],
                                    ["falconsuit", "🦅 falcon suit"], ["eaglesuit", "🦅 bald eagle suit"]]],
     ["color", "fur", "fur / feather color", FURS],
     ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"],
