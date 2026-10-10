@@ -117,7 +117,7 @@ const DEFAULTS = {
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
-             accent: "#e89aa0", furPattern: "stripes" },
+             accent: "#e89aa0", furPattern: "stripes", spot: "auto" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 // before the alien finger slider there were two alien styles
@@ -544,10 +544,10 @@ const ANIMALS = {
   falcon: { suit: false, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
   raccoon: { suit: true, fur: "#8d9096", marks: "#26262a", belly: "#e4e1da", eyes: "#3b2a1a", accent: "#26262a", furPattern: "none" },
   bobcat: { suit: true,  fur: "#c79a68", marks: "#4b3020", belly: "#f3e6cf", eyes: "#d9a520", accent: "#d98a8a", furPattern: "spots" },
-  leopard: { suit: true, fur: "#e3b04b", marks: "#2b1d12", belly: "#f7ecd3", eyes: "#9bbf3a", accent: "#c97a7a", furPattern: "rosettes" },
+  leopard: { suit: true, fur: "#e3b04b", marks: "#2b1d12", belly: "#f7ecd3", eyes: "#9bbf3a", accent: "#c97a7a", furPattern: "rosettes", spot: "auto" },
   eagle:  { suit: false, fur: "#4a3222", marks: "#2a1a10", belly: "#ffffff", eyes: "#f2c230", accent: "#f2b705", furPattern: "none" },
   // a black jaguar: nearly black, its rosettes just showing
-  jaguar: { suit: true, fur: "#1e1c22", marks: "#3d3944", belly: "#2b2830", eyes: "#d4c23a", accent: "#3a363f", furPattern: "rosettes" },
+  jaguar: { suit: true, fur: "#1e1c22", marks: "#3d3944", belly: "#2b2830", eyes: "#d4c23a", accent: "#3a363f", furPattern: "rosettes", spot: "auto" },
   cheetah: { suit: true, fur: "#e8b54a", marks: "#1c1410", belly: "#f8eed8", eyes: "#c88a1e", accent: "#2a1d14", furPattern: "spots" },
   // a whole falcon suit: feathers all over, wings on the arms, talons
   falconsuit: { suit: true, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
@@ -569,6 +569,10 @@ const costumeOn = () => (ANIMALS[state.costume.kind] ? state.costume : null);
 
 // Fur: the fur color with little tufts, and stripes, spots or patches in
 // the markings color. Feathers: the feather color with curved bars.
+// A rosette's middle: "auto" is a warm brown mixed into the fur, "off"
+// leaves the fur showing through (just the broken ring), or any color.
+const rosetteMiddle = C =>
+  !C.spot || C.spot === "auto" ? mix(C.fur, "#7a4a10", 0.35) : C.spot === "off" ? "none" : C.spot;
 function furDefs(C, kind) {
   if (BIRD_SUIT[kind])   // feathers: the color with curved bars, all over
     return `<pattern id="pat-fur" width="24" height="12" patternUnits="userSpaceOnUse">` +
@@ -584,7 +588,7 @@ function furDefs(C, kind) {
     patches: `<ellipse cx="12" cy="14" rx="11" ry="8" fill="${m}"/><ellipse cx="34" cy="34" rx="9" ry="7" fill="${m}"/>`,
     // a leopard's rosettes: broken rings with a darker middle
     rosettes: [[11, 12, 5.5], [31, 30, 5]].map(([x, y, r]) =>
-      `<circle cx="${x}" cy="${y}" r="${r}" fill="${mix(C.fur, "#7a4a10", 0.35)}" stroke="${m}" stroke-width="2.4" stroke-dasharray="5 2.6"/>`).join("") +
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="${rosetteMiddle(C)}" stroke="${m}" stroke-width="2.4" stroke-dasharray="5 2.6"/>`).join("") +
       `<circle cx="31" cy="9" r="2.2" fill="${m}"/><circle cx="9" cy="31" r="2" fill="${m}"/>`,
   }[C.furPattern] || "";
   return `<pattern id="pat-fur" width="40" height="40" patternUnits="userSpaceOnUse">` +
@@ -1303,6 +1307,7 @@ const TABS = [
     ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"],
                                              ["rosettes", "rosettes"], ["patches", "patches"]]],
     ["color", "marks", "markings color (stripes, mane, bars)", MARKS],
+    ["color", "spot", "rosette middle color", ["auto", "off", "#7a4a10", "#c8892e", "#5a3a1a", "#1c1410", "#ffffff", "#ff69b4", "#8b5cf6"]],
     ["color", "belly", "belly & muzzle color", BELLIES],
     ["color", "eyes", "animal eye color", ANIMAL_EYES],
     ["color", "accent", "nose, ear & beak color", ACCENTS],
@@ -1343,6 +1348,7 @@ const SHOWN_WHEN = {
   "costume.fur": c => c.kind !== "none",
   "costume.furPattern": c => !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.marks": c => c.kind !== "none",
+  "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => c.kind !== "none",
   "costume.eyes": c => c.kind !== "none",
   "costume.accent": c => c.kind !== "none",
@@ -1390,8 +1396,10 @@ function control(part, [kind, key, label, ...rest]) {
   } else if (kind === "color") {
     const row = el("div", { class: "row" });
     const bs = rest[0].map(c => {
-      const b = c === "skin" || c === "auto"
-        ? el("button", { class: "swatch skin", title: c === "skin" ? "same as skin" : "a lighter shade",
+      const b = c === "skin" || c === "auto" || c === "off"
+        ? el("button", { class: "swatch skin",
+                         title: c === "skin" ? "same as skin" : c === "off" ? "none: the fur shows through"
+                              : key === "spot" ? "a warm brown" : "a lighter shade",
                          onclick: () => set(part, key, c) }, c)
         : el("button", { class: "swatch", title: c, style: `background:${c}`, onclick: () => set(part, key, c) });
       row.append(b); return [c, b];
