@@ -231,9 +231,9 @@ const browPath = v => `M55 78 Q100 ${50 + idiv(2 * v, 5)} 145 78`;
 // box's height.
 const NOSES = {
   // tilted so the bottom, where the nostril would be, sits near the middle
-  L:     "M-0.2 0 L-0.06 1 L0.2 1",
+  L:     "M0.16 0 L-0.1 1 L0.16 1",
   angle: "M0 0 L0.55 0.72 L0.08 1",
-  soft:  "M-0.2 0 Q-0.1 1 0.06 1 Q0.3 1 0.32 0.8",
+  soft:  "M0.22 0 Q-0.12 0.9 0.02 1 Q0.24 1.04 0.26 0.82",
   hook:  "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",     // "bulbous"
 };
 // from the front: one side of the bridge flaring into a nostril that curls
@@ -250,26 +250,38 @@ const lipTop = c => Math.min(150, 75 + c / 2) - 2.5;   // (less half the lip's l
 function mouthTopAsDrawn(F) {
   return lipTop(F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0]);
 }
-// An open mouth grows DOWNWARD: its upper lip stays where the closed
-// mouth's was, the mouth moves down by however far the opening would have
-// raised it, and the head's lower half stretches by as much. Smiling and
-// frowning only bend the mouth.
-function mouthDrop(F) {
-  if (F.open === 0) return 0;
-  return Math.max(0, Math.round(lipTop(110 + idiv(4 * F.smile, 5)) - mouthTopAsDrawn(F)));
+// WHERE THE FEATURES GO, for the head's width and height: a bigger head
+// spreads the eyes, brows, nose and mouth apart (by 60% of its stretch) and
+// grows the mouth, which has no size control of its own. Then the mouth
+// moves down for two things: a tall nose (measured from a flat mouth's
+// line, so smiling and frowning never move it), and opening, which grows
+// the mouth downward from where its closed top was. The head's lower half
+// stretches by however far the mouth moved (`stretch`).
+function faceLayout(F) {
+  const kx = 1 + 0.6 * (F.faceW / 100 - 1), ky = 1 + 0.6 * (F.faceH / 100 - 1);
+  const eyeY = HEAD_C + (100 - HEAD_C) * ky, eyeDX = 32 * kx;
+  const noseTop = eyeY + 6;
+  const nose = F.noseView && F.noseView !== "none";
+  const uh = 30 * F.noseH / 100, uw = 30 * F.noseW / 100;
+  const mouthY0 = HEAD_C + (150 - HEAD_C) * ky;
+  const flatTop = mouthY0 - 14.5 * ky;
+  const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 5 - flatTop) : 0;
+  const openDrop = F.open === 0 ? 0
+    : Math.max(0, lipTop(110 + idiv(4 * F.smile, 5)) - mouthTopAsDrawn(F)) * ky;
+  const stretch = Math.round(noseDrop + openDrop);
+  return { kx, ky, eyeY, eyeDX, noseTop, uh, uw, mouthY: mouthY0 + stretch, stretch };
 }
-const mouthTop = F => mouthTopAsDrawn(F) + mouthDrop(F);
+const mouthDrop = F => faceLayout(F).stretch;
 function noseSvg(F) {
   const view = F.noseView;
   if (!view || view === "none") return "";
   const front = view === "front";
   const shape = front ? FRONT_NOSES[F.noseFront] || FRONT_NOSES.round : NOSES[F.nose] || NOSES.L;
-  // as tall as asked, but ending above the mouth
-  const fit = (mouthTop(F) - 5 - 106) / 1.1;
-  const uh = Math.max(6, Math.min(30 * F.noseH / 100, fit)), uw = 30 * F.noseW / 100;
+  // as tall as asked: the mouth makes room (faceLayout)
+  const { noseTop, uh, uw } = faceLayout(F);
   const sw = f1(3 + (F.noseH + F.noseW) / 200);
   const at = (sx, d) => `<path d="${d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
-      f1(100 + sx * uw * Number(x)) + " " + f1(106 + uh * Number(y)))}" ` +
+      f1(100 + sx * uw * Number(x)) + " " + f1(noseTop + uh * Number(y)))}" ` +
     `fill="none" stroke="black" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
   if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
   return at(view === "left" ? -1 : 1, shape);
@@ -554,6 +566,7 @@ function faceSvg(F, ground) {
   const shown = k * b >= 2500 ? 40 : idiv(k * b * 40, 2500);
   const lift = idiv(b * 7, 10), tilt = idiv(b, 4);
   const [upper, lower] = lips(F.smile, o);
+  const LY = faceLayout(F);
   // The head, and when it explodes, split along a crack into a lid and
   // the rest: the same outline twice, clipped above and below the crack.
   const pts = headPoints(F);
@@ -579,16 +592,21 @@ function faceSvg(F, ground) {
     (C ? `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hoodFront(C, kind)}</g></g>` : "") +
     pieces(shown, b, crackY) +
     (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
-    eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
-    eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F, -F.tilt) +
+    `<g transform="translate(0 ${f1(LY.eyeY - 100)})">` +
+      eye(100 - LY.eyeDX, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
+      eye(100 + LY.eyeDX, F.eyes, F.stars, F.hearts, F.xeyes, F, -F.tilt) + `</g>` +
     noseSvg(F) +
-    `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
-      `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round" transform="translate(0 ${f1(-browLift(F))})"/>` +
-    `<g transform="translate(0 ${mouthDrop(F)})">` +
+    // the brows spread with the eyes (their path's points, so the line
+    // keeps its width)
+    `<path d="${(F.unibrow ? browPath(F.brow) : browPair(F.brow)).replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
+        f1(100 + (Number(x) - 100) * LY.kx) + " " + f1(Number(y) + LY.eyeY - 100 - browLift(F)))}" ` +
+      `stroke="black" fill="none" stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
+    // the mouth, at its place and grown with the head
+    `<g transform="translate(100 ${f1(LY.mouthY)}) scale(${LY.kx.toFixed(3)} ${LY.ky.toFixed(3)}) translate(-100 -150)">` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
       `stroke-width="5" stroke-linejoin="round"/>` +
     teeth(F.teeth, upper, lower) +
-    sickPile(F.sick, 150 + idiv(lower - 150, 2), ground - mouthDrop(F)) + `</g>`;
+    sickPile(F.sick, 150 + idiv(lower - 150, 2), 150 + (ground - LY.mouthY) / LY.ky) + `</g>`;
 }
 
 // ===================== COSTUMES =====================
@@ -1699,7 +1717,7 @@ pic.addEventListener("touchmove", e => {
 pic.addEventListener("pointerdown", e => {
   if (!e.isPrimary || !onFace(e)) return;
   const [x, y] = faceUnits(e);
-  const feature = y < 88 - browLift(state.face) ? "brow" : "smile";
+  const feature = y < faceLayout(state.face).eyeY - 12 - browLift(state.face) ? "brow" : "smile";
   drag = { feature, v0: state.face[feature], y0: e.clientY };
   pic.setPointerCapture(e.pointerId);
 });
