@@ -259,9 +259,9 @@ function mouthTopAsDrawn(F) {
 // WHERE THE FEATURES GO, for the head's width and height: a bigger head
 // spreads the eyes, brows, nose and mouth apart (by 60% of its stretch) and
 // grows the mouth, which has no size control of its own. Then the mouth
-// moves down for two things: a tall nose (measured from a flat mouth's
-// line, so smiling and frowning never move it), and opening, which grows
-// the mouth downward from where its closed top was. The head's lower half
+// moves down for two things: opening, which grows the mouth downward from
+// where its closed top was, and the nose, which the mouth's top as drawn
+// must clear (a short nose never moves it). The head's lower half
 // stretches by however far the mouth moved (`stretch`).
 function faceLayout(F) {
   const kx = 1 + 0.6 * (F.faceW / 100 - 1), ky = 1 + 0.6 * (F.faceH / 100 - 1);
@@ -270,11 +270,13 @@ function faceLayout(F) {
   const nose = F.noseView && F.noseView !== "none";
   const uh = 30 * F.noseH / 100, uw = 30 * F.noseW / 100;
   const mouthY0 = HEAD_C + (150 - HEAD_C) * ky;
-  const flatTop = mouthY0 - 14.5 * ky;
-  const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 5 - flatTop) : 0;
   // a frown's top rises as it opens: keep it where the closed mouth's was
   const riseDrop = F.open === 0 ? 0
     : Math.max(0, lipTop(110 + idiv(4 * F.smile, 5)) - mouthTopAsDrawn(F)) * ky;
+  // then clear the nose, measured to the mouth's top as drawn (a frown's
+  // arch, an open mouth's upper lip), not to a flat mouth's line
+  const top = mouthY0 + riseDrop + (mouthTopAsDrawn(F) - 150) * ky;
+  const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 6 - top) : 0;
   const mouthY = mouthY0 + noseDrop + riseDrop;
   // and the chin makes room below a deep mouth
   const bottom = mouthY + (75 + lips(F.smile, F.open)[1] / 2 + 2.5 - 150) * ky;
