@@ -103,7 +103,7 @@ const DEFAULTS = {
            rays: 0, teeth: 0, open: 0,
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
-           faceW: 100, faceH: 100, alien: 0 },
+           faceW: 100, faceH: 100, alien: 0, nose: "none", noseDir: "right", noseSize: 100 },
   hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -198,6 +198,36 @@ function openMouth(v, o) {
   return `M60 150 Q100 ${lower} 140 150 Q100 ${upper} 60 150 Z`;
 }
 const browPath = v => `M55 78 Q100 ${50 + idiv(2 * v, 5)} 145 78`;
+
+// THE NOSE: lines between the eyes and the mouth, from the bridge's top
+// at (100, 106) down about 30 face units at size 100. In profile, an L
+// or a < in one of a few curves, pointing right (the letter L) or left (a
+// backwards L); centered, both sides of the nose and the two nostrils.
+// Each path is in nose units: x across (+ = the way it points), y down,
+// 1 = the nose's height.
+const NOSES = {
+  // profile; centered: one side of the bridge, flaring into a nostril
+  // that curls back up (drawn twice, mirrored, with a gap at the tip)
+  L:     { side: "M0 0 L0 1 L0.5 1",
+           half: "M0.12 0.05 L0.16 0.72 Q0.34 0.86 0.24 1 Q0.14 1.06 0.06 0.94" },
+  angle: { side: "M0 0 L0.55 0.72 L0.08 1",
+           half: "M0.06 0.05 L0.26 0.72 Q0.42 0.88 0.28 1 Q0.16 1.06 0.07 0.94" },
+  soft:  { side: "M0 0 Q0 1 0.2 1 Q0.48 1 0.5 0.8",
+           half: "M0.1 0.05 Q0.12 0.55 0.24 0.74 Q0.4 0.9 0.26 1.01 Q0.15 1.07 0.07 0.95" },
+  hook:  { side: "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",
+           half: "M0.1 0.05 Q0.34 0.45 0.3 0.74 Q0.48 0.92 0.3 1.03 Q0.16 1.08 0.07 0.95" },
+};
+function noseSvg(F) {
+  const N = NOSES[F.nose];
+  if (!N) return "";
+  const u = 30 * F.noseSize / 100, sw = f1(3 + F.noseSize / 100);
+  const at = (sx, d) => `<path d="${d}" transform="translate(100 106) scale(${f1(sx * u)} ${f1(u)})" ` +
+    `fill="none" stroke="black" stroke-width="${f1(sw / u)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (F.noseDir === "center")
+    // both halves, mirror images
+    return at(1, N.half) + at(-1, N.half);
+  return at(F.noseDir === "left" ? -1 : 1, N.side);
+}
 function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
   return `M48 80 Q68 ${top} 88 ${inner} M152 80 Q132 ${top} 112 ${inner}`;
@@ -482,6 +512,7 @@ function faceSvg(F, ground) {
     (b > 0 ? `<path d="${crack}" fill="none" stroke="black" stroke-width="2"/>` : "") +
     eye(68, F.eyes, F.stars, F.hearts, F.xeyes, F, F.tilt) +
     eye(132, F.eyes, F.stars, F.hearts, F.xeyes, F, -F.tilt) +
+    noseSvg(F) +
     `<path d="${F.unibrow ? browPath(F.brow) : browPair(F.brow)}" stroke="black" fill="none" ` +
       `stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round" transform="translate(0 ${f1(-browLift(F))})"/>` +
     `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
@@ -641,6 +672,49 @@ const SHOES = {
   boot:    [[-12,-34],[12,-34],[13,8],[38,12],[42,26],[-13,26]],
   clown:   [[-10,0],[10,0],[14,8],[62,4],[74,16],[64,30],[-14,30],[-18,14]],
 };
+// BARE FEET WITH TOES, as the hands have fingers: in the foot's frame
+// (x outward from the ankle, y down, in shoe units), a sole and toes,
+// each toe a rounded stroke from (x1, y1) to (x2, y2), `w` its half-width,
+// an optional round pad `tip`, and for talons a hooked claw at the end.
+// Outline layer first, then fill, so toes and sole merge into one shape.
+const TOED = {
+  // a foot from the side, five toes along its front, the big toe first
+  toes5: { sole: [14, 16, 20, 10], toes: [
+    [28, 9, 42, 6.5, 3.2], [29, 13, 43, 12.5, 2.8], [29, 16.5, 41.5, 18, 2.5],
+    [28, 20, 39, 23, 2.3], [26, 23, 35, 27, 2.1]] },
+  // a small sole and four long, thin toes fanned forward, round pads
+  alien4: { sole: [6, 14, 14, 10], tip: 4.2, toes: [
+    [8, 12, 40, -2, 2.4], [8, 13, 46, 10, 2.4], [8, 14, 44, 21, 2.4], [8, 15, 36, 27, 2.4]] },
+  // three very long toes with big round pads, like a tree frog's
+  alien3: { sole: [6, 14, 14, 10], tip: 6, toes: [
+    [8, 12, 46, 0, 2.6], [8, 14, 54, 14, 2.6], [8, 16, 44, 24, 2.6]] },
+  // a bird's (or a raptor's) foot: three toes forward, one back, talons
+  talons: { sole: [4, 16, 10, 8], talon: true, toes: [
+    [6, 15, 34, 6, 3.6], [6, 17, 40, 18, 3.6], [6, 19, 32, 26, 3.4], [2, 18, -14, 24, 3.2]] },
+};
+// How far each kind of foot reaches out from the ankle, in shoe units,
+// so the picture's frame can hold big feet (and big shoes).
+const FOOT_REACH = { sneaker: 46, boot: 44, clown: 76, bare: 36, paw: 40,
+                     toes5: 44, alien4: 52, alien3: 62, talons: 56 };
+function toedFoot(x, y, side, sc, skin, style) {
+  const T = TOED[style], st = darker(skin), lw = 2.5 / sc;
+  const [sx, sy, srx, sry] = T.sole;
+  const layer = (fill, grow) =>
+    `<ellipse cx="${sx}" cy="${sy}" rx="${f1(srx + grow)}" ry="${f1(sry + grow)}" fill="${fill}"/>` +
+    T.toes.map(([x1, y1, x2, y2, w]) =>
+      `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${fill}" stroke-width="${f1(2 * (w + grow))}" stroke-linecap="round"/>` +
+      (T.tip ? `<circle cx="${x2}" cy="${y2}" r="${f1(T.tip + grow)}" fill="${fill}"/>` : "")).join("");
+  // a talon: a curved point leaving the toe's end, hooking downward
+  const talon = ([x1, y1, x2, y2, w]) => {
+    const L = Math.hypot(x2 - x1, y2 - y1), dx = (x2 - x1) / L, dy = (y2 - y1) / L, nx = -dy, ny = dx;
+    const P = (a, c) => `${f1(x2 + dx * a + nx * c)} ${f1(y2 + dy * a + ny * c)}`;
+    const k = Math.sign(dx) || 1;                        // hook toward the ground
+    return `<path d="M${P(0, -w)} Q${P(9, -w)} ${P(13, k * 6)} Q${P(5, w * 0.8)} ${P(0, w)} Z" ` +
+           `fill="#f4ecd6" stroke="#5c4a2e" stroke-width="${f1(1.8 / sc)}" stroke-linejoin="round"/>`;
+  };
+  return `<g transform="translate(${f1(x)} ${f1(y)}) scale(${(side * sc).toFixed(3)} ${sc.toFixed(3)})">` +
+    (T.talon ? T.toes.map(talon).join("") : "") + layer(st, lw) + layer(skin, 0) + `</g>`;
+}
 function shoeSvg(x, y, side, sh, skin) {
   const sc = sh.size / 100;
   if (sh.style === "paw") {
@@ -653,6 +727,7 @@ function shoeSvg(x, y, side, sh, skin) {
   if (sh.style === "bare")
     return `<ellipse cx="${f1(x + side * 12 * sc)}" cy="${f1(y + 8 * sc)}" rx="${f1(22 * sc)}" ry="${f1(10 * sc)}" ` +
            `fill="${skin}" stroke="${darker(skin)}" stroke-width="2.5"/>`;
+  if (TOED[sh.style]) return toedFoot(x, y, side, sc, skin, sh.style);
   const ps = SHOES[sh.style].map(([dx, dy]) => [x + side * dx * sc, y + dy * sc]);
   let s = poly(ps, sh.color, darker(sh.color));
   if (sh.style === "sneaker")
@@ -795,7 +870,7 @@ function draw() {
   const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach));
   const hairHalf = hr.half * (F.faceW / 100) * (1 + 0.12 * F.alien / 100) * s;
   const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
-                        -(fx + half + 70), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20));
+                        -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20));
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}${C ? furDefs(C) : ""}</defs>`;
@@ -876,6 +951,9 @@ const TABS = [
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
+    ["choice", "nose", "👃 nose", [["none", "none"], ["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "hook"]]],
+    ["choice", "noseDir", "nose points", [["right", "L →"], ["left", "← backwards L"], ["center", "centered"]]],
+    ["range", "noseSize", "nose size", 20, 300, 70, 150],
     ["range", "open", "mouth open", 0, 300, 0, 100],
     ["range", "teeth", "teeth", 0, 15, 0, 5],
     ["range", "sides", "side lines", 0, 300, 0, 100],
@@ -939,7 +1017,8 @@ const TABS = [
     ["color", "patternColor", "pattern color", PATTERN_COLORS],
   ]],
   ["👟 Feet", "shoes", [
-    ["choice", "style", "style", [["sneaker", "sneakers"], ["boot", "boots"], ["clown", "clown shoes"], ["bare", "bare feet"]]],
+    ["choice", "style", "style", [["sneaker", "sneakers"], ["boot", "boots"], ["clown", "clown shoes"], ["bare", "bare feet"],
+                                  ["toes5", "🦶 5 toes"], ["alien4", "👽 4 toes"], ["alien3", "👽 3 toes"], ["talons", "🦅 talons"]]],
     ["color", "color", "color", BRIGHT],
     ["range", "size", "size", 20, 310, 60, 170],
   ]],
@@ -978,6 +1057,8 @@ function el(tag, attrs = {}, kids = []) {
 // Iris color and eye whites only mean something once there is an iris.
 const SHOWN_WHEN = {
   "face.irisColor": f => f.iris > 0,
+  "face.noseDir": f => f.nose !== "none",
+  "face.noseSize": f => f.nose !== "none",
   "face.whites": f => f.iris > 0,
   "costume.fur": c => c.kind !== "none",
   "costume.furPattern": c => !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
