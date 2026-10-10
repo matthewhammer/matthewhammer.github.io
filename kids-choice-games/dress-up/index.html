@@ -111,7 +111,7 @@ const DEFAULTS = {
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
-  hands: { style: "round", size: 14, color: "skin", fingers: 5, clawLen: 100 },
+  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100 },
   pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto", skirtLen: 50 },
   undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
             patternColor: "auto" },
@@ -120,10 +120,15 @@ const DEFAULTS = {
              accent: "#e89aa0", furPattern: "stripes" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
+// before the alien finger slider there were two alien styles
+function upgradeHands(h) {
+  if (h.style === "alien4" || h.style === "alien3") { h.alienFingers = h.style === "alien4" ? 4 : 3; h.style = "alien"; }
+}
 let state = clone(DEFAULTS);
 try {
   const saved = JSON.parse(localStorage.getItem("dress-up-v1") || "null");
   if (saved) for (const k of Object.keys(DEFAULTS)) state[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
+  upgradeHands(state.hands);
   // pants length moved to the legs (leg length)
   if (saved && saved.pants && saved.pants.length && !(saved.body && saved.body.legLen))
     state.body.legLen = saved.pants.length;
@@ -713,6 +718,12 @@ function falconTail(C, hw, L, LL, fill = "url(#pat-bars)") {
 // and pants): the torso is skin from the collar (y = -20) to the waist
 // (L), the hips skin down to the legs. Simple shapes, nothing more.
 
+// A bikini's (and a one-piece's) bottom edge, as path commands from the
+// right hip to the left: a T, the band's full width across the hips, then
+// curved leg holes sweeping in to a narrow strip between the legs.
+const tLegHoles = (hw, L) =>
+  ` L${f1(hw)} ${f1(L + 9)} Q${f1(hw * 0.3)} ${f1(L + 12)} 9 ${f1(L + 34)}` +
+  ` L-9 ${f1(L + 34)} Q${f1(-hw * 0.3)} ${f1(L + 12)} ${f1(-hw)} ${f1(L + 9)}`;
 function undiesBottom(U, hw, fx, half, L, LL) {
   const f = fillOf("pat-undies", U.color, U.pattern), st = darker(U.color);
   const P = ps => poly(ps, f, st);
@@ -729,7 +740,8 @@ function undiesBottom(U, hw, fx, half, L, LL) {
     case "bikini":
     case "onepiece":           // (a one-piece's bottom is drawn with its top)
       return U.style === "bikini"
-        ? P([[-hw * 0.95, L], [hw * 0.95, L], [fx + 2, L + 18], [3, L + 31], [-3, L + 31], [-(fx + 2), L + 18]])
+        ? `<path d="M${f1(-hw)} ${f1(L - 2)} L${f1(hw)} ${f1(L - 2)}${tLegHoles(hw, L)} Z" fill="${f}" ` +
+          `stroke="${st}" stroke-width="2.5" stroke-linejoin="round"/>`
         : "";
   }
   return "";
@@ -741,9 +753,8 @@ function undiesTop(U, w, nw, hw, fx, L) {
                         line(side * w * 0.5, 16, side * (nw + 7), -18, 2, U.color);
   if (U.style === "onepiece") {
     // from a scooped neckline down over the hips, with straps
-    const d = `M${f1(-w - 2)} 12 Q0 26 ${f1(w + 2)} 12 L${f1(w + 2)} ${f1(L)} L${f1(hw * 0.95)} ${f1(L)} ` +
-              `L${f1(fx + 2)} ${f1(L + 18)} L3 ${f1(L + 31)} L-3 ${f1(L + 31)} L${f1(-(fx + 2))} ${f1(L + 18)} ` +
-              `L${f1(-hw * 0.95)} ${f1(L)} L${f1(-w - 2)} ${f1(L)} Z`;
+    const d = `M${f1(-w - 2)} 12 Q0 26 ${f1(w + 2)} 12 L${f1(w + 2)} ${f1(L)} L${f1(hw)} ${f1(L)}` +
+              tLegHoles(hw, L) + ` L${f1(-w - 2)} ${f1(L)} Z`;
     return strap(-1) + strap(1) + `<path d="${d}" fill="${f}" stroke="${st}" stroke-width="2.5" stroke-linejoin="round"/>`;
   }
   if (!U.top) return "";
@@ -877,7 +888,7 @@ const suitHands = (C, kind) => ({ style: "paw", size: Math.max(state.hands.size,
 // How far a hand reaches from where it joins the arm, in any direction,
 // in units of its size (fingers and claws stick out; a round hand doesn't).
 const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, claw: 2.4,
-                     human: 2.3, alien4: 2.7, alien3: 3.2 };
+                     human: 2.3, alien: 3.2, alien4: 2.7, alien3: 3.2 };
 const handReach = h => {
   const k = (h.clawLen ?? 100) / 100;
   const per = h.style === "claw" ? 1.3 + 1.4 * k
@@ -885,6 +896,21 @@ const handReach = h => {
             : HAND_REACH[h.style] ?? 2;
   return per * h.size + 4;
 };
+// An alien hand with n long, thin fingers, each with a round pad at its
+// tip, fanned out: 3 is the tree-frog hand (big pads), more spread wider
+// with smaller pads, 99 is nearly a full circle of them.
+function alienFingers(n) {
+  n = Math.max(1, Math.min(99, Math.round(n)));
+  const span = n <= 1 ? 0 : Math.min(330, 90 + (n - 3) * 14);
+  const step = n > 1 ? span / (n - 1) : 90, half = Math.sin(step * Math.PI / 360);
+  const w = Math.max(0.018, Math.min(0.2, 0.55 * half)), tip = Math.max(0.03, Math.min(0.36, 0.95 * half));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = n > 1 ? -span / 2 + i * step : 0, t = span ? Math.abs(a) / (span / 2) : 0;
+    out.push({ a, len: 2.15 - 0.3 * t, w, tip });
+  }
+  return out;
+}
 // A human hand with n fingers, thumb included: the n - 1 fingers fan out
 // wider as there are more of them (and thinner, so each still shows),
 // the middle ones longest, and the thumb just past the first. At 100, a
@@ -941,16 +967,11 @@ function handSvg(x, y, angle, side, h, skin) {
       return g(fingered(r, c, st, [
         { a: -36, len: 1.15, w: 0.25 }, { a: -12, len: 1.35, w: 0.26 }, { a: 12, len: 1.25, w: 0.25 },
         { a: 35, len: 1.0, w: 0.23 }, { a: -95, len: 0.85, w: 0.28, base: 0.5 }]));
-    case "alien4":
-      // four long, thin fingers spread wide, each with a round pad at its tip
-      return g(fingered(r, c, st, [
-        { a: -60, len: 1.5, w: 0.18, tip: 0.26 }, { a: -20, len: 1.75, w: 0.18, tip: 0.26 },
-        { a: 20, len: 1.65, w: 0.18, tip: 0.26 }, { a: 62, len: 1.35, w: 0.18, tip: 0.26 }], 0.6));
-    case "alien3":
-      // three very long fingers with big round tips, like a tree frog's
-      return g(fingered(r, c, st, [
-        { a: -45, len: 1.9, w: 0.2, tip: 0.36 }, { a: 0, len: 2.15, w: 0.2, tip: 0.36 },
-        { a: 45, len: 1.9, w: 0.2, tip: 0.36 }], 0.55));
+    case "alien":
+      return g(fingered(r, c, st, alienFingers(h.alienFingers ?? 3), 0.55));
+    // the 4- and 3-finger styles before the slider, so saved friends still draw
+    case "alien4": return g(fingered(r, c, st, alienFingers(4), 0.6));
+    case "alien3": return g(fingered(r, c, st, alienFingers(3), 0.55));
   }
   return "";
 }
@@ -1175,9 +1196,10 @@ const TABS = [
   ]],
   ["🖐 Hands", "hands", [
     ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"],
-                                  ["human", "✋ 5 fingers"], ["alien4", "👽 4 fingers"], ["alien3", "👽 3 fingers"]]],
+                                  ["human", "✋ human"], ["alien", "👽 alien"]]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
     ["range", "fingers", "✋ number of fingers", 5, 100, 5, 7],
+    ["range", "alienFingers", "👽 number of alien fingers", 1, 99, 2, 6],
     ["range", "clawLen", "🐾 claw length", 20, 300, 70, 140],
     ["range", "size", "size", 2, 80, 6, 28],
   ]],
@@ -1260,6 +1282,7 @@ const SHOWN_WHEN = {
   "hair.length": h => ["long", "curly", "pigtails", "spiky", "afro"].includes(h.style),
   "pants.skirtLen": p => p.style === "skirt" || p.style === "dress",
   "hands.fingers": h => h.style === "human",
+  "hands.alienFingers": h => h.style === "alien",
   // claws: the claw hand's, or a cat costume's paws
   "hands.clawLen": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
   "undies.style": u => u.on,
@@ -1468,6 +1491,7 @@ document.getElementById("load-file").addEventListener("change", async e => {
     if (!saved || typeof saved !== "object") throw new Error("no settings in this file");
     const next = clone(DEFAULTS);
     for (const k of Object.keys(DEFAULTS)) next[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
+    upgradeHands(next.hands);
     state = next;
     changed();
   } catch (err) {
