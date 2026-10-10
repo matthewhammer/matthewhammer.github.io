@@ -60,6 +60,9 @@
     .actions button { padding: 4px 8px; font-size: 0.85em; white-space: nowrap; }
     .caption { margin-top: 2px; font-size: 1em; }
   }
+  .formats { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: center;
+             margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .formats label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -70,8 +73,16 @@
     <div class="caption" id="mood"></div>
     <div class="actions">
       <button class="big" id="surprise">🎲 Surprise me!</button>
-      <button id="save">💾 Save picture</button>
+      <button id="save" title="Saves the files checked below: a picture (.png), a drawing that prints at any size (.svg), and your friend's settings (.json) to load again later">💾 Save</button>
+      <button id="load" title="Load a friend you saved (.json)">📂 Load</button>
+      <input type="file" id="load-file" accept=".json,application/json" hidden>
       <button id="reset">↺ Start over</button>
+    </div>
+    <div class="formats" id="formats">
+      <span>save as:</span>
+      <label><input type="checkbox" value="png" checked> picture (.png)</label>
+      <label><input type="checkbox" value="svg" checked> drawing (.svg)</label>
+      <label><input type="checkbox" value="json" checked> settings (.json)</label>
     </div>
     <p class="hint" style="text-align:center">Drag the mouth or the eyebrows on the face, too!</p>
   </div>
@@ -93,7 +104,7 @@ const DEFAULTS = {
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
            faceW: 100, faceH: 100, alien: 0 },
-  hair:  { style: "long", color: "#2b2b2b" },
+  hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
@@ -333,29 +344,78 @@ const HAIRDOS = {
   long:  { crown: [160, 84], pts: [[116,194],[114,104],[126,76],[146,67],[160,66],[174,67],[194,76],[206,104],[204,194],[184,188],[188,124],[160,84],[132,124],[136,188]] },
   curly: { crown: [265, 84], pts: [[221,120],[215,104],[221,90],[217,78],[229,70],[235,60],[249,62],[257,54],[265,60],[273,54],[281,62],[295,60],[301,70],[313,78],[309,90],[315,104],[309,120]] },
 };
+// Hair length, as a fraction of each style's usual length (1 = as drawn).
+const hairLen = h => (h.length ?? 100) / 100;
+// Curly hair hanging down from a side, at x, from y = 120 (the cap's
+// edge, in the dos' units) to y = 120 + drop: a column of curls, as a
+// wavy outer edge going down and a wavy inner edge coming back up.
+function curlColumn(xOut, xIn, drop) {
+  const n = Math.max(1, Math.round(drop / 12)), step = drop / n, out = [], back = [];
+  for (let i = 1; i <= n; i++) {
+    const y = 120 + i * step, bump = i % 2 ? 6 : -2;
+    out.push([xOut - Math.sign(xIn - xOut) * bump, y - step / 2], [xOut, y]);
+    back.unshift([xIn, y - step / 2], [xIn + Math.sign(xIn - xOut) * (i % 2 ? 2 : -3), y]);
+  }
+  const tipY = 120 + drop;
+  return { down: out.concat([[(xOut + xIn) / 2, tipY + 6]]), up: back };
+}
 function hairSvg(h) {
-  const k = 80 / 36, stroke = darker(h.color);
-  const fromDo = d => d.pts.map(([x, y]) => [100 + (x - d.crown[0]) * k, 30.6 + (y - d.crown[1]) * k]);
+  const k = 80 / 36, stroke = darker(h.color), L = hairLen(h);
+  const fromPts = (d, pts) => pts.map(([x, y]) => [100 + (x - d.crown[0]) * k, 30.6 + (y - d.crown[1]) * k]);
+  const fromDo = d => fromPts(d, d.pts);
   switch (h.style) {
-    case "short": case "long": case "curly":
-      return poly(fromDo(HAIRDOS[h.style]), h.color, stroke, 4);
+    case "short":
+      return poly(fromDo(HAIRDOS.short), h.color, stroke, 4);
+    case "long": {
+      // what hangs below the ears grows (or shrinks) with the length
+      const d = HAIRDOS.long, ear = 124;
+      return poly(fromPts(d, d.pts.map(([x, y]) => [x, y > ear ? ear + (y - ear) * L : y])), h.color, stroke, 4);
+    }
+    case "curly": {
+      // a cap of curls; longer, and curls hang down at the sides
+      const d = HAIRDOS.curly, drop = Math.max(0, (L - 1) * 70);
+      if (drop < 4) return poly(fromDo(d), h.color, stroke, 4);
+      const left = curlColumn(215, 235, drop), right = curlColumn(315, 295, drop);
+      // left column: down its inner edge, across the tip, up its outer edge
+      const leftPts = [[235, 120], ...left.up.slice().reverse(), ...left.down.slice().reverse(), [215, 120]];
+      const rightPts = [[315, 120], ...right.down, ...right.up, [295, 120]];
+      return poly(fromPts(d, [...leftPts, ...d.pts, ...rightPts]), h.color, stroke, 4);
+    }
     case "spiky": {
       const ps = [];
       for (let i = 0; i <= 14; i++) {
-        const a = Math.PI * (1.05 + i * 0.9 / 14), r = i % 2 ? 128 : 84;
+        const a = Math.PI * (1.05 + i * 0.9 / 14), r = i % 2 ? 84 + 44 * L : 84;
         ps.push([100 + r * Math.cos(a), 110.6 + r * Math.sin(a)]);
       }
       ps.push([100, 120]);
       return poly(ps, h.color, stroke, 4);
     }
-    case "afro":
-      return `<circle cx="100" cy="46" r="104" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
-    case "pigtails":
-      return `<circle cx="-8" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
-             `<circle cx="208" cy="70" r="34" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>` +
-             poly(fromDo(HAIRDOS.short), h.color, stroke, 4);
+    case "afro": {
+      // bigger all round, its bottom edge staying behind the face
+      const r = 104 * L;
+      return `<circle cx="100" cy="${f1(150 - r)}" r="${f1(r)}" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
+    }
+    case "pigtails": {
+      // the tails hang from where they're tied, longer and longer
+      const ry = 34 * Math.max(0.5, L), rx = 34 * Math.min(1, 0.6 + 0.4 / Math.max(L, 0.5));
+      const tail = cx => `<ellipse cx="${cx}" cy="${f1(36 + ry)}" rx="${f1(rx)}" ry="${f1(ry)}" fill="${h.color}" stroke="${stroke}" stroke-width="4"/>`;
+      return tail(-8) + tail(208) + poly(fromDo(HAIRDOS.short), h.color, stroke, 4);
+    }
   }
   return "";
+}
+// How far hair reaches, in face units (before the head's stretch): its
+// top, its bottom and its half-width about x = 100, to size the picture.
+function hairReach(h) {
+  const L = hairLen(h), k = 80 / 36;
+  switch (h.style) {
+    case "long": return { top: 0, bottom: 30.6 + (124 - 84 + 70 * L) * k, half: 100 };
+    case "curly": return { top: -40, bottom: 30.6 + (120 - 84 + Math.max(0, (L - 1) * 70) + 6) * k, half: 115 };
+    case "spiky": return { top: 110.6 - 84 - 44 * L, bottom: 120, half: 84 + 44 * L };
+    case "afro": return { top: 150 - 2 * 104 * L, bottom: 150, half: 104 * L };
+    case "pigtails": return { top: 0, bottom: 36 + 2 * 34 * Math.max(0.5, L), half: 150 };
+    default: return { top: 0, bottom: 120, half: 100 };
+  }
 }
 
 // The head's outline, around its center (100, 110.6): a circle of radius
@@ -601,6 +661,31 @@ function shoeSvg(x, y, side, sh, skin) {
     s += `<circle cx="${f1(x + side * 40 * sc)}" cy="${f1(y + 4 * sc)}" r="${f1(6 * sc)}" fill="#ffffff" stroke="${darker(sh.color)}" stroke-width="2"/>`;
   return s;
 }
+// A hand with fingers, in the hand's frame (the arm points along +x): a
+// palm and, for each finger, a rounded stroke fanned out at angle `a`
+// (degrees, 0 = straight on), `len` and `w` in units of the hand size, and
+// an optional round pad of radius `tip` at its end. The whole outline is
+// drawn first, then the fill over it, so fingers and palm merge into one
+// shape with one outline.
+function fingered(r, c, st, fingers, palm = 0.75) {
+  const lw = 2.5, P = r * palm;
+  const parts = fingers.map(({ a, len, w, tip = 0, base = 0.6 }) => {
+    const t = a * Math.PI / 180, dx = Math.cos(t), dy = Math.sin(t);
+    const b = r * base, e = b + r * len;
+    return { x1: dx * b, y1: dy * b, x2: dx * e, y2: dy * e, w: r * w, tip: r * tip };
+  });
+  const layer = (fill, grow) =>
+    `<ellipse rx="${f1(P * 1.05 + grow)}" ry="${f1(P + grow)}" fill="${fill}"/>` +
+    parts.map(p => `<line x1="${f1(p.x1)}" y1="${f1(p.y1)}" x2="${f1(p.x2)}" y2="${f1(p.y2)}" ` +
+                   `stroke="${fill}" stroke-width="${f1(p.w * 2 + 2 * grow)}" stroke-linecap="round"/>` +
+                   (p.tip ? `<circle cx="${f1(p.x2)}" cy="${f1(p.y2)}" r="${f1(p.tip + grow)}" fill="${fill}"/>` : "")).join("");
+  return layer(st, lw) + layer(c, 0);
+}
+// How far a hand reaches from where it joins the arm, in any direction,
+// in units of its size (fingers and claws stick out; a round hand doesn't).
+const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, claw: 2.4,
+                     human: 2.3, alien4: 2.7, alien3: 3.2 };
+const handReach = h => (HAND_REACH[h.style] ?? 2) * h.size + 4;
 function handSvg(x, y, angle, side, h, skin) {
   const c = h.color === "skin" ? skin : h.color, st = darker(c), r = h.size;
   const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${inner}</g>`;
@@ -626,12 +711,36 @@ function handSvg(x, y, angle, side, h, skin) {
                [[0.62, -0.6], [0.86, 0], [0.62, 0.6]].map(([px, py]) =>
                  `<circle cx="${r * px}" cy="${r * py}" r="${r * 0.22}" fill="${pad}"/>`).join(""));
     }
-    case "claw":
-      return g(`<circle r="${r * 0.6}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
-               `<path d="M${r * 0.4} ${-r * 0.4} Q${r * 1.8} ${-r * 1.2} ${r * 2} ${-r * 0.1} M${r * 0.4} ${r * 0.4} ` +
-               `Q${r * 1.8} ${r * 1.2} ${r * 2} ${r * 0.1}" fill="none" stroke="${st}" stroke-width="${r * 0.45 + 2}" stroke-linecap="round"/>` +
-               `<path d="M${r * 0.4} ${-r * 0.4} Q${r * 1.8} ${-r * 1.2} ${r * 2} ${-r * 0.1} M${r * 0.4} ${r * 0.4} ` +
-               `Q${r * 1.8} ${r * 1.2} ${r * 2} ${r * 0.1}" fill="none" stroke="${c}" stroke-width="${r * 0.45}" stroke-linecap="round"/>`);
+    case "claw": {
+      // a furry paw with four hooked talons: each a curved, tapering
+      // point, wide where it leaves the paw and sharp at the tip
+      const talon = deg => {
+        const t = deg * Math.PI / 180, dx = Math.cos(t), dy = Math.sin(t);
+        const nx = -dy, ny = dx;                          // across the talon
+        const R = r * 0.7, len = r * 1.4, w = r * 0.25, hook = r * 0.55;
+        const P = (along, across) => `${f1(dx * along + nx * across)} ${f1(dy * along + ny * across)}`;
+        return `<path d="M${P(R * 0.8, -w)} Q${P(R + len * 0.75, -w * 0.9)} ${P(R + len, hook)} ` +
+               `Q${P(R + len * 0.45, w * 0.6)} ${P(R * 0.8, w)} Z" fill="#f4ecd6" stroke="#5c4a2e" stroke-width="2" stroke-linejoin="round"/>`;
+      };
+      return g([-62, -22, 18, 56].map(talon).join("") +
+               `<ellipse cx="${r * 0.1}" rx="${r * 0.85}" ry="${r * 0.8}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
+               `<ellipse cx="${-r * 0.1}" cy="${r * 0.05}" rx="${r * 0.32}" ry="${r * 0.36}" fill="${st}" opacity="0.35"/>`);
+    }
+    case "human":
+      // a palm, four fingers (the middle one longest) and a thumb
+      return g(fingered(r, c, st, [
+        { a: -36, len: 1.15, w: 0.25 }, { a: -12, len: 1.35, w: 0.26 }, { a: 12, len: 1.25, w: 0.25 },
+        { a: 35, len: 1.0, w: 0.23 }, { a: -95, len: 0.85, w: 0.28, base: 0.5 }]));
+    case "alien4":
+      // four long, thin fingers spread wide, each with a round pad at its tip
+      return g(fingered(r, c, st, [
+        { a: -60, len: 1.5, w: 0.18, tip: 0.26 }, { a: -20, len: 1.75, w: 0.18, tip: 0.26 },
+        { a: 20, len: 1.65, w: 0.18, tip: 0.26 }, { a: 62, len: 1.35, w: 0.18, tip: 0.26 }], 0.6));
+    case "alien3":
+      // three very long fingers with big round tips, like a tree frog's
+      return g(fingered(r, c, st, [
+        { a: -45, len: 1.9, w: 0.2, tip: 0.36 }, { a: 0, len: 2.15, w: 0.2, tip: 0.36 },
+        { a: 45, len: 1.9, w: 0.2, tip: 0.36 }], 0.55));
   }
   return "";
 }
@@ -672,14 +781,21 @@ function draw() {
 
   // The picture's frame grows to hold everything.
   const handYs = arms.map(x => x.H[1]);
+  // each hand's own reach past the end of its arm: big mittens and long
+  // fingers stuck out of the frame (and out of the saved picture)
+  const reach = handReach(suit ? { style: "paw", size: Math.max(state.hands.size, 12) } : state.hands) + 12;
   // room for big hair on a tall head, a lid blown far off, and candy
-  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40);
-  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - 40));
+  // and hair, stretched with the head (it hangs and spreads in face units)
+  const hr = C ? { top: 0, bottom: 0, half: 0 } : hairReach(state.hair);
+  const hairY = y => HEAD_C + (y - HEAD_C) * F.faceH / 100;
+  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40, hairY(hr.top) - 20);
+  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)));
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
-  const bottom = ground + 24;
-  const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - 40), ...arms.map(x => -x.H[0] - 40),
-                        -(fx + half + 70), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40));
+  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach));
+  const hairHalf = hr.half * (F.faceW / 100) * (1 + 0.12 * F.alien / 100) * s;
+  const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
+                        -(fx + half + 70), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20));
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}${C ? furDefs(C) : ""}</defs>`;
@@ -787,6 +903,7 @@ const TABS = [
   ["💇 Hair", "hair", [
     ["choice", "style", "style", [["none", "none"], ["short", "short"], ["long", "long"], ["curly", "curly"],
                                   ["spiky", "spiky"], ["afro", "afro"], ["pigtails", "pigtails"]]],
+    ["range", "length", "📏 length", 30, 400, 70, 180],
     ["color", "color", "color", HAIRS],
   ]],
   ["🦒 Neck, arms & legs", "body", [
@@ -809,7 +926,8 @@ const TABS = [
     ["range", "length", "length", 20, 300, 100, 190],
   ]],
   ["🖐 Hands", "hands", [
-    ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"]]],
+    ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"],
+                                  ["human", "✋ 5 fingers"], ["alien4", "👽 4 fingers"], ["alien3", "👽 3 fingers"]]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
     ["range", "size", "size", 2, 80, 6, 28],
   ]],
@@ -867,6 +985,7 @@ const SHOWN_WHEN = {
   "costume.belly": c => c.kind !== "none",
   "costume.eyes": c => c.kind !== "none",
   "costume.accent": c => c.kind !== "none",
+  "hair.length": h => ["long", "curly", "pigtails", "spiky", "afro"].includes(h.style),
   "shirt.patternSize": c => c.pattern !== "plain",
   "shirt.patternColor": c => c.pattern !== "plain",
   "pants.patternSize": c => c.pattern !== "plain",
@@ -987,30 +1106,74 @@ document.getElementById("surprise").addEventListener("click", () => {
   changed();
 });
 document.getElementById("reset").addEventListener("click", () => { state = clone(DEFAULTS); changed(); });
+// SAVE: up to three files with one name, stamped with the local date and time
+// so each save is new: my-friend-2026-10-10-16-29-05.png, .svg and .json.
+// The picture as it is drawn (.png), the drawing itself, which Firefox
+// opens and which prints sharp at any size (.svg), and the settings, which
+// Load brings back (.json).
+function download(blob, name) {
+  const a = el("a", { href: URL.createObjectURL(blob), download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+// which files Save writes: all three to start with; unchecking one is
+// remembered on this device
+const formatBoxes = [...document.querySelectorAll("#formats input")];
+try {
+  const off = JSON.parse(localStorage.getItem("dress-up-save-off") || "[]");
+  for (const b of formatBoxes) b.checked = !off.includes(b.value);
+} catch (_) {}
+for (const b of formatBoxes) b.addEventListener("change", () => {
+  try { localStorage.setItem("dress-up-save-off", JSON.stringify(formatBoxes.filter(x => !x.checked).map(x => x.value))); } catch (_) {}
+});
+const wanted = f => formatBoxes.some(b => b.value === f && b.checked);
 document.getElementById("save").addEventListener("click", () => {
+  if (!formatBoxes.some(b => b.checked)) { alert("Check at least one kind of file to save."); return; }
+  const d = new Date(), two = n => String(n).padStart(2, "0");
+  const name = `my-friend-${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}-` +
+               `${two(d.getHours())}-${two(d.getMinutes())}-${two(d.getSeconds())}`;
   const pic = document.getElementById("pic");
   const vb = pic.viewBox.baseVal, scale = 1000 / vb.height;
+  // a standalone copy at its own size; both the .svg and the .png keep a
+  // transparent background
   const copy = pic.cloneNode(true);
   copy.setAttribute("width", Math.round(vb.width * scale));
   copy.setAttribute("height", 1000);
+  const svgText = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(copy);
   const img = new Image();
   img.onload = () => {
     const c = document.createElement("canvas");
     c.width = Math.round(vb.width * scale); c.height = 1000;
     const g = c.getContext("2d");
-    g.fillStyle = "#fffdf7"; g.fillRect(0, 0, c.width, c.height);
     g.drawImage(img, 0, 0);
     c.toBlob(blob => {
-      // the local date and time in the name, so each save is a new file:
-      // my-friend-2026-10-09-16-29-05.png
-      const d = new Date(), two = n => String(n).padStart(2, "0");
-      const stamp = `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}-` +
-                    `${two(d.getHours())}-${two(d.getMinutes())}-${two(d.getSeconds())}`;
-      const a = el("a", { href: URL.createObjectURL(blob), download: `my-friend-${stamp}.png` });
-      document.body.append(a); a.click(); a.remove();
+      if (wanted("png")) download(blob, name + ".png");
+      if (wanted("svg")) download(new Blob([svgText], { type: "image/svg+xml" }), name + ".svg");
+      if (wanted("json"))
+        download(new Blob([JSON.stringify({ app: "dress-up", version: 1, saved: d.toISOString(), state }, null, 2)],
+                          { type: "application/json" }), name + ".json");
     });
   };
-  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(copy));
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+});
+// LOAD: a saved .json (or a bare state object); anything it lacks keeps
+// its default, so friends saved before a feature existed still load.
+document.getElementById("load").addEventListener("click", () => document.getElementById("load-file").click());
+document.getElementById("load-file").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    const saved = data && data.state ? data.state : data;
+    if (!saved || typeof saved !== "object") throw new Error("no settings in this file");
+    const next = clone(DEFAULTS);
+    for (const k of Object.keys(DEFAULTS)) next[k] = { ...DEFAULTS[k], ...(saved[k] || {}) };
+    state = next;
+    changed();
+  } catch (err) {
+    alert("That file didn't load: " + err.message);
+  }
 });
 
 // ===================== DRAG THE MOUTH AND BROW =====================
