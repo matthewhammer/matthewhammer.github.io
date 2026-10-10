@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dress Up</title>
+<title>Messed Up Dress Up</title>
 <style>
   :root { --ink: #222; --muted: #666; --line: #d6d6d6; --paper: #fffdf7; --bg: #f3f0ff;
           --panel: #ffffff; --accent: #7c3aed; --accent-ink: #fff; }
@@ -68,7 +68,7 @@
 </style>
 </head>
 <body>
-<h1>Dress Up</h1>
+<h1>Messed Up Dress Up</h1>
 <div class="app">
   <div class="stage">
     <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -549,10 +549,16 @@ const ANIMALS = {
   cheetah: { suit: true, fur: "#e8b54a", marks: "#1c1410", belly: "#f8eed8", eyes: "#c88a1e", accent: "#2a1d14", furPattern: "spots" },
   // a whole falcon suit: feathers all over, wings on the arms, talons
   falconsuit: { suit: true, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
+  // and a bald eagle's: dark brown feathers, white head and tail
+  eaglesuit: { suit: true, fur: "#4a3222", marks: "#2a1a10", belly: "#ffffff", eyes: "#f2c230", accent: "#f2b705", furPattern: "none" },
 };
 // cats (pointed ears, a triangle nose) and birds (no suit: wings and a tail)
 const FELINE = { cat: 1, tiger: 1, bobcat: 1, leopard: 1, cheetah: 1 };
-const BIRDS = { falcon: 1, eagle: 1, falconsuit: 1 };
+const BIRDS = { falcon: 1, eagle: 1, falconsuit: 1, eaglesuit: 1 };
+// the bird suits: feathers all over, wings on the arms, talons
+const BIRD_SUIT = { falconsuit: 1, eaglesuit: 1 };
+// the bald eagle's head (hat or suit): white, with its beak
+const eagleHead = kind => kind === "eagle" || kind === "eaglesuit";
 const isBird = kind => !!BIRDS[kind];
 // the falcon's head (hat or suit): its hood, moustache and face
 const falconHead = kind => kind === "falcon" || kind === "falconsuit";
@@ -562,7 +568,7 @@ const costumeOn = () => (ANIMALS[state.costume.kind] ? state.costume : null);
 // Fur: the fur color with little tufts, and stripes, spots or patches in
 // the markings color. Feathers: the feather color with curved bars.
 function furDefs(C, kind) {
-  if (kind === "falconsuit")   // feathers: the color with curved bars, all over
+  if (BIRD_SUIT[kind])   // feathers: the color with curved bars, all over
     return `<pattern id="pat-fur" width="24" height="12" patternUnits="userSpaceOnUse">` +
       `<rect width="24" height="12" fill="${C.fur}"/>` +
       `<path d="M0 9 Q6 6 12 9 Q18 12 24 9" stroke="${C.marks}" stroke-width="2.5" fill="none"/></pattern>` +
@@ -594,7 +600,7 @@ function furDefs(C, kind) {
 const HOOD = `cx="100" cy="108" rx="106" ry="110"`;
 function hoodBack(C, kind) {
   // a bald eagle's head is white
-  const line = darker(C.fur), fill = ANIMALS[kind].suit ? "url(#pat-fur)" : kind === "eagle" ? C.belly : C.fur;
+  const line = darker(C.fur), fill = eagleHead(kind) ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
   let s = "";
   if (kind === "lion") {
     const pts = [];
@@ -631,7 +637,7 @@ function hoodBack(C, kind) {
   return s;
 }
 function hoodFront(C, kind) {
-  const brimFill = falconHead(kind) ? C.marks : kind === "eagle" ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
+  const brimFill = falconHead(kind) ? C.marks : eagleHead(kind) ? C.belly : ANIMALS[kind].suit ? "url(#pat-fur)" : C.fur;
   let s = `<ellipse ${HOOD} fill="${brimFill}" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-brim)"/>` +
           `<line x1="0" y1="54" x2="200" y2="54" stroke="${darker(C.fur)}" stroke-width="4" clip-path="url(#hood-inside)"/>`;
   const shine = (x, y, r) => `<circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.28}" fill="#ffffff"/>`;
@@ -643,7 +649,7 @@ function hoodFront(C, kind) {
          `<path d="M93 36 L107 36 Q109 47 100 58 Q101 47 93 36 Z" fill="#59636e" stroke="#2a2f35" stroke-width="1.5"/>`;
     return s;
   }
-  if (kind === "eagle") {
+  if (eagleHead(kind)) {
     // a stern brow, yellow eyes, and a big hooked yellow beak
     for (const [x, side] of [[78, -1], [122, 1]])
       s += `<circle cx="${x}" cy="26" r="9" fill="${C.eyes}" stroke="#4a3a20" stroke-width="2"/>` +
@@ -1066,7 +1072,7 @@ function draw() {
   // each hand's own reach past the end of its arm: big mittens and long
   // fingers stuck out of the frame (and out of the saved picture)
   // (a falcon suit's wing reaches past the hand by about an arm's length)
-  const reach = kind === "falconsuit" ? B.armLen * 1.4 + 50 : handReach(suit ? suitHands(C, kind) : state.hands) + 12;
+  const reach = BIRD_SUIT[kind] ? B.armLen * 1.4 + 50 : handReach(suit ? suitHands(C, kind) : state.hands) + 12;
   // room for big hair on a tall head, a lid blown far off, and candy
   // and hair, stretched with the head (it hangs and spreads in face units)
   const hr = C ? { top: 0, bottom: 0, half: 0 } : hairReach(state.hair);
@@ -1093,14 +1099,15 @@ function draw() {
   if (kind === "falcon") svg += falconWings(C, w) + falconTail(C, hw, L, LL);
   else if (kind === "eagle") svg += falconWings(C, w, C.fur) + falconTail(C, hw, L, LL, C.belly);
   else if (kind === "falconsuit") svg += falconTail(C, hw, L, LL, "url(#pat-fur)");
+  else if (kind === "eaglesuit") svg += falconTail(C, hw, L, LL, C.belly);
   else if (suit) svg += tailSvg(C, kind, hw, L);
 
   // legs, then shoes, then pants over both: long pants cover a boot's top
   for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, B.legW, limb, limbLine);
-  const feet = kind === "falconsuit" ? { style: "talons", size: state.shoes.size }
+  const feet = BIRD_SUIT[kind] ? { style: "talons", size: state.shoes.size }
              : suit ? { style: "paw", size: state.shoes.size, color: C.fur, pad: C.accent } : state.shoes;
   // (a falcon suit's talons are yellow, like a falcon's feet)
-  for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, feet, kind === "falconsuit" ? C.accent : skin);
+  for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, feet, BIRD_SUIT[kind] ? C.accent : skin);
   const pf = suit ? "url(#pat-fur)" : fillOf("pat-pants", P.color, P.pattern);
   const ps = suit ? darker(C.fur) : darker(P.color);
   if (undies) {
@@ -1139,7 +1146,7 @@ function draw() {
   const sf = suit ? "url(#pat-fur)" : fillOf("pat-shirt", SH.color, SH.pattern);
   const ss = suit ? darker(C.fur) : darker(SH.color);
   // (a falcon suit's arms are inside its wings, drawn after the body)
-  const winged = kind === "falconsuit";
+  const winged = !!BIRD_SUIT[kind];
   if (!winged) for (const { A, H } of arms) svg += line(A[0], A[1], H[0], H[1], armW, limb, limbLine);
   const sleeveEnd = ({ A, H }) => [A[0] + (H[0] - A[0]) * sleeve, A[1] + (H[1] - A[1]) * sleeve];
   if (sleeve > 0 && !winged) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
@@ -1156,7 +1163,7 @@ function draw() {
            `<polyline points="${pts(body)}" fill="none" stroke="${limbLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
     svg += undiesTop(U, w, nw, hw, fx, L);
   } else svg += poly(torso, sf, ss);
-  if (suit)  // the suit's belly
+  if (suit && kind !== "eaglesuit")  // the suit's belly (a bald eagle is brown all over)
     svg += `<ellipse cx="0" cy="${f1(L * 0.58)}" rx="${f1(w * 0.55)}" ry="${f1(L * 0.36)}" fill="${C.belly}"/>`;
   if (sleeve > 0 && !winged) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
 
@@ -1289,7 +1296,7 @@ const TABS = [
                                    ["lion", "🦁 lion"], ["bear", "🐻 bear"], ["falcon", "🦅 peregrine falcon"],
                                    ["raccoon", "🦝 raccoon"], ["bobcat", "🐈 bobcat"], ["leopard", "🐆 leopard"],
                                    ["eagle", "🦅 bald eagle"], ["cheetah", "🐆 cheetah"],
-                                   ["falconsuit", "🦅 falcon suit"]]],
+                                   ["falconsuit", "🦅 falcon suit"], ["eaglesuit", "🦅 bald eagle suit"]]],
     ["color", "fur", "fur / feather color", FURS],
     ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"],
                                              ["rosettes", "rosettes"], ["patches", "patches"]]],
