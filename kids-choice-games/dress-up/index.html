@@ -363,7 +363,9 @@ function faceLayout(F) {
   // line. The default gap, 38, puts the default eyes where they always
   // were, 32 out. The brows go with the eyes.
   const eyeY = HEAD_C + (100 - HEAD_C) * ky, eyeDX = F.eyeGap / 2 + eyeHalfW(F);
-  const bx = eyeDX / 32;
+  // (but never past the eyes' outer edges, or a wide gap pushed them out
+  // of the face: the brow is 45 to a side, a pair 52)
+  const bx = Math.min(eyeDX / 32, Math.max(1, (eyeDX + eyeHalfW(F)) / (F.unibrow ? 45 : 52)));
   const noseTop = eyeY + 6;
   const nose = F.noseView && F.noseView !== "none";
   const uh = 30 * F.noseH / 100, uw = 30 * F.noseW / 100;
@@ -2143,7 +2145,7 @@ const TABS = [
     ["range", "faceW", "face width", 40, 600, 85, 115],
     ["range", "faceH", "face height", 40, 600, 85, 115],
     ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
-    ["range", "eyeGap", "eye gap", 0, 200, 25, 55],
+    ["range", "eyeGap", "eye gap", 0, 600, 25, 55],
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
