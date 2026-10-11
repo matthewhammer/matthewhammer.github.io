@@ -278,10 +278,12 @@ function mouthTopAsDrawn(F) {
 // WHERE THE FEATURES GO, for the head's width and height: a bigger head
 // spreads the eyes, brows, nose and mouth apart (by 60% of its stretch) and
 // grows the mouth, which has no size control of its own. Then the mouth
-// moves down for two things: opening, which grows the mouth downward from
-// where its closed top was, and the nose, which the mouth's top as drawn
-// must clear (a short nose never moves it). The head's lower half
-// stretches by however far the mouth moved (`stretch`).
+// moves down for three things: opening, which grows the mouth downward
+// from where its closed top was; the nose, which the mouth's top as drawn
+// must clear (a short nose never moves it); and the eyes, which it clears
+// by 8 wherever they are above it (big eyes close together, never the
+// usual ones). The head's lower half stretches by however far the mouth
+// moved (`stretch`).
 function faceLayout(F) {
   const kx = 1 + 0.6 * (F.faceW / 100 - 1), ky = 1 + 0.6 * (F.faceH / 100 - 1);
   // The eyes keep the eye gap between them, edge to edge, however big,
@@ -302,11 +304,42 @@ function faceLayout(F) {
   // arch, an open mouth's upper lip), not to a flat mouth's line
   const top = mouthY0 + riseDrop + (mouthTopAsDrawn(F) - 150) * ky;
   const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 6 - top) : 0;
-  const mouthY = mouthY0 + noseDrop + riseDrop;
+  // the eyes: along the mouth's top curve as drawn (a smile's corners, a
+  // frown's middle, an open mouth's upper lip), it keeps 8 below each
+  // eye's lower edge, found right above each point of the curve. A plain
+  // eye's edge is an oval, its extent (eyeHalfW, eyeHalfH) grown by 8. A
+  // glyph or an x is a box, slanted with the eye, since their points reach
+  // its corners: an x's strokes, and a star's or heart's ink, which SVG
+  // text draws lower than its middle (measured, in Firefox: 1.67 radii to
+  // either side, 1.22 above, 1.97 below).
+  const c = F.open === 0 ? 110 + idiv(4 * F.smile, 5) : lips(F.smile, F.open)[0];
+  const er = 6 + idiv(F.eyes, 7), th = -F.tilt * Math.PI / 180;   // the right eye's slant
+  const corners = F.xeyes ? [[-er, -er], [er, -er], [er, er], [-er, er]]
+    : F.stars || F.hearts ? [[-1.67 * er, -1.22 * er], [1.67 * er, -1.22 * er], [1.67 * er, 1.97 * er], [-1.67 * er, 1.97 * er]]
+    : null;
+  const pad = 8 + (F.xeyes ? (3 + idiv(er, 6)) / 2 : 0);
+  const box = corners && corners.map(([x, y]) => [x * Math.cos(th) - y * Math.sin(th), x * Math.sin(th) + y * Math.cos(th)]);
+  const ew = eyeHalfW(F) + 8, eh = eyeHalfH(F) + 8;
+  // (either eye: they are mirror images about the middle line)
+  const below = x => {
+    const ax = Math.abs(x) - eyeDX;
+    if (box) return ax >= Math.min(...box.map(p => p[0])) - pad && ax <= Math.max(...box.map(p => p[0])) + pad
+      ? eyeY + Math.max(...box.map(p => p[1])) + pad : -Infinity;
+    const e = ax / ew;
+    return Math.abs(e) < 1 ? eyeY + eh * Math.sqrt(1 - e * e) : -Infinity;
+  };
+  let eyeDrop = 0;
+  for (let i = 0; i <= 40; i++) {
+    const u = i / 40, x = 40 * kx * (2 * u - 1);     // from the face's middle line
+    const lip = mouthY0 + riseDrop + (2 * u * (1 - u) * (c - 150) - 2.5) * ky;
+    eyeDrop = Math.max(eyeDrop, below(x) - lip);
+  }
+  const drop = Math.max(noseDrop, eyeDrop);
+  const mouthY = mouthY0 + drop + riseDrop;
   // and the chin makes room below a deep mouth
   const bottom = mouthY + (75 + lips(F.smile, F.open)[1] / 2 + 2.5 - 150) * ky;
   const chin = HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
-  const stretch = Math.round(Math.max(noseDrop + riseDrop, bottom + 12 - chin, 0));
+  const stretch = Math.round(Math.max(drop + riseDrop, bottom + 12 - chin, 0));
   return { kx, ky, bx, eyeY, eyeDX, noseTop, uh, uw, mouthY, stretch };
 }
 const mouthDrop = F => faceLayout(F).stretch;
