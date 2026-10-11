@@ -137,7 +137,7 @@ const DEFAULTS = {
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes", spot: "auto",
              witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false,
-             catFur: "#1f1f22", catWhite: "#ffffff", catEyes: "#c6d43a", catNose: "#f4a0b0" },
+             catFur: "#1f1f22", catWhite: "#ffffff", catEyes: "#c6d43a", catNose: "#f4a0b0", catSize: 100, broomSize: 100 },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 // before the nose views: a nose was a shape (or "none"), a direction and
@@ -1822,19 +1822,24 @@ function draw() {
                            witch ? hairY(-130) - 20 - flying : 0);
   // (a broom stands 120 above the hand that holds it, its bristles 66 below)
   const broomH = witch && WC.broom ? arms[0].H : null;
-  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)), broomH ? broomH[1] - 140 : 0);
+  // (and a cat on the shoulder, 64 above where it sits and 42 below, its
+  // tail out 34 to the side, all times its size)
+  const kb = (state.costume.broomSize ?? 100) / 100, catK = witch && WC.witchCat ? (WC.catSize ?? 100) / 100 : 0;
+  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)), broomH ? broomH[1] - 140 * kb : 0,
+                       catK ? -9 - 70 * catK : 0);
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
   // and a long skirt or dress, which can reach past the feet
   const skirtHem = !suit && !undies && (P.style === "skirt" || P.style === "dress")
     ? L + LL * (P.skirtLen ?? 50) / 100 + 30 : 0;
   let bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem,
-                          broomH ? broomH[1] + 140 : 0);
+                          broomH ? broomH[1] + 140 * kb : 0, catK ? -9 + 46 * catK : 0);
   const hairHalf = hr.half * headWidth(F) * (1 + 0.12 * F.alien / 100) * s;
   let left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
                         -((80 + (C ? (kind === "deer" ? 60 : 30) : witch ? 50 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20),
-                        broomH ? -(Math.abs(broomH[0]) + 60) : 0);
+                        broomH ? -(Math.abs(broomH[0]) + 60 * kb) : 0,
+                        catK ? -(w - 4) - 24 * catK : 0, catK ? -(-(w - 4) + 40 * catK) : 0);
   // a background is a scene, wider than it is tall, with room at the
   // sides for its trees, wreck, table or palms, and in front of the feet
   // for its flowers, sand castles and blankets
@@ -1953,7 +1958,10 @@ function draw() {
   if (witch) {
     svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})"><g transform="${topFlies(F)}">` +
            `<g transform="${hairStretch(F)}">${witchHat(WC)}</g></g></g>`;
-    if (WC.witchCat) svg += shoulderCat(w, WC);
+    // (the cat grows or shrinks about where it sits)
+    if (WC.witchCat)
+      svg += `<g transform="translate(${f1(-(w - 4))} -9) scale(${((WC.catSize ?? 100) / 100).toFixed(3)}) translate(${f1(w - 4)} 9)">` +
+             `${shoulderCat(w, WC)}</g>`;
   }
 
   // then the arms again, over the hair and the face: raised arms cross
@@ -1976,7 +1984,10 @@ function draw() {
   }
 
   // a witch's broom, held in her right hand (on the picture's right)
-  if (broomH) svg += broomSvg(broomH, WC.trimColor);
+  // (it grows or shrinks about the hand)
+  if (broomH)
+    svg += `<g transform="translate(${f1(broomH[0])} ${f1(broomH[1])}) scale(${kb.toFixed(3)}) translate(${f1(-broomH[0])} ${f1(-broomH[1])})">` +
+           `${broomSvg(broomH, WC.trimColor)}</g>`;
 
   // and the hands last, in front of everything, the face too: raised
   // arms put them by the cheeks or over the eyes, not behind the head
@@ -2161,7 +2172,9 @@ const TABS = [
     ["color", "catWhite", "🐈‍⬛ cat's tuxedo (nose, chest, paws)", ["#ffffff", "off", "#f7ead8", "#ffd1dc", "#c0c0c0", "#1f1f22"]],
     ["color", "catEyes", "🐈‍⬛ cat's eyes", ["#c6d43a", "#e0a800", "#3b82f6", "#22c55e", "#f28c28"]],
     ["color", "catNose", "🐈‍⬛ cat's nose", ["#f4a0b0", "#ff69b4", "#1f1f22", "#8a4b1c"]],
+    ["range", "catSize", "🐈‍⬛ cat's size", 10, 1000, 70, 160],
     ["toggle", "broom", "🧹 broom"],
+    ["range", "broomSize", "🧹 broom's size", 10, 1000, 70, 160],
   ]],
   ["🏞️ Background", "background", [
     ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
@@ -2217,6 +2230,8 @@ const SHOWN_WHEN = {
   "costume.catEyes": c => c.kind === "witch" && c.witchCat,
   "costume.catNose": c => c.kind === "witch" && c.witchCat,
   "costume.broom": c => c.kind === "witch",
+  "costume.catSize": c => c.kind === "witch" && c.witchCat,
+  "costume.broomSize": c => c.kind === "witch" && c.broom,
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => !!ANIMALS[c.kind],
