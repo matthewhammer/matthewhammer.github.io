@@ -295,7 +295,13 @@ const NOSES = {
   angle: "M0 0 L0.55 0.72 L0.08 1",
   soft:  "M0.22 0 Q-0.12 0.9 0.02 1 Q0.24 1.04 0.26 0.82",
   hook:  "M0 0 Q0.8 0.45 0.55 0.95 Q0.35 1.08 0.12 0.9",     // "bulbous"
+  // a witch's: long, out to the side, hooked down at the tip (and warts:
+  // NOSE_WARTS)
+  witch: "M0.06 0 Q0.4 0.6 1.45 0.86 Q1.3 1 1 0.96 Q0.55 0.93 0.22 1.02 Q0.06 1.06 0.04 0.96",
 };
+// a witch nose's warts: where, in the nose's units, and how big, in the
+// nose's height (never smaller than 3.5)
+const NOSE_WARTS = [[0.66, 0.56, 0.16], [1.12, 0.8, 0.12], [0.42, 0.9, 0.11]];
 // from the front: one side of the bridge flaring into a nostril that curls
 // back up (drawn twice, mirrored), and the tip, drawn once between them
 const FRONT_NOSES = {
@@ -389,11 +395,20 @@ function noseSvg(F) {
   // from the front, width spreads the nostrils (the bottom) much more than
   // the bridge (the top), for a broad nose
   const wAt = y => front ? 30 + (uw * 1.7 - 30) * Math.max(0, Math.min(1, y)) : uw;
+  // A side nose widens from the top of its bridge, which stays between the
+  // eyes where the usual width (30) puts it, not off under one eye. (From
+  // the front it is mirrored, so centred.)
+  const top = Number(shape.match(/-?[\d.]+/)[0]);
+  const X = (sx, x, y) => 100 + sx * (front ? wAt(y) * x : top * 30 + (x - top) * uw);
   const at = (sx, d) => `<path d="${d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
-      f1(100 + sx * wAt(Number(y)) * Number(x)) + " " + f1(noseTop + uh * Number(y)))}" ` +
+      f1(X(sx, Number(x), Number(y))) + " " + f1(noseTop + uh * Number(y)))}" ` +
     `fill="none" stroke="black" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
   if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
-  return at(view === "left" ? -1 : 1, shape);
+  const sx = view === "left" ? -1 : 1;
+  return at(sx, shape) + (F.nose === "witch"
+    ? NOSE_WARTS.map(([x, y, r]) => `<circle cx="${f1(X(sx, x, y))}" cy="${f1(noseTop + uh * y)}" r="${f1(Math.max(3.5, r * uh))}" ` +
+                                     `fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("")
+    : "");
 }
 function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
@@ -2025,7 +2040,7 @@ const TABS = [
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
     ["choice", "noseView", "👃 nose", [["none", "none"], ["right", "side, L →"], ["left", "side, ← backwards L"], ["front", "front"]]],
-    ["choice", "nose", "side shape", [["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "bulbous"]]],
+    ["choice", "nose", "side shape", [["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "bulbous"], ["witch", "🧙 witch, warts"]]],
     ["choice", "noseFront", "front shape", [["pointed", "pointed"], ["round", "round"]]],
     ["range", "noseH", "nose height", 20, 300, 70, 150],
     ["range", "noseW", "nose width", 20, 300, 70, 150],
