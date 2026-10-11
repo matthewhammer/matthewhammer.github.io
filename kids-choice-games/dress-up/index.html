@@ -123,7 +123,7 @@ const DEFAULTS = {
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
            faceW: 100, faceH: 100, alien: 0, eyeGap: 38, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100,
-           witchDir: "center", witchLen: 100 },
+           witchDir: "right", witchLen: 100 },
   hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -303,8 +303,7 @@ const NOSES = {
   // NOSE_WARTS)
   witch: "M0.06 0 Q0.85 0.3 1.45 0.86 Q1.3 1 1 0.96 Q0.55 0.93 0.22 1.02 Q0.06 1.06 0.04 0.96",
 };
-// a witch nose's warts: where, in the nose's units, and how big, in the
-// nose's height (never smaller than 3.5)
+// a witch nose's warts: where, in the nose's units, and how big (wartR)
 const NOSE_WARTS = [[0.6, 0.5, 0.16], [1.12, 0.84, 0.12], [0.36, 0.84, 0.11]];
 // from the front: one side of the bridge flaring into a nostril that curls
 // back up (drawn twice, mirrored), and the tip, drawn once between them
@@ -391,6 +390,9 @@ function faceLayout(F) {
   return { kx, ky, bx, eyeY, eyeDX, noseTop, uh, uw, mouthY, stretch };
 }
 const mouthDrop = F => faceLayout(F).stretch;
+// A wart's radius: r of the usual nose's height (30), shrunk a little, and
+// grown with the nose -- its height, width and length together.
+const wartR = (r, uh, uw, len) => Math.max(1.5, r * 30 * 0.7 * Math.sqrt(uh * uw * len) / 30);
 function noseSvg(F) {
   let view = F.noseView;
   if (!view || view === "none") return "";
@@ -399,7 +401,7 @@ function noseSvg(F) {
   const witch = view === "witch" || ((view === "left" || view === "right") && F.nose === "witch");
   const len = view === "witch" ? (F.witchLen ?? 100) / 100 : 1;
   if (view === "witch") {
-    if ((F.witchDir ?? "center") === "center") return witchNoseFront(F, len);
+    if ((F.witchDir ?? "right") === "center") return witchNoseFront(F, len);
     view = F.witchDir;
   }
   const front = view === "front";
@@ -424,7 +426,7 @@ function noseSvg(F) {
   if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
   const sx = view === "left" ? -1 : 1;
   return at(sx, shape) + (witch
-    ? NOSE_WARTS.map(([x, y, r]) => `<circle cx="${f1(X(sx, x, y))}" cy="${f1(noseTop + uh * y)}" r="${f1(Math.max(3.5, r * uh))}" ` +
+    ? NOSE_WARTS.map(([x, y, r]) => `<circle cx="${f1(X(sx, x, y))}" cy="${f1(noseTop + uh * y)}" r="${f1(wartR(r, uh, uw, len))}" ` +
                                      `fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("")
     : "");
 }
@@ -440,7 +442,7 @@ function witchNoseFront(F, len) {
   return `<path d="${d}" fill="${mix(F.color, "#000000", 0.14)}" stroke="black" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>` +
     [-1, 1].map(sd => `<ellipse cx="${f1(100 + sd * 0.3 * uw)}" cy="${f1(noseTop + L * 0.9 * uh)}" rx="${f1(0.09 * uw + 1)}" ry="${f1(0.05 * uh + 1)}" fill="#111"/>`).join("") +
     [[0.14, 0.45, 0.13], [-0.3, 0.74, 0.11]].map(([x, y, r]) =>
-      `<circle cx="${f1(100 + x * uw)}" cy="${f1(noseTop + y * L * uh)}" r="${f1(Math.max(3.5, r * uh))}" fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("");
+      `<circle cx="${f1(100 + x * uw)}" cy="${f1(noseTop + y * L * uh)}" r="${f1(wartR(r, uh, uw, len))}" fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("");
 }
 function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
