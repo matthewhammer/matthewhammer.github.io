@@ -848,7 +848,7 @@ function furDefs(C, kind) {
       `<path d="M0 9 Q6 6 12 9 Q18 12 24 9" stroke="${C.marks}" stroke-width="2.5" fill="none"/></pattern>`;
   const tuft = mix(C.fur, "#000000", 0.3), m = C.marks;
   const marks = {
-    stripes: `<path d="M0 6 Q12 1 24 8 Q14 10 0 12 Z M16 26 Q29 21 40 27 L40 33 Q29 29 16 31 Z" fill="${m}"/>`,
+    // (stripes are not tiled: wrapStripes draws them on each part)
     spots:   `<circle cx="10" cy="10" r="4.5" fill="${m}"/><circle cx="30" cy="28" r="4" fill="${m}"/><circle cx="28" cy="8" r="2.5" fill="${m}"/>`,
     patches: `<ellipse cx="12" cy="14" rx="11" ry="8" fill="${m}"/><ellipse cx="34" cy="34" rx="9" ry="7" fill="${m}"/>`,
     // a leopard's rosettes: broken rings with a darker middle
@@ -865,16 +865,76 @@ function furDefs(C, kind) {
     `<path d="M0 9 Q6 6 12 9 Q18 12 24 9" stroke="${m}" stroke-width="2.5" fill="none"/></pattern>`;
 }
 
+// WRAPPED STRIPES, a striped suit's (a tiger's, as Daniel Tiger wears
+// them): each stripe comes round from the back, over a part's outline,
+// and tapers to a point before the part's middle -- never across it.
+const wrapStripes = C => C && C.furPattern === "stripes" && ANIMALS[state.costume.kind].suit &&
+                         !BIRD_SUIT[state.costume.kind];
+// One stripe from b (on or past the outline) to its tip t, w wide where it
+// starts, bowed a little.
+function stripe(b, t, w, color) {
+  const dx = t[0] - b[0], dy = t[1] - b[1], d = Math.hypot(dx, dy) || 1;
+  const nx = -dy / d * w / 2, ny = dx / d * w / 2, mx = (b[0] + t[0]) / 2, my = (b[1] + t[1]) / 2;
+  return `<path d="M${f1(b[0] + nx)} ${f1(b[1] + ny)} Q${f1(mx + nx * 0.9)} ${f1(my + ny * 0.9)} ${f1(t[0])} ${f1(t[1])} ` +
+         `Q${f1(mx - nx * 0.4)} ${f1(my - ny * 0.4)} ${f1(b[0] - nx)} ${f1(b[1] - ny)} Z" fill="${color}"/>`;
+}
+// Stripes on a limb, a band W wide from A to E: in from both edges every
+// so often, from `from` along it, each ending short of the middle line by
+// 15% of the half-width (a limb is narrow: shorter, they barely showed),
+// and a little further along than it starts, so the two sides make a
+// shallow V pointing down the limb.
+function limbStripes(A, E, W, color, id, from = 0) {
+  const dx = E[0] - A[0], dy = E[1] - A[1], len = Math.hypot(dx, dy);
+  if (len < 1) return "";
+  const ux = dx / len, uy = dy / len, nx = -uy, ny = ux, h = W / 2, gap = Math.max(18, W * 0.9);
+  const at = (t, k) => [A[0] + ux * t + nx * k, A[1] + uy * t + ny * k];
+  const band = [at(0, h), at(len, h), at(len, -h), at(0, -h)];
+  let s = `<clipPath id="${id}"><polygon points="${pts(band)}"/></clipPath><g clip-path="url(#${id})">`;
+  for (let t = from + gap * 0.6; t < len - gap * 0.4; t += gap)
+    for (const side of [1, -1]) s += stripe(at(t, side * (h + 4)), at(t + gap * 0.2, side * h * 0.15), gap * 0.5, color);
+  return s + `</g>`;
+}
+// Stripes on the body, in from both sides, every 24 down it, sloping a
+// little down toward the middle; the belly, drawn over them, hides their
+// tips, so they end before the middle.
+function torsoStripes(outline, w, L, color) {
+  let s = `<clipPath id="torso-stripes"><polygon points="${pts(outline)}"/></clipPath><g clip-path="url(#torso-stripes)">`;
+  for (let y = 14; y < L - 10; y += 24)
+    for (const side of [1, -1]) s += stripe([side * (w + 10), y], [side * w * 0.42, y + 7], 10, color);
+  return s + `</g>`;
+}
+// Stripes on the legs (the suit's legs, one shape from the waist): on
+// each leg, in from its outer edge and, below the crotch, its inner one,
+// each ending short of the leg's middle line by 30% of the way.
+function legStripes(outline, hw, fx, half, L, LL, crotch, color) {
+  let s = `<clipPath id="leg-stripes"><polygon points="${pts(outline)}"/></clipPath><g clip-path="url(#leg-stripes)">`;
+  for (let y = L + 14; y < L + LL - 8; y += 24)
+    for (const side of [1, -1]) {
+      const xo = hw + (fx + half - hw) * (y - (L - 10)) / (LL + 10);
+      const xi = y > L + crotch ? (fx - half) * (y - (L + crotch)) / (LL - crotch) : null;
+      const c = xi === null ? xo * 0.5 : (xo + xi) / 2;
+      s += stripe([side * (xo + 8), y], [side * (c + (xo - c) * 0.3), y + 6], 10, color);
+      // (starting in the gap between the legs, never in the other leg)
+      if (xi !== null && c - xi > 8)
+        s += stripe([side * Math.max(xi - 8, xi * 0.5), y], [side * (c - (c - xi) * 0.3), y + 6], 10, color);
+    }
+  return s + `</g>`;
+}
+
 // THE HOOD, in the round head's units (it stretches with the face, as hair
 // does): behind the head, the hood and its ears (and a lion's mane); over
 // the forehead, the brim, with the animal's face on it.
 // It hugs the head as drawn: 32.6 above the crown and 27.4 below the chin
 // (which an open mouth moves down), at any height. Drawn inside the
 // face's stretch, so its ends are placed where they land once stretched.
-function hoodEllipse(F) {
+function hoodGeom(F) {
   const H = F.faceH / 100, Hs = headH(F);
   const top = HEAD_C - 80 - 32.6 / Hs, bottom = HEAD_C + (80 * H + headDrop(F) + 27.4) / Hs;
-  return `cx="100" cy="${f1((top + bottom) / 2)}" rx="106" ry="${f1((bottom - top) / 2)}"`;
+  return { cy: (top + bottom) / 2, rx: 106, ry: (bottom - top) / 2 };
+}
+function hoodEllipse(F) {
+  const { cy, rx, ry } = hoodGeom(F);
+  return `cx="100" cy="${f1(cy)}" rx="${rx}" ry="${f1(ry)}"`;
 }
 function hoodBack(C, kind, F) {
   const HOOD = hoodEllipse(F);
@@ -912,6 +972,18 @@ function hoodBack(C, kind, F) {
     }
   }
   s += `<ellipse ${HOOD} fill="${fill}" stroke="${line}" stroke-width="4"/>`;
+  // wrapped stripes on the hood's sides, below the brim: in from the
+  // edge toward the face, which covers their tips
+  if (wrapStripes(C)) {
+    const { cy, rx, ry } = hoodGeom(F);
+    s += `<clipPath id="hood-stripes"><ellipse ${HOOD}/></clipPath><g clip-path="url(#hood-stripes)">`;
+    for (const deg of [-12, 12, 36, 60])
+      for (const side of [1, -1]) {
+        const t = deg * Math.PI / 180, c = Math.cos(t) * side, sn = Math.sin(t);
+        s += stripe([100 + (rx + 6) * c, cy + (ry + 6) * sn], [100 + (rx - 26) * c, cy + (ry - 26) * sn], 11, C.marks);
+      }
+    s += `</g>`;
+  }
   if (falconHead(kind))  // the peregrine's dark "moustache" down each cheek
     for (const side of [-1, 1])
       s += `<path d="M${100 + side * 84} 52 Q${100 + side * 96} 96 ${100 + side * 84} 132 ` +
@@ -1460,8 +1532,10 @@ function draw() {
     }
   } else {
     const len = !suit && P.style === "shorts" ? LL * 0.38 : LL;
-    svg += poly([[-hw, L - 10], [hw, L - 10], [fx + half, L + len], [fx - half, L + len],
-                 [0, L + Math.min(len * 0.3, 40)], [-(fx - half), L + len], [-(fx + half), L + len]], pf, ps);
+    const legs = [[-hw, L - 10], [hw, L - 10], [fx + half, L + len], [fx - half, L + len],
+                  [0, L + Math.min(len * 0.3, 40)], [-(fx - half), L + len], [-(fx + half), L + len]];
+    svg += poly(legs, pf, ps);
+    if (wrapStripes(C)) svg += legStripes(legs, hw, fx, half, L, len, Math.min(len * 0.3, 40), C.marks);
   }
 
   // neck, behind the shirt so it shows in the collar
@@ -1490,6 +1564,7 @@ function draw() {
            `<polyline points="${pts(body)}" fill="none" stroke="${limbLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
     svg += undiesTop(U, w, nw, hw, fx, L);
   } else svg += poly(torso, sf, ss);
+  if (wrapStripes(C) && !undies) svg += torsoStripes(torso, w, L, C.marks);
   if (suit && kind !== "eaglesuit")  // the suit's belly (a bald eagle is brown all over)
     svg += `<ellipse cx="0" cy="${f1(L * 0.58)}" rx="${f1(w * 0.55)}" ry="${f1(L * 0.36)}" fill="${C.belly}"/>`;
   // the hair, in the face's frame: over the body and shirt, but under the
@@ -1519,6 +1594,9 @@ function draw() {
     if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
     svg += `</g>`;
     if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
+    // (from past the shoulder, where the fur sleeve joins the body)
+    if (wrapStripes(C))
+      for (const arm of arms) svg += limbStripes(arm.A, sleeveEnd(arm), armW + 9, C.marks, `arm-stripes${arm.side}`, 22);
   }
 
   // and the hands last, in front of everything, the face too: raised
