@@ -537,7 +537,9 @@ function eye(x, size, stars, hearts, xs, F, angle = 0) {
   const len = Math.hypot(ux, uy), most = outer * 0.55;
   if (len > most) { ux *= most / len; uy *= most / len; }
   const dx = cs * ux - sn * uy * k, dy = sn * ux + cs * uy * k;
-  const shineR = Math.min(dotR, outer * k * 0.45);
+  // (kept within 45% of the eye up to 150; past that, up to 450, the cap
+  // grows with it, to three times)
+  const shineR = Math.min(dotR, outer * k * 0.45 * Math.max(1, F.shineSize / 150));
   return `<g transform="rotate(${f1(angle)} ${x} 100) translate(${x} 100) scale(1 ${k.toFixed(3)}) translate(${-x} -100)">` +
     (whiteR ? `<circle cx="${x}" cy="100" r="${f1(whiteR)}" fill="#ffffff" stroke="black" stroke-width="2"/>` : "") +
     (irisR ? `<circle cx="${x}" cy="100" r="${f1(irisR)}" fill="${F.irisColor}"/>` : "") +
@@ -2134,7 +2136,7 @@ const TABS = [
     ["pad", "light", "✨ where the light comes from"],
     ["color", "shine", "shine color", ["#ffffff", "#fff3b0", "#ffd1dc", "#aee6ff", "#c8ffc8", "#ffb347"]],
     ["range", "shineMix", "shine (dark ↔ bright)", 0, 100, 60, 100],
-    ["range", "shineSize", "shine size", 0, 150, 25, 70],
+    ["range", "shineSize", "shine size", 0, 450, 25, 70],
     ["color", "pupil", "pupil color", ["#000000", "#3b2314", "#1e3a8a", "#14532d", "#7f1d1d", "#4c1d95"]],
     ["range", "iris", "iris size (0 = no iris)", 0, 150, 0, 0],
     ["color", "irisColor", "iris color", ["#3b82f6", "#22c55e", "#8b5a2b", "#a0782c", "#9ca3af", "#8b5cf6", "#ef4444"]],
