@@ -96,8 +96,8 @@
   .hud .ctl { flex: 1 1 220px; margin: 6px 0; }
   .hud .ctl > .lbl .val { color: #ddd; }
   .hud .empty { color: #ddd; padding: 8px 0; }
-  .pin { border: none; background: none; padding: 0 4px; margin-left: 4px; font-size: 0.85em; opacity: 0.3;
-         cursor: pointer; vertical-align: middle; }
+  .pin { border: none; background: none; padding: 0; margin-right: 6px; font-size: 0.85em; opacity: 0.3;
+         cursor: pointer; vertical-align: baseline; }
   .pin[aria-pressed=true] { opacity: 1; }
 </style>
 </head>
@@ -2398,15 +2398,21 @@ function togglePin(id) {
   state.hud.pins = pinned(id) ? pins.filter(x => x !== id) : [...pins, id];
   changed(); renderHud();
 }
+// (while the HUD is built: its sliders have no pins -- pinning is for
+// the editor, not the performance)
+let buildingHud = false;
 function control(part, [kind, key, label, ...rest]) {
   const val = el("span", { class: "val" });
-  const lbl = el("div", { class: "lbl" }, [label, val]);
+  const name = el("span", { class: "name" }, [label]);
+  const lbl = el("div", { class: "lbl" }, [el("span", {}, [name]), val]);
   const box = el("div", { class: "ctl" }, [lbl]);
-  if (kind === "range" || kind === "turn") {
-    // (the scene's own sliders are always in the HUD: no pin)
+  if ((kind === "range" || kind === "turn") && part !== "background" && !buildingHud) {
+    // the pin, left of the name (the scene's own sliders are always in the
+    // HUD: no pin)
     const id = part + "." + key, pin = el("button", { class: "pin", title: "Pin to the full-screen controls",
                                                        onclick: () => togglePin(id) }, "📌");
-    if (part !== "background") { lbl.firstChild.after(pin); syncs.push(() => pin.setAttribute("aria-pressed", pinned(id))); }
+    name.before(pin);
+    syncs.push(() => pin.setAttribute("aria-pressed", pinned(id)));
   }
   if (kind === "action") {
     const b = el("button", { onclick: () => { rest[0](); changed(); } }, label);
@@ -2546,6 +2552,7 @@ function renderHud() {
   hudShown = hudKey();
   const saved = syncs;
   syncs = [];
+  buildingHud = true;
   const boxes = [];
   if (state.background.kind !== "none")
     for (const spec of TABS.find(t => t[1] === "background")[2].filter(c => c[1] !== "kind")) boxes.push(control("background", spec));
@@ -2556,6 +2563,7 @@ function renderHud() {
   }
   if (!boxes.length)
     boxes.push(el("div", { class: "empty" }, "Pin sliders with 📌 in the controls, and they show up here."));
+  buildingHud = false;
   hud.replaceChildren(...boxes);
   hudSyncs = syncs;
   syncs = saved;
