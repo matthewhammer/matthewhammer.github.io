@@ -1423,21 +1423,10 @@ function draw() {
     svg += `<ellipse cx="0" cy="${f1(L * 0.58)}" rx="${f1(w * 0.55)}" ry="${f1(L * 0.36)}" fill="${C.belly}"/>`;
   // the hair, in the face's frame: over the body and shirt, but under the
   // arms, which are drawn again over it (long or curly hair hangs beside
-  // them), and behind the head, which is drawn last
-  if (!C) {
+  // them), and behind the head
+  if (!C)
     svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
            `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hairSvg(state.hair)}</g></g></g>`;
-    // (only outside the body, where they showed before: the body still
-    // covers their tops, outline and all)
-    svg += `<mask id="off-body" maskUnits="userSpaceOnUse" x="-5000" y="-5000" width="10000" height="10000">` +
-           `<rect x="-5000" y="-5000" width="10000" height="10000" fill="white"/>` +
-           `<polygon points="${pts(undies ? bareBody : torso)}" fill="black" stroke="black" stroke-width="3" stroke-linejoin="round"/></mask>` +
-           `<g mask="url(#off-body)">`;
-    for (const { A, H } of arms) svg += line(A[0], A[1], H[0], H[1], armW, limb, limbLine);
-    if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
-    svg += `</g>`;
-  }
-  if (sleeve > 0 && !winged) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
 
   if (winged) for (const arm of arms) svg += armWing(C, arm, armW);
 
@@ -1445,9 +1434,24 @@ function draw() {
   const groundInFace = (ground - ty) / s;
   svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">${faceSvg(F, groundInFace)}</g>`;
 
+  // then the arms again, over the hair and the face: raised arms cross
+  // the chin and cheeks in front of the head, not behind it
+  // (only outside the body, where they showed before: the body still
+  // covers their tops, outline and all)
+  // (a bird suit's wings stay behind the face, or they would hide it)
+  if (!winged) {
+    svg += `<mask id="off-body" maskUnits="userSpaceOnUse" x="-5000" y="-5000" width="10000" height="10000">` +
+           `<rect x="-5000" y="-5000" width="10000" height="10000" fill="white"/>` +
+           `<polygon points="${pts(undies ? bareBody : torso)}" fill="black" stroke="black" stroke-width="3" stroke-linejoin="round"/></mask>` +
+           `<g mask="url(#off-body)">`;
+    for (const { A, H } of arms) svg += line(A[0], A[1], H[0], H[1], armW, limb, limbLine);
+    if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
+    svg += `</g>`;
+    if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
+  }
+
   // and the hands last, in front of everything, the face too: raised
   // arms put them by the cheeks or over the eyes, not behind the head
-  // (a bird suit's wings stay behind it, or they would hide the face)
   if (!winged) {
     const hands = suit ? suitHands(C, kind) : state.hands;
     for (const { side, H, angle } of arms) svg += handSvg(H[0], H[1], angle, side, hands, skin);
