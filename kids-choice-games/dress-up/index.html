@@ -127,15 +127,17 @@ const DEFAULTS = {
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
-  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100, clawCount: 4, starPoints: 5, starAngle: 0,
+  hands: { style: "round", leftStyle: "same", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100, clawCount: 4, starPoints: 5, starAngle: 0,
            mittenAngle: 0, clawAngle: 0, humanAngle: 0, alienAngle: 0 },
   pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto", skirtLen: 50 },
   undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
+  background: { kind: "none" },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes", spot: "auto",
-             witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false },
+             witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false,
+             catFur: "#1f1f22", catWhite: "#ffffff", catEyes: "#c6d43a", catNose: "#f4a0b0" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 // before the nose views: a nose was a shape (or "none"), a direction and
@@ -1508,19 +1510,25 @@ function witchHat(WC) {
     `<path d="M52 24 Q100 34 149 24 L152 38 Q100 48 49 38 Z" fill="${WC.trimColor}"/>` +
     `<rect x="89" y="25" width="22" height="16" rx="2" fill="none" stroke="#f2c230" stroke-width="3.5"/>`;
 }
-// A black cat sitting on the left shoulder (the picture's left), in body
-// units: its tail hanging down behind, its body, its head with pointed
-// ears and green-gold eyes.
-function shoulderCat(w) {
-  const x = -(w - 4), y = -9, fur = "#1f1f22", ln = "#000000";
+// A cat sitting on the left shoulder (the picture's left), in body units,
+// a tuxedo cat: its fur, with a white blaze down its nose, a white chest
+// and white boots on its front paws ("off" leaves it all fur). Its tail
+// hangs down behind; its eyes and nose in their own colors.
+function shoulderCat(w, WC) {
+  const x = -(w - 4), y = -9, fur = WC.catFur, ln = darker(fur), wh = WC.catWhite;
+  const tux = wh && wh !== "off";
   return `<path d="M${x + 8} ${y - 6} Q${x + 34} ${y + 6} ${x + 24} ${y + 42}" fill="none" stroke="${fur}" stroke-width="6" stroke-linecap="round"/>` +
     `<ellipse cx="${x}" cy="${y - 17}" rx="15" ry="18" fill="${fur}" stroke="${ln}" stroke-width="1.5"/>` +
+    (tux ? `<path d="M${x - 9} ${y - 32} Q${x - 3} ${y - 26} ${x + 3} ${y - 32} Q${x + 6} ${y - 14} ${x - 3} ${y - 2} Q${x - 12} ${y - 14} ${x - 9} ${y - 32} Z" fill="${wh}"/>` : "") +
+    // the front paws, side by side at the front of its body
+    [x - 8, x + 2].map(px => `<ellipse cx="${px}" cy="${y - 2}" rx="5" ry="4" fill="${tux ? wh : fur}" stroke="${ln}" stroke-width="1.2"/>`).join("") +
     poly([[x - 15, y - 44], [x - 13, y - 64], [x - 4, y - 52]], fur, ln, 1.5) +
     poly([[x + 1, y - 52], [x + 8, y - 64], [x + 9, y - 44]], fur, ln, 1.5) +
     `<circle cx="${x - 3}" cy="${y - 42}" r="13" fill="${fur}" stroke="${ln}" stroke-width="1.5"/>` +
-    [x - 8, x + 2].map(ex => `<ellipse cx="${ex}" cy="${y - 43}" rx="3.2" ry="3.8" fill="#c6d43a"/>` +
+    (tux ? `<path d="M${x - 4.5} ${y - 50} L${x - 1.5} ${y - 50} L${x + 1} ${y - 36} Q${x - 3} ${y - 31} ${x - 7} ${y - 36} Z" fill="${wh}"/>` : "") +
+    [x - 8, x + 2].map(ex => `<ellipse cx="${ex}" cy="${y - 43}" rx="3.2" ry="3.8" fill="${WC.catEyes}"/>` +
                              `<ellipse cx="${ex}" cy="${y - 43}" rx="1" ry="3.2" fill="#111"/>`).join("") +
-    `<path d="M${x - 5} ${y - 37} L${x - 1} ${y - 37} L${x - 3} ${y - 35} Z" fill="#f4a0b0"/>`;
+    `<path d="M${x - 5} ${y - 37} L${x - 1} ${y - 37} L${x - 3} ${y - 35} Z" fill="${WC.catNose}"/>`;
 }
 // A broom through the hand at H, in body units: the stick, leaning a
 // little, 120 above the hand and 52 below it, then the bristles flaring
@@ -1534,6 +1542,203 @@ function broomSvg([hx, hy], trim) {
     [-2, -1, 0, 1, 2].map(k => { const [x1, y1] = at(4, k * 3), [x2, y2] = at(58, k * 9);
       return `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#a87a2a" stroke-width="1.5"/>`; }).join("") +
     line(at(5, 9)[0], at(5, 9)[1], at(5, -9)[0], at(5, -9)[1], 6, trim);
+}
+
+// ===================== BACKGROUNDS =====================
+// A scene behind the figure, in picture units: the frame runs from x0 to
+// x1 and y0 to y1, and the figure stands on the ground at y = g, in the
+// middle. Sizes are in k, a 700th of the frame's height, so a scene looks
+// the same however big the figure's frame; its sky and ground run well
+// past the frame (a blown lid can widen it). Things stand off to the
+// sides, where the figure is not.
+function backgroundSvg(kind, x0, y0, x1, y1, g) {
+  const W = x1 - x0, H = y1 - y0, k = H / 700, pad = Math.max(W, H);
+  // the same "random" every time, for a scene that holds still
+  const R = (i, j = 0) => { const v = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const P = (x, y) => `${f1(x)} ${f1(y)}`;
+  const grad = (id, a, b, ya, yb) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${f1(ya)}" x2="0" y2="${f1(yb)}">` +
+    `<stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
+  const all = fill => `<rect x="${f1(x0 - pad)}" y="${f1(y0 - pad)}" width="${f1(W + 2 * pad)}" height="${f1(H + 2 * pad)}" fill="${fill}"/>`;
+  // ground from y = at (a gentle wave) down past the frame
+  const land = (at, amp, fill, phase = 0) => {
+    let d = `M${P(x0 - pad, at)}`;
+    for (let i = 0; i <= 12; i++) {
+      const x = x0 - pad + (W + 2 * pad) * i / 12;
+      d += ` Q${P(x - (W + 2 * pad) / 24, at + amp * k * Math.sin(i * 1.7 + phase))} ${P(x, at)}`;
+    }
+    return `<path d="${d} L${P(x1 + pad, y1 + pad)} L${P(x0 - pad, y1 + pad)} Z" fill="${fill}"/>`;
+  };
+  const side = i => (i % 2 ? 1 : -1);
+  let s = "";
+  if (kind === "forest") {
+    s += `<defs>${grad("bg-sky", "#a9dcf0", "#eef8e2", y0, g)}</defs>` + all("url(#bg-sky)");
+    s += land(g - 150 * k, 30, "#b5dc98", 0.5);
+    // the far wood: rows of pines
+    for (const [row, base, col] of [[0, g - 110 * k, ["#4f8f5a", "#5c9c63"]], [1, g - 60 * k, ["#2f6b3a", "#3c7d45"]]])
+      for (let i = 0, x = x0 - 50 * k; x < x1 + 50 * k; i++, x += (row ? 52 : 40) * k) {
+        const h = (row ? 210 : 150) * k * (0.8 + 0.4 * R(i, row)), b = base + 20 * k * R(i, row + 2), w = h * 0.42;
+        s += `<rect x="${f1(x - 4 * k)}" y="${f1(b - 10 * k)}" width="${f1(8 * k)}" height="${f1(14 * k)}" fill="#5d3f24"/>` +
+             `<polygon points="${P(x, b - h)} ${P(x + w / 2, b - 4 * k)} ${P(x - w / 2, b - 4 * k)}" fill="${col[i % 2]}"/>`;
+      }
+    // sunshafts, slanting down through the trees onto the meadow
+    for (let j = 0; j < 4; j++) {
+      const xt = x0 + W * (0.12 + 0.2 * j), xb = -W * 0.12 + j * W * 0.09;
+      s += `<polygon points="${P(xt, y0 - pad * 0.1)} ${P(xt + 50 * k, y0 - pad * 0.1)} ${P(xb + 110 * k, g + 20 * k)} ${P(xb - 20 * k, g + 20 * k)}" ` +
+           `fill="#fff6bf" opacity="0.32"/>`;
+    }
+    // the meadow, brightest in the middle where the figure stands
+    s += land(g - 30 * k, 10, "#86c95f", 2.1) +
+         `<ellipse cx="0" cy="${f1(g + 20 * k)}" rx="${f1(W * 0.42)}" ry="${f1(70 * k)}" fill="#a6e07a"/>`;
+    for (let i = 0; i < 26; i++) {
+      const x = x0 + W * R(i, 5), y = g - 20 * k + 110 * k * R(i, 6), c = ["#ff6fa5", "#ffd23f", "#ffffff", "#b388ff"][i % 4];
+      s += [0, 72, 144, 216, 288].map(a => `<circle cx="${f1(x + 5 * k * Math.cos(a * Math.PI / 180))}" cy="${f1(y + 5 * k * Math.sin(a * Math.PI / 180))}" r="${f1(3.6 * k)}" fill="${c}"/>`).join("") +
+           `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(2.6 * k)}" fill="#f2a900"/>`;
+    }
+    // big round trees at the sides, nearest of all
+    for (let i = 0; i < 4; i++) {
+      const sd = side(i), x = sd * Math.max(W / 2 - (i < 2 ? 70 : 200) * k, 170 * k), b = g + (i < 2 ? 60 : 30) * k;
+      const sc = i < 2 ? 1.15 : 0.9, cy = b - 270 * k * sc;
+      s += `<path d="M${P(x - 18 * k * sc, b)} Q${P(x - 10 * k * sc, b - 120 * k * sc)} ${P(x - 12 * k * sc, cy)} L${P(x + 12 * k * sc, cy)} ` +
+           `Q${P(x + 10 * k * sc, b - 120 * k * sc)} ${P(x + 18 * k * sc, b)} Z" fill="#6b4728" stroke="#4a301a" stroke-width="${f1(2 * k)}"/>`;
+      for (const [dx, dy, r, c] of [[-60, 10, 70, "#2e7d32"], [60, 10, 70, "#2e7d32"], [0, -50, 85, "#388e3c"],
+                                    [-45, -40, 60, "#43a047"], [45, -45, 60, "#43a047"], [0, 30, 65, "#33873a"]])
+        s += `<circle cx="${f1(x + dx * k * sc)}" cy="${f1(cy + dy * k * sc)}" r="${f1(r * k * sc)}" fill="${c}"/>`;
+    }
+  } else if (kind === "underwater") {
+    s += `<defs>${grad("bg-sea", "#6fd6f2", "#0b4f7a", y0, y1)}</defs>` + all("url(#bg-sea)");
+    for (let j = 0; j < 5; j++) {
+      const xt = x0 + W * (0.05 + 0.22 * j);
+      s += `<polygon points="${P(xt, y0 - pad * 0.1)} ${P(xt + 60 * k, y0 - pad * 0.1)} ${P(xt + 10 * k + W * 0.08, g)} ${P(xt - 50 * k + W * 0.08, g)}" ` +
+           `fill="#ffffff" opacity="0.1"/>`;
+    }
+    // far rocks, then the sandy bottom
+    s += land(g - 70 * k, 40, "#2f6f8f", 1.2) + land(g - 18 * k, 8, "#e6d29a", 0.3);
+    for (let i = 0; i < 30; i++)
+      s += `<circle cx="${f1(x0 + W * R(i, 9))}" cy="${f1(g - 5 * k + 120 * k * R(i, 10))}" r="${f1(2.2 * k)}" fill="#c9b27a"/>`;
+    // seaweed swaying up from the bottom, along both sides (behind the
+    // wreck and the table)
+    for (let i = 0; i < 12; i++) {
+      const x = side(i) * (W * 0.16 + W * 0.33 * R(i, 12)), b = g + 40 * k * R(i, 13), h = (140 + 110 * R(i, 14)) * k;
+      let d = `M${P(x, b)}`;
+      for (let j = 1; j <= 4; j++) d += ` Q${P(x + (j % 2 ? 1 : -1) * 22 * k, b - h * (j - 0.5) / 4)} ${P(x, b - h * j / 4)}`;
+      s += `<path d="${d}" fill="none" stroke="${i % 2 ? "#2e8b57" : "#3cb371"}" stroke-width="${f1(8 * k)}" stroke-linecap="round"/>`;
+    }
+    // a shipwreck on the left, half sunk in the sand, its mast broken
+    {
+      const x = Math.min(x0 + W * 0.2, -230 * k), y = g - 10 * k, X = (a, b) => P(x + a * k, y + b * k);
+      s += `<g transform="rotate(-9 ${P(x, y)})">` +
+           `<path d="M${X(-160, -40)} L${X(150, -64)} Q${X(150, 10)} ${X(110, 30)} L${X(-120, 40)} Q${X(-160, 10)} ${X(-160, -40)} Z" ` +
+           `fill="#6d4c2f" stroke="#3e2a18" stroke-width="${f1(4 * k)}"/>` +
+           [-20, 0, 20].map(d => `<path d="M${X(-150, -20 + d)} L${X(140, -42 + d)}" stroke="#4e3420" stroke-width="${f1(2.5 * k)}"/>`).join("") +
+           [-90, -40, 10, 60].map(a => `<circle cx="${f1(x + a * k)}" cy="${f1(y - (16 + a * 0.08) * k)}" r="${f1(9 * k)}" fill="#1d3a4a" stroke="#c9a14a" stroke-width="${f1(2.5 * k)}"/>`).join("") +
+           `<line x1="${f1(x + 10 * k)}" y1="${f1(y - 52 * k)}" x2="${f1(x + 30 * k)}" y2="${f1(y - 250 * k)}" stroke="#5a3d24" stroke-width="${f1(11 * k)}" stroke-linecap="round"/>` +
+           `<polygon points="${X(32, -240)} ${X(110, -205)} ${X(70, -150)} ${X(90, -120)} ${X(26, -110)}" fill="#d8cfae" opacity="0.85"/>` +
+           `<line x1="${f1(x + 25 * k)}" y1="${f1(y - 200 * k)}" x2="${f1(x + 95 * k)}" y2="${f1(y - 165 * k)}" stroke="#5a3d24" stroke-width="${f1(6 * k)}"/>` +
+           `</g>` + `<ellipse cx="${f1(x - 20 * k)}" cy="${f1(y + 40 * k)}" rx="${f1(190 * k)}" ry="${f1(34 * k)}" fill="#e6d29a"/>`;
+    }
+    // a picnic table on the right, a shark sitting at each end
+    {
+      const x = Math.max(x1 - W * 0.22, 230 * k), y = g + 30 * k, X = (a, b) => P(x + a * k, y + b * k);
+      const shark = sd => {
+        // sitting up, facing the table: a grey body with a white belly, a
+        // fin on its back, a tail at its feet, an eye and a toothy grin
+        const cx = x + sd * 128 * k, cy = y - 92 * k, T = (a, b) => P(cx + sd * a * k, cy + b * k);
+        return `<path d="M${T(14, 64)} Q${T(-30, 92)} ${T(-56, 72)} L${T(-20, 58)} Z" fill="#7d8ea0" stroke="#4d5b69" stroke-width="${f1(2.5 * k)}"/>` +
+          `<path d="M${T(-12, -70)} Q${T(30, -78)} ${T(30, -30)} Q${T(26, 30)} ${T(10, 66)} Q${T(-30, 60)} ${T(-34, 10)} Q${T(-40, -50)} ${T(-12, -70)} Z" ` +
+          `fill="#8b9cad" stroke="#4d5b69" stroke-width="${f1(3 * k)}"/>` +
+          `<path d="M${T(26, -40)} Q${T(22, 20)} ${T(8, 60)} Q${T(-4, 20)} ${T(4, -40)} Z" fill="#eef3f6"/>` +
+          `<path d="M${T(-30, -10)} L${T(-62, -24)} L${T(-34, 18)} Z" fill="#7d8ea0" stroke="#4d5b69" stroke-width="${f1(2.5 * k)}"/>` +
+          `<circle cx="${f1(cx + sd * 10 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(6 * k)}" fill="#ffffff"/>` +
+          `<circle cx="${f1(cx + sd * 12 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(3 * k)}" fill="#111"/>` +
+          `<path d="M${T(4, -30)} Q${T(18, -20)} ${T(28, -32)}" fill="#fff" stroke="#333" stroke-width="${f1(2 * k)}"/>` +
+          [6, 13, 20].map(a => `<path d="M${T(a, -30 + (a - 4) * 0.1)} l${f1(sd * 3 * k)} ${f1(5 * k)} l${f1(sd * 3 * k)} ${f1(-5 * k)}" fill="#fff" stroke="#999" stroke-width="${f1(0.8 * k)}"/>`).join("");
+      };
+      s += [-70, 70].map(a => `<line x1="${f1(x + a * k)}" y1="${f1(y - 60 * k)}" x2="${f1(x + a * 1.2 * k)}" y2="${f1(y)}" stroke="#7a5230" stroke-width="${f1(8 * k)}"/>`).join("") +
+           `<rect x="${f1(x - 120 * k)}" y="${f1(y - 34 * k)}" width="${f1(240 * k)}" height="${f1(10 * k)}" fill="#8b5a2b"/>` +
+           shark(-1) + shark(1) +
+           `<rect x="${f1(x - 100 * k)}" y="${f1(y - 74 * k)}" width="${f1(200 * k)}" height="${f1(16 * k)}" fill="#8b5a2b" stroke="#5a3a1c" stroke-width="${f1(2 * k)}"/>`;
+      for (let i = 0; i < 10; i++)
+        s += `<rect x="${f1(x - 100 * k + i * 20 * k)}" y="${f1(y - 80 * k)}" width="${f1(20 * k)}" height="${f1(8 * k)}" fill="${i % 2 ? "#ffffff" : "#e53935"}"/>`;
+      s += `<ellipse cx="${f1(x - 40 * k)}" cy="${f1(y - 84 * k)}" rx="${f1(18 * k)}" ry="${f1(5 * k)}" fill="#ffffff" stroke="#bbb" stroke-width="${f1(1.5 * k)}"/>` +
+           `<path d="M${X(-52, -88)} Q${X(-40, -100)} ${X(-28, -88)} Z" fill="#f2b84b"/>` +
+           `<ellipse cx="${f1(x + 40 * k)}" cy="${f1(y - 84 * k)}" rx="${f1(18 * k)}" ry="${f1(5 * k)}" fill="#ffffff" stroke="#bbb" stroke-width="${f1(1.5 * k)}"/>` +
+           `<ellipse cx="${f1(x + 40 * k)}" cy="${f1(y - 90 * k)}" rx="${f1(12 * k)}" ry="${f1(6 * k)}" fill="#e57373"/>`;
+    }
+    // fish, and bubbles rising
+    for (let i = 0; i < 4; i++) {
+      const x = x0 + W * (0.1 + 0.8 * R(i, 15)), y = y0 + (g - y0) * (0.15 + 0.4 * R(i, 16)), sd = side(i);
+      s += `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(18 * k)}" ry="${f1(9 * k)}" fill="${["#ff9f1c", "#ffd23f", "#ff6f91", "#7bdff2"][i]}"/>` +
+           `<polygon points="${P(x - sd * 16 * k, y)} ${P(x - sd * 30 * k, y - 9 * k)} ${P(x - sd * 30 * k, y + 9 * k)}" fill="${["#ff9f1c", "#ffd23f", "#ff6f91", "#7bdff2"][i]}"/>` +
+           `<circle cx="${f1(x + sd * 9 * k)}" cy="${f1(y - 2 * k)}" r="${f1(2 * k)}" fill="#111"/>`;
+    }
+    for (let i = 0; i < 16; i++)
+      s += `<circle cx="${f1(x0 + W * R(i, 17))}" cy="${f1(y0 + (g - y0) * R(i, 18))}" r="${f1((3 + 6 * R(i, 19)) * k)}" fill="none" stroke="#ffffff" stroke-width="${f1(1.5 * k)}" opacity="0.7"/>`;
+  } else if (kind === "beach") {
+    const sea = g - 170 * k, shore = g - 55 * k;
+    s += `<defs>${grad("bg-sky", "#5fbdf2", "#d6f0ff", y0, sea)}${grad("bg-ocean", "#1f86c4", "#4cc0e6", sea, shore)}</defs>` + all("url(#bg-sky)");
+    // the sun, high on the right
+    const sx = x1 - W * 0.16, sy = y0 + H * 0.14;
+    s += [...Array(12)].map((_, i) => { const a = i * Math.PI / 6;
+      return `<line x1="${f1(sx + 58 * k * Math.cos(a))}" y1="${f1(sy + 58 * k * Math.sin(a))}" x2="${f1(sx + 82 * k * Math.cos(a))}" y2="${f1(sy + 82 * k * Math.sin(a))}" ` +
+             `stroke="#ffd23f" stroke-width="${f1(6 * k)}" stroke-linecap="round"/>`; }).join("") +
+         `<circle cx="${f1(sx)}" cy="${f1(sy)}" r="${f1(46 * k)}" fill="#ffd23f"/>`;
+    // the ocean next to the sand, waves on it and foam at its edge
+    s += `<rect x="${f1(x0 - pad)}" y="${f1(sea)}" width="${f1(W + 2 * pad)}" height="${f1(shore - sea + 20 * k)}" fill="url(#bg-ocean)"/>`;
+    for (let i = 0; i < 14; i++) {
+      const x = x0 + W * R(i, 20), y = sea + (shore - sea) * (0.15 + 0.7 * R(i, 21));
+      s += `<path d="M${P(x - 16 * k, y)} Q${P(x - 8 * k, y - 6 * k)} ${P(x, y)} Q${P(x + 8 * k, y - 6 * k)} ${P(x + 16 * k, y)}" fill="none" stroke="#ffffff" stroke-width="${f1(2.5 * k)}" opacity="0.8"/>`;
+    }
+    s += land(shore - 4 * k, 6, "#ffffff", 0.9) + land(shore + 4 * k, 6, "#f3dca5", 1.4);
+    // palm trees at the sides
+    for (const sd of [-1, 1]) {
+      const bx = sd * Math.max(W / 2 - 60 * k, 200 * k), by = g + 40 * k, tx = bx - sd * 70 * k, ty = g - 340 * k;
+      s += `<path d="M${P(bx, by)} Q${P(bx + sd * 10 * k, g - 180 * k)} ${P(tx, ty)}" fill="none" stroke="#9b6b3c" stroke-width="${f1(20 * k)}" stroke-linecap="round"/>`;
+      for (let j = 1; j < 9; j++) {
+        const t = j / 9, qx = (1 - t) * (1 - t) * bx + 2 * t * (1 - t) * (bx + sd * 10 * k) + t * t * tx,
+              qy = (1 - t) * (1 - t) * by + 2 * t * (1 - t) * (g - 180 * k) + t * t * ty;
+        s += `<line x1="${f1(qx - 9 * k)}" y1="${f1(qy)}" x2="${f1(qx + 9 * k)}" y2="${f1(qy + 4 * k)}" stroke="#7a522c" stroke-width="${f1(2.5 * k)}"/>`;
+      }
+      for (const a of [-160, -125, -90, -55, -20, 15, 160, 195]) {
+        const r = a * Math.PI / 180, ex = tx + 120 * k * Math.cos(r), ey = ty + 80 * k * Math.sin(r) + 40 * k;
+        s += `<path d="M${P(tx, ty)} Q${P(tx + 70 * k * Math.cos(r), ty + 60 * k * Math.sin(r) - 30 * k)} ${P(ex, ey)} ` +
+             `Q${P(tx + 50 * k * Math.cos(r), ty + 40 * k * Math.sin(r) - 4 * k)} ${P(tx, ty)} Z" fill="#2e9d4a" stroke="#1f6e33" stroke-width="${f1(2 * k)}"/>`;
+      }
+      s += [[-8, 10], [8, 12], [0, 20]].map(([dx, dy]) => `<circle cx="${f1(tx + dx * k)}" cy="${f1(ty + dy * k)}" r="${f1(9 * k)}" fill="#6b4a2b"/>`).join("");
+    }
+    // a striped umbrella over a beach chair on each side
+    for (const [sd, ca, cb] of [[-1, "#e53935", "#ffffff"], [1, "#1e88e5", "#ffd23f"]]) {
+      const x = sd * Math.max(W / 2 - 210 * k, 150 * k), b = g + 20 * k, top = [x + sd * 16 * k, b - 230 * k];
+      s += `<line x1="${f1(x)}" y1="${f1(b)}" x2="${P(...top).replace(" ", '" y2="')}" stroke="#d8d8d8" stroke-width="${f1(5 * k)}"/>`;
+      for (let j = 0; j < 6; j++) {
+        const a0 = Math.PI + j * Math.PI / 6, a1 = a0 + Math.PI / 6;
+        const p0 = [top[0] + 120 * k * Math.cos(a0), top[1] + 26 * k + 40 * k * Math.sin(a0) * 0], p1 = [top[0] + 120 * k * Math.cos(a1), top[1] + 26 * k];
+        s += `<path d="M${P(...top)} L${P(p0[0], top[1] + 26 * k)} Q${P((p0[0] + p1[0]) / 2, top[1] + 38 * k)} ${P(...p1)} Z" fill="${j % 2 ? cb : ca}" stroke="#555" stroke-width="${f1(1.2 * k)}"/>`;
+      }
+      // the chair: a striped back leaning away, a seat, and its legs
+      const cx = x + sd * 30 * k, cy = b - 10 * k;
+      s += `<polygon points="${P(cx - 40 * k, cy - 34 * k)} ${P(cx + 40 * k, cy - 34 * k)} ${P(cx + 34 * k, cy - 18 * k)} ${P(cx - 34 * k, cy - 18 * k)}" fill="${ca}" stroke="#555" stroke-width="${f1(1.5 * k)}"/>` +
+           `<polygon points="${P(cx - 34 * k, cy - 34 * k)} ${P(cx + 34 * k, cy - 34 * k)} ${P(cx + 40 * k, cy - 92 * k)} ${P(cx - 28 * k, cy - 92 * k)}" fill="${cb}" stroke="#555" stroke-width="${f1(1.5 * k)}"/>` +
+           [-1, 0, 1].map(j => `<line x1="${f1(cx + j * 22 * k)}" y1="${f1(cy - 34 * k)}" x2="${f1(cx + j * 22 * k + 6 * k)}" y2="${f1(cy - 92 * k)}" stroke="${ca}" stroke-width="${f1(7 * k)}"/>`).join("") +
+           [-36, 36].map(dx => `<line x1="${f1(cx + dx * k)}" y1="${f1(cy - 20 * k)}" x2="${f1(cx + dx * 1.1 * k)}" y2="${f1(cy)}" stroke="#777" stroke-width="${f1(3 * k)}"/>`).join("");
+    }
+    // blankets on the sand, striped
+    for (const [sd, ca, cb, dy] of [[-1, "#8e44ad", "#ffd23f", 70], [1, "#2ecc71", "#ffffff", 95]]) {
+      const x = sd * W * 0.2, y = g + dy * k, w = 150 * k, h = 42 * k;
+      for (let j = 0; j < 6; j++)
+        s += `<polygon points="${P(x - w / 2 + j * w / 6 + 14 * k, y - h)} ${P(x - w / 2 + (j + 1) * w / 6 + 14 * k, y - h)} ${P(x - w / 2 + (j + 1) * w / 6, y)} ${P(x - w / 2 + j * w / 6, y)}" fill="${j % 2 ? cb : ca}"/>`;
+    }
+    // a sand castle on each side of the figure, towers, a door and a flag
+    for (const sd of [-1, 1]) {
+      const x = sd * Math.max(W * 0.3, 120 * k), y = g + 45 * k, c = "#e2bd6e", ln = "#b08a43";
+      const tower = (tx, w, h) => `<rect x="${f1(tx - w / 2)}" y="${f1(y - h)}" width="${f1(w)}" height="${f1(h)}" fill="${c}" stroke="${ln}" stroke-width="${f1(2 * k)}"/>` +
+        [-1, 0, 1].map(j => `<rect x="${f1(tx + j * w / 3 - w / 8)}" y="${f1(y - h - 8 * k)}" width="${f1(w / 4)}" height="${f1(9 * k)}" fill="${c}" stroke="${ln}" stroke-width="${f1(1.5 * k)}"/>`).join("");
+      s += tower(x, 80 * k, 46 * k) + tower(x - 34 * k, 26 * k, 74 * k) + tower(x + 34 * k, 26 * k, 74 * k) + tower(x, 30 * k, 92 * k) +
+           `<path d="M${P(x - 9 * k, y)} L${P(x - 9 * k, y - 16 * k)} Q${P(x, y - 26 * k)} ${P(x + 9 * k, y - 16 * k)} L${P(x + 9 * k, y)} Z" fill="#9a7638"/>` +
+           `<line x1="${f1(x)}" y1="${f1(y - 100 * k)}" x2="${f1(x)}" y2="${f1(y - 132 * k)}" stroke="#555" stroke-width="${f1(2 * k)}"/>` +
+           `<polygon points="${P(x, y - 132 * k)} ${P(x + sd * 22 * k, y - 125 * k)} ${P(x, y - 118 * k)}" fill="#e53935"/>`;
+    }
+  }
+  return s;
 }
 
 let faceFrame = { tx: 0, ty: 0, s: 1 };   // where the face is, for dragging it
@@ -1588,7 +1793,10 @@ function draw() {
   // each hand's own reach past the end of its arm: big mittens and long
   // fingers stuck out of the frame (and out of the saved picture)
   // (a falcon suit's wing reaches past the hand by about an arm's length)
-  const reach = BIRD_SUIT[kind] ? B.armLen * 1.4 + 50 : handReach(suit ? suitHands(C, kind) : state.hands) + 12;
+  // (either hand's: the left may wear its own style)
+  const reach = BIRD_SUIT[kind] ? B.armLen * 1.4 + 50
+    : (suit ? handReach(suitHands(C, kind))
+            : Math.max(handReach(state.hands), handReach({ ...state.hands, style: leftHand(state.hands) }))) + 12;
   // room for big hair on a tall head, a lid blown far off, and candy
   // and hair, stretched with the head (it hangs and spreads in face units)
   const hr = C ? { top: 0, bottom: 0, half: 0 } : hairReach(state.hair);
@@ -1605,17 +1813,27 @@ function draw() {
   // and a long skirt or dress, which can reach past the feet
   const skirtHem = !suit && !undies && (P.style === "skirt" || P.style === "dress")
     ? L + LL * (P.skirtLen ?? 50) / 100 + 30 : 0;
-  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem,
+  let bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem,
                           broomH ? broomH[1] + 140 : 0);
   const hairHalf = hr.half * headWidth(F) * (1 + 0.12 * F.alien / 100) * s;
-  const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
+  let left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
                         -((80 + (C ? (kind === "deer" ? 60 : 30) : witch ? 50 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20),
                         broomH ? -(Math.abs(broomH[0]) + 60) : 0);
+  // a background is a scene, wider than it is tall, with room at the
+  // sides for its trees, wreck, table or palms, and in front of the feet
+  // for its flowers, sand castles and blankets
+  if (state.background.kind !== "none") {
+    bottom = Math.max(bottom, ground + 0.16 * (bottom - top));
+    left = Math.min(left, -0.675 * (bottom - top));
+  }
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
             `${patternDef("pat-undies", U.color, U.pattern, U.patternSize, U.patternColor)}${C ? furDefs(C, kind) : ""}</defs>`;
+  // the background first, behind everything, its ground at the feet
+  if (state.background.kind !== "none")
+    svg += `<g id="bg">${backgroundSvg(state.background.kind, left, top, -left, bottom, ground)}</g>`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
   // behind everything: long hair's back layer, in the face's frame
   if (!C) svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
@@ -1720,7 +1938,7 @@ function draw() {
   if (witch) {
     svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})"><g transform="${topFlies(F)}">` +
            `<g transform="${hairStretch(F)}">${witchHat(WC)}</g></g></g>`;
-    if (WC.witchCat) svg += shoulderCat(w);
+    if (WC.witchCat) svg += shoulderCat(w, WC);
   }
 
   // then the arms again, over the hair and the face: raised arms cross
@@ -1749,7 +1967,12 @@ function draw() {
   // arms put them by the cheeks or over the eyes, not behind the head
   if (!winged) {
     const hands = suit ? suitHands(C, kind) : state.hands;
-    for (const { side, H, angle } of arms) svg += handSvg(H[0], H[1], angle, side, hands, skin);
+    for (const { side, H, angle } of arms) {
+      // the hand on the left may wear a style of its own; a hand holding
+      // the broom is closed round it, a round fist
+      const own = !suit && side < 0 && hands.leftStyle && hands.leftStyle !== "same" ? { ...hands, style: hands.leftStyle } : hands;
+      svg += handSvg(H[0], H[1], angle, side, broomH && side > 0 ? { ...own, style: "round" } : own, skin);
+    }
   }
 
   const pic = document.getElementById("pic");
@@ -1759,7 +1982,11 @@ function draw() {
   // long hair or a hood's back below it) swings far out: frame what was
   // drawn, kept centred
   if (F.burst > 0) {
+    // (the background runs past the frame on purpose: not counted)
+    const bg = pic.querySelector("#bg");
+    if (bg) bg.style.display = "none";
     const b = pic.getBBox(), l = Math.min(left, b.x - 12, -(b.x + b.width + 12));
+    if (bg) bg.style.display = "";
     const t = Math.min(top, b.y - 12), btm = Math.max(bottom, b.y + b.height + 12);
     if (l < left || t < top || btm > bottom)
       pic.setAttribute("viewBox", `${f1(l)} ${f1(t)} ${f1(-2 * l)} ${f1(btm - t)}`);
@@ -1780,6 +2007,12 @@ const ANIMAL_EYES = ["#e0a800", "#c6d43a", "#c88a1e", "#2b1a10", "#1a1410", "#3b
 const ACCENTS = ["#e89aa0", "#f4a0b0", "#5a3a2a", "#1d1410", "#f2c230", "#ff69b4"];
 const PATTERNS = [["plain", "plain"], ["stripes", "stripes"], ["dots", "dots"], ["hearts", "♥ hearts"], ["stars", "★ stars"]];
 
+// the hand on the left's style: its own, or the same as the other's
+const leftHand = h => (h.leftStyle && h.leftStyle !== "same" ? h.leftStyle : h.style);
+// whether either hand wears a style, for showing that style's sliders
+const usesHand = (h, st) => h.style === st || leftHand(h) === st;
+const HAND_STYLES = [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"],
+                     ["human", "✋ human"], ["alien", "👽 alien"]];
 const TABS = [
   ["😀 Face", "face", [
     ["color", "color", "skin & head color", SKINS],
@@ -1851,8 +2084,8 @@ const TABS = [
     ["range", "length", "length", 20, 300, 100, 190],
   ]],
   ["🖐 Hands", "hands", [
-    ["choice", "style", "style", [["round", "round"], ["mitten", "mittens"], ["star", "stars"], ["claw", "claws"],
-                                  ["human", "✋ human"], ["alien", "👽 alien"]]],
+    ["choice", "style", "style", HAND_STYLES],
+    ["choice", "leftStyle", "hand on the left", [["same", "same"], ...HAND_STYLES]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
     ["range", "fingers", "✋ number of fingers", 1, 100, 5, 7],
     ["range", "alienFingers", "👽 number of alien fingers", 1, 100, 2, 6],
@@ -1909,7 +2142,15 @@ const TABS = [
     ["color", "webColor", "🕸️ spider web color", ["#3fae4a", "#ffffff", "#c0c0c0", "#f28c28", "#1f1f22", "#b38bff"]],
     ["color", "trimColor", "hat band & stocking color", ["#f28c28", "#3fae4a", "#6a2c91", "#1f1f22", "#ffffff", "#e53935"]],
     ["toggle", "witchCat", "🐈‍⬛ cat on the shoulder"],
+    ["color", "catFur", "🐈‍⬛ cat's fur", ["#1f1f22", "#6b4226", "#e8862a", "#9ca3af", "#ffffff", "#8b5cf6"]],
+    ["color", "catWhite", "🐈‍⬛ cat's tuxedo (nose, chest, paws)", ["#ffffff", "off", "#f7ead8", "#ffd1dc", "#c0c0c0", "#1f1f22"]],
+    ["color", "catEyes", "🐈‍⬛ cat's eyes", ["#c6d43a", "#e0a800", "#3b82f6", "#22c55e", "#f28c28"]],
+    ["color", "catNose", "🐈‍⬛ cat's nose", ["#f4a0b0", "#ff69b4", "#1f1f22", "#8a4b1c"]],
     ["toggle", "broom", "🧹 broom"],
+  ]],
+  ["🏞️ Background", "background", [
+    ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
+                                      ["beach", "🏖️ beach"]]],
   ]],
 ];
 
@@ -1956,6 +2197,10 @@ const SHOWN_WHEN = {
   "costume.webColor": c => c.kind === "witch",
   "costume.trimColor": c => c.kind === "witch",
   "costume.witchCat": c => c.kind === "witch",
+  "costume.catFur": c => c.kind === "witch" && c.witchCat,
+  "costume.catWhite": c => c.kind === "witch" && c.witchCat,
+  "costume.catEyes": c => c.kind === "witch" && c.witchCat,
+  "costume.catNose": c => c.kind === "witch" && c.witchCat,
   "costume.broom": c => c.kind === "witch",
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
@@ -1964,17 +2209,17 @@ const SHOWN_WHEN = {
   "costume.accent": c => !!ANIMALS[c.kind],
   "hair.length": h => ["long", "curly", "pigtails", "spiky", "afro"].includes(h.style),
   "pants.skirtLen": p => p.style === "skirt" || p.style === "dress",
-  "hands.fingers": h => h.style === "human",
-  "hands.alienFingers": h => h.style === "alien",
-  "hands.starPoints": h => h.style === "star",
-  "hands.starAngle": h => h.style === "star",
-  "hands.mittenAngle": h => h.style === "mitten",
-  "hands.clawAngle": h => h.style === "claw",
-  "hands.humanAngle": h => h.style === "human",
-  "hands.alienAngle": h => h.style === "alien",
+  "hands.fingers": h => usesHand(h, "human"),
+  "hands.alienFingers": h => usesHand(h, "alien"),
+  "hands.starPoints": h => usesHand(h, "star"),
+  "hands.starAngle": h => usesHand(h, "star"),
+  "hands.mittenAngle": h => usesHand(h, "mitten"),
+  "hands.clawAngle": h => usesHand(h, "claw"),
+  "hands.humanAngle": h => usesHand(h, "human"),
+  "hands.alienAngle": h => usesHand(h, "alien"),
   // claws: the claw hand's, or a cat costume's paws
-  "hands.clawLen": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
-  "hands.clawCount": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
+  "hands.clawLen": h => usesHand(h, "claw") || (!!CLAWED[state.costume.kind] && !!costumeOn()),
+  "hands.clawCount": h => usesHand(h, "claw") || (!!CLAWED[state.costume.kind] && !!costumeOn()),
   "undies.style": u => u.on,
   "undies.top": u => u.on && u.style !== "onepiece",
   "undies.color": u => u.on,
@@ -2119,7 +2364,9 @@ document.getElementById("surprise").addEventListener("click", () => {
       else if (kind === "turn")
         state[part][key] = key === "starAngle" || Math.random() < 0.25 ? Math.random() * rest[0](state[part]) : 0;
       else if (kind === "toggle") state[part][key] = Math.random() < 0.3;
-      else if (kind === "choice") state[part][key] = pick(rest[0])[0];
+      // (the hand on the left mostly matches the other one)
+      else if (kind === "choice")
+        state[part][key] = key === "leftStyle" && Math.random() < 0.75 ? "same" : pick(rest[0])[0];
       else if (kind === "color") state[part][key] = pick(rest[0]);
     }
   // keep the surprises friendly: mostly not sick, not exploded, a normal-ish head
