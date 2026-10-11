@@ -99,6 +99,13 @@
   .pin { border: none; background: none; padding: 0; margin-right: 6px; font-size: 0.85em; opacity: 0.3;
          cursor: pointer; vertical-align: baseline; }
   .pin[aria-pressed=true] { opacity: 1; }
+  /* in the HUD, an eye on each slider folds it away to its name, and back
+     (it stays pinned) */
+  .eye { border: none; background: none; padding: 0; margin-right: 6px; font-size: 0.95em; cursor: pointer; }
+  .eye[aria-pressed=false] { opacity: 0.45; }
+  .hud .ctl.min { flex: 0 0 auto; }
+  .hud .ctl.min input, .hud .ctl.min .val { display: none; }
+  .hud .ctl.min > .lbl { margin: 0; }
 </style>
 </head>
 <body>
@@ -161,7 +168,7 @@ const DEFAULTS = {
   // the figure's size and place in a background scene (dragged there)
   background: { kind: "none", figSize: 100, figX: 0, figY: 0 },
   // the sliders pinned to the full-screen controls, as "part.key"
-  hud: { pins: [] },
+  hud: { pins: [], min: [] },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes", spot: "auto",
              witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false,
@@ -1604,9 +1611,9 @@ function handSvg(x, y, angle, side, h, skin) {
 // A WITCH'S THINGS. The hat, in the round head's units: a wide brim just
 // below the crown, a tall cone leaning over, bent at the tip, a band in
 // the trim color and a gold buckle.
-function witchHat(WC) {
+function witchHat(WC, rx = 128) {
   const c = WC.witchColor, ln = darker(c);
-  return `<ellipse cx="100" cy="44" rx="128" ry="18" fill="${c}" stroke="${ln}" stroke-width="3"/>` +
+  return `<ellipse cx="100" cy="44" rx="${f1(rx)}" ry="${f1(18 * Math.max(1, rx / 128) ** 0.5)}" fill="${c}" stroke="${ln}" stroke-width="3"/>` +
     `<path d="M46 42 Q72 -24 98 -84 Q112 -116 154 -126 Q128 -104 122 -80 Q134 -20 154 42 Q100 54 46 42 Z" ` +
     `fill="${c}" stroke="${ln}" stroke-width="3" stroke-linejoin="round"/>` +
     `<path d="M52 24 Q100 34 149 24 L152 38 Q100 48 49 38 Z" fill="${WC.trimColor}"/>` +
@@ -1742,18 +1749,26 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
     {
       const x = Math.max(x1 - W * 0.22, 230 * k), y = g + 30 * k, X = (a, b) => P(x + a * k, y + b * k);
       const shark = sd => {
-        // sitting up, facing the table: a grey body with a white belly, a
-        // fin on its back, a tail at its feet, an eye and a toothy grin
-        const cx = x + sd * 128 * k, cy = y - 92 * k, T = (a, b) => P(cx + sd * a * k, cy + b * k);
+        // sitting up, facing the table (toward the middle, -sd): a grey
+        // body with a white belly, a fin on its back, a tail at its feet,
+        // an eye and a toothy grin, and a front fin holding up a fork
+        const cx = x + sd * 128 * k, cy = y - 92 * k, T = (a, b) => P(cx - sd * a * k, cy + b * k);
+        const steel = `stroke="#9aa4ad" stroke-width="${f1(3 * k)}" stroke-linecap="round"`;
         return `<path d="M${T(14, 64)} Q${T(-30, 92)} ${T(-56, 72)} L${T(-20, 58)} Z" fill="#7d8ea0" stroke="#4d5b69" stroke-width="${f1(2.5 * k)}"/>` +
           `<path d="M${T(-12, -70)} Q${T(30, -78)} ${T(30, -30)} Q${T(26, 30)} ${T(10, 66)} Q${T(-30, 60)} ${T(-34, 10)} Q${T(-40, -50)} ${T(-12, -70)} Z" ` +
           `fill="#8b9cad" stroke="#4d5b69" stroke-width="${f1(3 * k)}"/>` +
           `<path d="M${T(26, -40)} Q${T(22, 20)} ${T(8, 60)} Q${T(-4, 20)} ${T(4, -40)} Z" fill="#eef3f6"/>` +
           `<path d="M${T(-30, -10)} L${T(-62, -24)} L${T(-34, 18)} Z" fill="#7d8ea0" stroke="#4d5b69" stroke-width="${f1(2.5 * k)}"/>` +
-          `<circle cx="${f1(cx + sd * 10 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(6 * k)}" fill="#ffffff"/>` +
-          `<circle cx="${f1(cx + sd * 12 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(3 * k)}" fill="#111"/>` +
+          `<circle cx="${f1(cx - sd * 10 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(6 * k)}" fill="#ffffff"/>` +
+          `<circle cx="${f1(cx - sd * 12 * k)}" cy="${f1(cy - 48 * k)}" r="${f1(3 * k)}" fill="#111"/>` +
           `<path d="M${T(4, -30)} Q${T(18, -20)} ${T(28, -32)}" fill="#fff" stroke="#333" stroke-width="${f1(2 * k)}"/>` +
-          [6, 13, 20].map(a => `<path d="M${T(a, -30 + (a - 4) * 0.1)} l${f1(sd * 3 * k)} ${f1(5 * k)} l${f1(sd * 3 * k)} ${f1(-5 * k)}" fill="#fff" stroke="#999" stroke-width="${f1(0.8 * k)}"/>`).join("");
+          [6, 13, 20].map(a => `<path d="M${T(a, -30 + (a - 4) * 0.1)} l${f1(-sd * 3 * k)} ${f1(5 * k)} l${f1(-sd * 3 * k)} ${f1(-5 * k)}" fill="#fff" stroke="#999" stroke-width="${f1(0.8 * k)}"/>`).join("") +
+          // the fork, held up over the table: a handle, a crossbar, three tines
+          `<line x1="${f1(cx - sd * 46 * k)}" y1="${f1(cy + 14 * k)}" x2="${f1(cx - sd * 46 * k)}" y2="${f1(cy - 34 * k)}" ${steel}/>` +
+          `<line x1="${f1(cx - sd * 40 * k)}" y1="${f1(cy - 34 * k)}" x2="${f1(cx - sd * 52 * k)}" y2="${f1(cy - 34 * k)}" ${steel}/>` +
+          [40, 46, 52].map(a => `<line x1="${f1(cx - sd * a * k)}" y1="${f1(cy - 34 * k)}" x2="${f1(cx - sd * a * k)}" y2="${f1(cy - 48 * k)}" ${steel}/>`).join("") +
+          // ...in its front fin, wrapped round the handle
+          `<path d="M${T(16, -2)} Q${T(36, -8)} ${T(52, 4)} Q${T(38, 14)} ${T(16, 10)} Z" fill="#7d8ea0" stroke="#4d5b69" stroke-width="${f1(2.5 * k)}"/>`;
       };
       s += [-70, 70].map(a => `<line x1="${f1(x + a * k)}" y1="${f1(y - 60 * k)}" x2="${f1(x + a * 1.2 * k)}" y2="${f1(y)}" stroke="#7a5230" stroke-width="${f1(8 * k)}"/>`).join("") +
            `<rect x="${f1(x - 120 * k)}" y="${f1(y - 34 * k)}" width="${f1(240 * k)}" height="${f1(10 * k)}" fill="#8b5a2b"/>` +
@@ -1846,7 +1861,13 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
 let faceFrame = { tx: 0, ty: 0, s: 1 };
 // the figure's size and place in its scene (k about its feet, at y = g),
 // and the scene's frame: for dragging the figure, and the face in it
-let figureT = { k: 1, dx: 0, dy: 0, g: 0 }, sceneFrame = { left: -200, top: -200, right: 200, bottom: 200, ground: 0 };   // where the face is, for dragging it
+// A background's stage: the frame the usual figure got in a scene, its
+// ground at 320 (the usual figure's), in picture units.
+const SCENE = { left: -405.9, top: -195, bottom: 406.2, ground: 320 };
+// the frame the figure itself needs (before a stage replaces it), for
+// fitting it to the stage
+let naturalFrame = { left: -200, top: -200, ground: 0 };
+let figureT = { k: 1, dx: 0, dy: 0, g: 0, sg: 0 }, sceneFrame = { left: -200, top: -200, right: 200, bottom: 200, ground: 0 };   // where the face is, for dragging it
 
 function draw() {
   const { face: F, body: B } = state;
@@ -1861,6 +1882,11 @@ function draw() {
   // pointed hat; and, if chosen, a cat on her shoulder and a broom in her
   // hand. Her own hair and face show.
   const witch = kind === "witch", WC = state.costume;
+  // (her brim covers her hair: as wide as its widest reach and 14 more,
+  // up to 300; and the hair above the brim is inside the hat, unseen)
+  const brimRx = witch ? Math.min(300, Math.max(128, hairReach(state.hair).half + 14)) : 128;
+  const tucked = (inner, id) => witch ? `<clipPath id="${id}"><rect x="-4000" y="40" width="8200" height="8000"/></clipPath>` +
+                                        `<g clip-path="url(#${id})">${inner}</g>` : inner;
   if (witch) {
     SH = { ...SH, style: "long", color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
     P = { ...P, style: "dress", skirtLen: 72, color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
@@ -1915,7 +1941,7 @@ function draw() {
   // (and a cat on the shoulder, 64 above where it sits and 42 below, its
   // tail out 34 to the side, all times its size)
   const kb = (state.costume.broomSize ?? 100) / 100, catK = witch && WC.witchCat ? (WC.catSize ?? 100) / 100 : 0;
-  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)), broomH ? broomH[1] - 140 * kb : 0,
+  let top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)), broomH ? broomH[1] - 140 * kb : 0,
                        catK ? -9 - 70 * catK : 0);
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
@@ -1927,34 +1953,37 @@ function draw() {
   const hairHalf = hr.half * headWidth(F) * (1 + 0.12 * F.alien / 100) * s;
   let left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[witch ? "witchboot" : state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
-                        -((80 + (C ? (kind === "deer" ? 60 : 30) : witch ? 50 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20),
+                        -((80 + (C ? (kind === "deer" ? 60 : 30) : witch ? brimRx - 80 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20),
                         broomH ? -(Math.abs(broomH[0]) + 60 * kb) : 0,
                         catK ? -(w - 4) - 24 * catK : 0, catK ? -(-(w - 4) + 40 * catK) : 0);
-  // a background is a scene, wider than it is tall, with room at the
-  // sides for its trees, wreck, table or palms, and in front of the feet
-  // for its flowers, sand castles and blankets
-  if (state.background.kind !== "none") {
-    bottom = Math.max(bottom, ground + 0.16 * (bottom - top));
-    left = Math.min(left, -0.675 * (bottom - top));
-  }
+  // A background is a stage of its own, the same whatever the figure
+  // (SCENE): the frame the usual figure gets in a scene. The figure stands
+  // on its ground by its feet, at its size and where it was dragged, so
+  // changing the figure never moves it or the scenery (fitting the scene
+  // to the figure did: a taller face slid the figure sideways). A figure
+  // grown past the stage's edges is cut off there; its size slider brings
+  // it back.
+  const scened = state.background.kind !== "none";
+  naturalFrame = { left, top, ground };
+  if (scened) ({ left, top, bottom } = SCENE);
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
             `${patternDef("pat-undies", U.color, U.pattern, U.patternSize, U.patternColor)}${C ? furDefs(C, kind) : ""}</defs>`;
   // the background first, behind everything, its ground at the feet
-  const BG = state.background, scened = BG.kind !== "none";
+  const BG = state.background;
   if (scened)
-    svg += `<g id="bg">${backgroundSvg(BG.kind, left, top, -left, bottom, ground)}</g>`;
-  // and in a scene, the figure at its own size (about its feet) and place,
-  // where it was dragged
-  figureT = scened ? { k: (BG.figSize ?? 100) / 100, dx: BG.figX ?? 0, dy: BG.figY ?? 0, g: ground }
-                   : { k: 1, dx: 0, dy: 0, g: ground };
-  sceneFrame = { left, top, right: -left, bottom, ground };
-  svg += `<g id="figure" transform="translate(${f1(figureT.dx)} ${f1(figureT.dy + ground)}) scale(${figureT.k.toFixed(3)}) translate(0 ${f1(-ground)})">`;
+    svg += `<g id="bg">${backgroundSvg(BG.kind, left, top, -left, bottom, SCENE.ground)}</g>`;
+  // and in a scene, the figure's feet (its ground, g) on the stage's
+  // ground (sg), at its own size about them, where it was dragged
+  figureT = scened ? { k: (BG.figSize ?? 100) / 100, dx: BG.figX ?? 0, dy: BG.figY ?? 0, g: ground, sg: SCENE.ground }
+                   : { k: 1, dx: 0, dy: 0, g: ground, sg: ground };
+  sceneFrame = { left, top, right: -left, bottom, ground: figureT.sg };
+  svg += `<g id="figure" transform="translate(${f1(figureT.dx)} ${f1(figureT.dy + figureT.sg)}) scale(${figureT.k.toFixed(3)}) translate(0 ${f1(-ground)})">`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
   // behind everything: long hair's back layer, in the face's frame
   if (!C) svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
-                 `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hairBackSvg(state.hair)}</g></g></g>`;
+                 `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${tucked(hairBackSvg(state.hair), "under-hat-back")}</g></g></g>`;
 
   // behind everything: a falcon's wings and tail, or a suit's tail
   // (a bald eagle's: plain dark brown wings and a white tail)
@@ -2051,7 +2080,7 @@ function draw() {
   // them), and behind the head
   if (!C)
     svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
-           `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hairSvg(state.hair)}</g></g></g>`;
+           `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${tucked(hairSvg(state.hair), "under-hat")}</g></g></g>`;
 
   if (winged) for (const arm of arms) svg += armWing(C, arm, armW);
 
@@ -2062,7 +2091,7 @@ function draw() {
   // off with the lid); her cat on her shoulder
   if (witch) {
     svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})"><g transform="${topFlies(F)}">` +
-           `<g transform="${hairStretch(F)}">${witchHat(WC)}</g></g></g>`;
+           `<g transform="${hairStretch(F)}">${witchHat(WC, brimRx)}</g></g></g>`;
     // (the cat grows or shrinks about where it sits)
     if (WC.witchCat)
       svg += `<g transform="translate(${f1(-(w - 4))} -9) scale(${((WC.catSize ?? 100) / 100).toFixed(3)}) translate(${f1(w - 4)} 9)">` +
@@ -2113,12 +2142,8 @@ function draw() {
   // a blown lid tilts about the crack, and on a tall head its top (and
   // long hair or a hood's back below it) swings far out: frame what was
   // drawn, kept centred
-  if (F.burst > 0) {
-    // (the background runs past the frame on purpose: not counted)
-    const bg = pic.querySelector("#bg");
-    if (bg) bg.style.display = "none";
+  if (F.burst > 0 && !scened) {
     const b = pic.getBBox(), l = Math.min(left, b.x - 12, -(b.x + b.width + 12));
-    if (bg) bg.style.display = "";
     const t = Math.min(top, b.y - 12), btm = Math.max(bottom, b.y + b.height + 12);
     if (l < left || t < top || btm > bottom)
       pic.setAttribute("viewBox", `${f1(l)} ${f1(t)} ${f1(-2 * l)} ${f1(btm - t)}`);
@@ -2304,6 +2329,7 @@ let syncs = [];   // each control's refresh, run after every change
 let hudSyncs = [];   // ...and the full-screen controls'
 
 function set(part, key, value) {
+  const wasBare = state.background.kind === "none";
   state[part][key] = value;
   // choosing an animal dresses it in its natural colors
   if (part === "costume" && key === "kind" && ANIMALS[value]) Object.assign(state.costume, lookOf(value));
@@ -2312,6 +2338,13 @@ function set(part, key, value) {
   if (part === "pants" && key === "style" && value === "dress") state.pants.skirtLen = 95;
   // a bikini comes with its top; trunks and briefs start without one
   if (part === "undies" && key === "style") state.undies.top = value === "bikini";
+  // a figure too big for the stage, once a background is chosen, shrinks
+  // to fit it (once: after that its size is the slider's)
+  if (part === "background" && key === "kind" && value !== "none" && wasBare) {
+    // (the usual figure fills the stage exactly: only a bigger one shrinks)
+    const n = naturalFrame, fit = Math.min((SCENE.ground - SCENE.top) / (n.ground - n.top), SCENE.left / n.left);
+    if (fit < 0.98) state.background.figSize = Math.max(10, Math.floor(100 * fit));
+  }
   changed();
 }
 function changed() {
@@ -2393,6 +2426,13 @@ const SHOWN_WHEN = {
 // Pinning a slider puts it in the full-screen controls (the HUD); the
 // pins are part of the friend, saved and loaded with it.
 const pinned = id => (state.hud.pins || []).includes(id);
+// a HUD slider folded away to its name: part of the friend too
+const folded = id => (state.hud.min || []).includes(id);
+function toggleMin(id) {
+  const min = state.hud.min || [];
+  state.hud.min = folded(id) ? min.filter(x => x !== id) : [...min, id];
+  changed();
+}
 function togglePin(id) {
   const pins = state.hud.pins || [];
   state.hud.pins = pinned(id) ? pins.filter(x => x !== id) : [...pins, id];
@@ -2406,6 +2446,12 @@ function control(part, [kind, key, label, ...rest]) {
   const name = el("span", { class: "name" }, [label]);
   const lbl = el("div", { class: "lbl" }, [el("span", {}, [name]), val]);
   const box = el("div", { class: "ctl" }, [lbl]);
+  if ((kind === "range" || kind === "turn") && buildingHud) {
+    const id = part + "." + key, eye = el("button", { class: "eye", title: "Fold this slider away, or open it (it stays pinned)",
+                                                       onclick: () => { toggleMin(id); } }, "👁️");
+    name.before(eye);
+    syncs.push(() => { eye.setAttribute("aria-pressed", !folded(id)); box.classList.toggle("min", folded(id)); });
+  }
   if ((kind === "range" || kind === "turn") && part !== "background" && !buildingHud) {
     // the pin, left of the name (the scene's own sliders are always in the
     // HUD: no pin)
@@ -2743,7 +2789,7 @@ const pic = document.getElementById("pic");
 const picUnits = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(pic.getScreenCTM().inverse());
 function faceUnits(e) {
   const p = picUnits(e), T = figureT;
-  const x = (p.x - T.dx) / T.k, y = (p.y - T.dy - T.g) / T.k + T.g;
+  const x = (p.x - T.dx) / T.k, y = (p.y - T.dy - T.sg) / T.k + T.g;
   return [(x - faceFrame.tx) / faceFrame.s, (y - faceFrame.ty) / faceFrame.s];
 }
 // in a scene, a press on the figure (not its face) picks it up
