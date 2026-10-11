@@ -67,13 +67,26 @@
   .formats label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
   .saved { text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 1em; }
   .saved a { color: inherit; font-weight: 600; margin: 0 4px; }
+  /* Full screen: the button at the picture's top right fills the window
+     with the picture, the controls hidden; again (an X then) or Escape
+     brings them back. */
+  .pic-wrap { position: relative; }
+  .max-btn { position: absolute; top: 8px; right: 8px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
+             background: var(--panel); opacity: 0.9; }
+  body.big { overflow: hidden; }
+  body.big .pic-wrap { position: fixed; inset: 0; z-index: 10; background: var(--bg); padding: 8px; }
+  body.big svg#pic { width: 100%; height: 100%; max-height: none; }
+  body.big .max-btn { top: 16px; right: 16px; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="stage">
     <h1>Messed Up Dress Up</h1>
-    <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="pic-wrap">
+      <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
+      <button class="max-btn" id="max" title="Full screen" aria-label="Full screen">⤢</button>
+    </div>
     <div class="caption" id="mood"></div>
     <div class="actions">
       <button class="big" id="surprise">🎲 Surprise me!</button>
@@ -2068,6 +2081,30 @@ function showTab() {
   panel.replaceChildren(...ctls.map(c => control(part, c)));
   changed();
 }
+
+// ===================== FULL SCREEN =====================
+// The picture fills the window, the controls hidden -- and the screen too,
+// where the browser allows it (not an iPhone's); an X, Escape, or leaving
+// the browser's full screen brings the controls back.
+const maxBtn = document.getElementById("max");
+function setBig(on) {
+  document.body.classList.toggle("big", on);
+  maxBtn.textContent = on ? "✕" : "⤢";
+  maxBtn.title = on ? "Back to the controls" : "Full screen";
+  maxBtn.setAttribute("aria-label", maxBtn.title);
+  try {
+    if (on && document.documentElement.requestFullscreen && !document.fullscreenElement)
+      document.documentElement.requestFullscreen().catch(() => {});
+    else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } catch (e) { /* the window-filling picture is enough */ }
+}
+maxBtn.addEventListener("click", () => setBig(!document.body.classList.contains("big")));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.body.classList.contains("big")) setBig(false);
+});
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && document.body.classList.contains("big")) setBig(false);
+});
 
 // ===================== SURPRISE, SAVE, START OVER =====================
 
