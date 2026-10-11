@@ -105,7 +105,8 @@
 const DEFAULTS = {
   face:  { color: "#cfa000", size: 46, smile: 85, brow: 30, sick: 0, burst: 0, candy: 0,
            stars: false, hearts: false, xeyes: false, unibrow: true, eyes: 50, sides: 0,
-           rays: 0, teeth: 0, open: 0,
+           rays: 0, teeth: 5, open: 0, teethStyle: "normal",
+           tongue: "in", tongueLen: 100, tongueW: 100, tongueColor: "#e75480",
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
            faceW: 100, faceH: 100, alien: 0, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100 },
@@ -125,6 +126,9 @@ const clone = o => JSON.parse(JSON.stringify(o));
 // before the nose views: a nose was a shape (or "none"), a direction and
 // one size
 function upgradeFace(f, saved) {
+  // before the teeth choice, teeth were the spikes, and 0 meant none
+  if (saved && saved.teethStyle === undefined && saved.teeth !== undefined)
+    f.teethStyle = saved.teeth > 0 ? "spikes" : "normal";
   if (!saved || saved.noseView !== undefined || saved.nose === undefined) return;
   f.noseView = saved.nose === "none" ? "none"
              : saved.noseDir === "left" ? "left" : saved.noseDir === "center" ? "front" : "right";
@@ -423,6 +427,44 @@ function teeth(n, upper, lower) {
   }
   return s;
 }
+// The inside of an open mouth: a dark hole at the back, the tongue lying
+// in the bottom, and teeth -- plain white bars along the inside of the
+// top and bottom lips, or the spikes -- then the lips' outline over them.
+// A tongue can also stick out, over the lower lip (or a closed mouth).
+// All in the mouth's units: corners at (60, 150) and (140, 150).
+function mouthSvg(F, o, upper, lower) {
+  const path = openMouth(F.smile, o), tc = F.tongueColor || "#e75480";
+  const outline = `<path d="${path}" stroke="black" fill="none" stroke-width="5" stroke-linejoin="round"/>`;
+  // the lips' middles (a quadratic's midpoint is halfway to its control)
+  const top = o === 0 ? 75 + (110 + idiv(4 * F.smile, 5)) / 2 : 75 + upper / 2;
+  const bottom = o === 0 ? top : 75 + lower / 2, depth = bottom - top;
+  const out = () => {
+    const w = 26 * (F.tongueW ?? 100) / 100, len = 30 * (F.tongueLen ?? 100) / 100, r = w / 2;
+    const y0 = o === 0 ? top - 2 : Math.max(top + 2, bottom - depth * 0.4), y1 = bottom + len;
+    return `<path d="M${f1(100 - r)} ${f1(y0)} L${f1(100 - r)} ${f1(y1)} A${f1(r)} ${f1(r)} 0 0 0 ${f1(100 + r)} ${f1(y1)} ` +
+           `L${f1(100 + r)} ${f1(y0)} Z" fill="${tc}" stroke="${darker(tc)}" stroke-width="2"/>` +
+           `<path d="M100 ${f1(y0 + 4)} L100 ${f1(y0 + (y1 + r - y0) * 0.7)}" stroke="${darker(tc)}" stroke-width="2" stroke-linecap="round"/>`;
+  };
+  if (o === 0) return F.tongue === "out" ? out() + outline : outline;
+  let s = `<defs><clipPath id="mouth-in"><path d="${path}"/></clipPath></defs>` +
+          `<path d="${path}" fill="#5c1a1a"/><g clip-path="url(#mouth-in)">`;
+  if (depth > 4)
+    s += `<ellipse cx="100" cy="${f1(top + depth * 0.42)}" rx="22" ry="${f1(depth * 0.3)}" fill="#160606"/>`;
+  if (F.tongue !== "none")
+    s += `<ellipse cx="100" cy="${f1(bottom - depth * 0.06)}" rx="27" ry="${f1(Math.max(3, depth * 0.34))}" ` +
+         `fill="${tc}" stroke="${darker(tc)}" stroke-width="1.5"/>`;
+  if ((F.teethStyle || "normal") === "normal") {
+    // a strip across the mouth just inside each lip, cut to the mouth's
+    // shape: wide along a flat lip, short at a curved one's deepest point
+    const t = Math.max(3, Math.min(10, depth * 0.2));
+    s += `<rect x="55" y="${f1(top - 3)}" width="90" height="${f1(t + 3)}" fill="white"/>` +
+         `<rect x="55" y="${f1(bottom - t * 0.85)}" width="90" height="${f1(t * 0.85 + 3)}" fill="white"/>`;
+  }
+  s += `</g>` + outline;
+  if (F.teethStyle === "spikes") s += teeth(F.teeth, upper, lower);
+  if (F.tongue === "out") s += out();
+  return s;
+}
 const SICK = ["yellowgreen", "#c8c84a", "olivedrab", "#b5c22e"];
 const BUMPS = [[8, 15, 7], [20, 40, 8], [30, 62, 8], [40, 88, 9], [50, 96, 8],
                [60, 88, 9], [70, 62, 8], [80, 40, 8], [92, 15, 7], [25, 12, 6]];
@@ -614,7 +656,7 @@ function faceSvg(F, ground) {
   const hoodClips = C ? `<clipPath id="hood-brim"><rect x="-200" y="-400" width="600" height="454"/></clipPath>` +
                         `<clipPath id="hood-inside"><ellipse ${hoodEllipse(F)}/></clipPath>` : "";
   return `<defs>${clips}${hoodClips}</defs>` +
-    `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${C ? hoodBack(C, kind, F) : hairSvg(state.hair)}</g></g>` +
+    (C ? `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hoodBack(C, kind, F)}</g></g>` : "") +
     sideLines(F.sides) +
     (b > 0 ? part(' clip-path="url(#below-crack)"') : part()) +
     raysUp(rayLen, 3 + idiv(r, 25), crackY) +
@@ -633,9 +675,7 @@ function faceSvg(F, ground) {
       `stroke="black" fill="none" stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
     // the mouth, at its place and grown with the head
     `<g transform="translate(100 ${f1(LY.mouthY)}) scale(${LY.kx.toFixed(3)} ${LY.ky.toFixed(3)}) translate(-100 -150)">` +
-    `<path d="${openMouth(F.smile, o)}" stroke="black" fill="${o === 0 ? "none" : "#5c1a1a"}" ` +
-      `stroke-width="5" stroke-linejoin="round"/>` +
-    teeth(F.teeth, upper, lower) +
+    mouthSvg(F, o, upper, lower) +
     sickPile(F.sick, 150 + idiv(lower - 150, 2), 150 + (ground - LY.mouthY) / LY.ky) + `</g>`;
 }
 
@@ -1286,17 +1326,34 @@ function draw() {
   const shoulder = !suit && SH.style === "tank" ? [[nw + 12, -20], [w, 30]] : [[w + 4, -6], [w, 44]];
   const torso = [[-nw, -20], ...collar, [nw, -20], ...shoulder, [w + 2, L], [-(w + 2), L],
                  ...shoulder.map(([x, y]) => [-x, y]).reverse()];
+  const bareBody = [[-(w + 2), L + 2], [-w, 44], [-(w + 4), -6], [-nw, -20], [nw, -20], [w + 4, -6], [w, 44], [w + 2, L + 2]];
   if (undies) {
     // a plain body shape in skin, no collar, then the swimsuit or top on it
     // (outlined on every side but the bottom, so it runs on into the hips
     // without a line at the waist)
-    const body = [[-(w + 2), L + 2], [-w, 44], [-(w + 4), -6], [-nw, -20], [nw, -20], [w + 4, -6], [w, 44], [w + 2, L + 2]];
+    const body = bareBody;
     svg += poly(body, limb, "none", 0) +
            `<polyline points="${pts(body)}" fill="none" stroke="${limbLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
     svg += undiesTop(U, w, nw, hw, fx, L);
   } else svg += poly(torso, sf, ss);
   if (suit && kind !== "eaglesuit")  // the suit's belly (a bald eagle is brown all over)
     svg += `<ellipse cx="0" cy="${f1(L * 0.58)}" rx="${f1(w * 0.55)}" ry="${f1(L * 0.36)}" fill="${C.belly}"/>`;
+  // the hair, in the face's frame: over the body and shirt, but under the
+  // arms, which are drawn again over it (long or curly hair hangs beside
+  // them), and behind the head, which is drawn last
+  if (!C) {
+    svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
+           `<g transform="${topFlies(F)}"><g transform="${hairStretch(F)}">${hairSvg(state.hair)}</g></g></g>`;
+    // (only outside the body, where they showed before: the body still
+    // covers their tops, outline and all)
+    svg += `<mask id="off-body" maskUnits="userSpaceOnUse" x="-5000" y="-5000" width="10000" height="10000">` +
+           `<rect x="-5000" y="-5000" width="10000" height="10000" fill="white"/>` +
+           `<polygon points="${pts(undies ? bareBody : torso)}" fill="black" stroke="black" stroke-width="3" stroke-linejoin="round"/></mask>` +
+           `<g mask="url(#off-body)">`;
+    for (const { A, H } of arms) svg += line(A[0], A[1], H[0], H[1], armW, limb, limbLine);
+    if (sleeve > 0) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 14, ss); }
+    svg += `</g>`;
+  }
   if (sleeve > 0 && !winged) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
 
   if (winged) for (const arm of arms) svg += armWing(C, arm, armW);
@@ -1353,7 +1410,12 @@ const TABS = [
     ["range", "noseH", "nose height", 20, 300, 70, 150],
     ["range", "noseW", "nose width", 20, 300, 70, 150],
     ["range", "open", "mouth open", 0, 300, 0, 100],
-    ["range", "teeth", "teeth", 0, 15, 0, 5],
+    ["choice", "teethStyle", "🦷 teeth", [["normal", "normal"], ["spikes", "spiky"], ["none", "none"]]],
+    ["range", "teeth", "spiky teeth", 0, 15, 0, 5],
+    ["choice", "tongue", "👅 tongue", [["in", "in"], ["out", "sticking out"], ["none", "none"]]],
+    ["range", "tongueLen", "tongue length", 10, 300, 60, 160],
+    ["range", "tongueW", "tongue width", 30, 250, 70, 140],
+    ["color", "tongueColor", "tongue color", ["#e75480", "#ff6f91", "#d62f4b", "#c71585", "#8e44ad", "#2ecc71", "#3b82f6"]],
     ["range", "sides", "side lines", 0, 300, 0, 100],
     ["range", "burst", "💥 explode", 0, 300, 0, 100],
     ["range", "candy", "🍬 candy", 0, 300, 0, 100],
@@ -1481,6 +1543,10 @@ const SHOWN_WHEN = {
   "face.irisColor": f => f.iris > 0,
   "face.nose": f => f.noseView === "right" || f.noseView === "left",
   "face.noseFront": f => f.noseView === "front",
+  "face.teeth": f => f.teethStyle === "spikes",
+  "face.tongueLen": f => f.tongue === "out",
+  "face.tongueW": f => f.tongue === "out",
+  "face.tongueColor": f => f.tongue !== "none",
   "face.noseH": f => f.noseView !== "none",
   "face.noseW": f => f.noseView !== "none",
   "face.whites": f => f.iris > 0,
