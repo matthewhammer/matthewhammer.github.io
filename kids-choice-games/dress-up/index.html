@@ -74,9 +74,31 @@
   .max-btn { position: absolute; top: 8px; right: 8px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
              background: var(--panel); opacity: 0.9; }
   body.big { overflow: hidden; }
-  body.big .pic-wrap { position: fixed; inset: 0; z-index: 10; background: var(--bg); padding: 8px; }
-  body.big svg#pic { width: 100%; height: 100%; max-height: none; }
+  /* (the sticky stage is its own stacking context: raised, or the panel's
+     half-faded pins, each a layer of its own, paint over the full screen) */
+  body.big .stage { z-index: 20; }
+  body.big .app > :not(.stage) { visibility: hidden; }
+  body.big .pic-wrap { position: fixed; inset: 0; z-index: 10; background: var(--bg); padding: 8px;
+                      display: flex; flex-direction: column; gap: 8px; }
+  body.big svg#pic { width: 100%; height: 0; flex: 1 1 auto; max-height: none; }
   body.big .max-btn { top: 16px; right: 16px; }
+  /* In full screen, a heads-up display of chosen controls: hidden until
+     its button is pressed; the scene's own controls and every pinned slider. */
+  .hud-btn { display: none; position: absolute; top: 16px; right: 66px; padding: 0 9px; font-size: 1.3em;
+             line-height: 1.45; background: var(--panel); opacity: 0.9; }
+  body.big .hud-btn { display: block; }
+  /* (below the picture, which shrinks to make room: it never covers the
+     figure or its face) */
+  .hud { flex: 0 0 auto; max-height: 40vh; overflow: auto; border-radius: 14px;
+         display: flex; flex-wrap: wrap; gap: 0 18px; padding: 6px 16px 10px;
+         background: rgba(24, 20, 36, 0.86); color: #fff; }
+  .hud[hidden] { display: none; }
+  .hud .ctl { flex: 1 1 220px; margin: 6px 0; }
+  .hud .ctl > .lbl .val { color: #ddd; }
+  .hud .empty { color: #ddd; padding: 8px 0; }
+  .pin { border: none; background: none; padding: 0 4px; margin-left: 4px; font-size: 0.85em; opacity: 0.3;
+         cursor: pointer; vertical-align: middle; }
+  .pin[aria-pressed=true] { opacity: 1; }
 </style>
 </head>
 <body>
@@ -86,6 +108,8 @@
     <div class="pic-wrap">
       <svg id="pic" xmlns="http://www.w3.org/2000/svg"></svg>
       <button class="max-btn" id="max" title="Full screen" aria-label="Full screen">⤢</button>
+      <button class="hud-btn" id="hud-btn" title="Show the pinned controls" aria-label="Show the pinned controls" aria-pressed="false">🎛️</button>
+      <div class="hud" id="hud" hidden></div>
     </div>
     <div class="caption" id="mood"></div>
     <div class="actions">
@@ -134,7 +158,10 @@ const DEFAULTS = {
   undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
-  background: { kind: "none" },
+  // the figure's size and place in a background scene (dragged there)
+  background: { kind: "none", figSize: 100, figX: 0, figY: 0 },
+  // the sliders pinned to the full-screen controls, as "part.key"
+  hud: { pins: [] },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes", spot: "auto",
              witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false,
@@ -1802,7 +1829,10 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
   return s;
 }
 
-let faceFrame = { tx: 0, ty: 0, s: 1 };   // where the face is, for dragging it
+let faceFrame = { tx: 0, ty: 0, s: 1 };
+// the figure's size and place in its scene (k about its feet, at y = g),
+// and the scene's frame: for dragging the figure, and the face in it
+let figureT = { k: 1, dx: 0, dy: 0, g: 0 }, sceneFrame = { left: -200, top: -200, right: 200, bottom: 200, ground: 0 };   // where the face is, for dragging it
 
 function draw() {
   const { face: F, body: B } = state;
@@ -1898,8 +1928,15 @@ function draw() {
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
             `${patternDef("pat-undies", U.color, U.pattern, U.patternSize, U.patternColor)}${C ? furDefs(C, kind) : ""}</defs>`;
   // the background first, behind everything, its ground at the feet
-  if (state.background.kind !== "none")
-    svg += `<g id="bg">${backgroundSvg(state.background.kind, left, top, -left, bottom, ground)}</g>`;
+  const BG = state.background, scened = BG.kind !== "none";
+  if (scened)
+    svg += `<g id="bg">${backgroundSvg(BG.kind, left, top, -left, bottom, ground)}</g>`;
+  // and in a scene, the figure at its own size (about its feet) and place,
+  // where it was dragged
+  figureT = scened ? { k: (BG.figSize ?? 100) / 100, dx: BG.figX ?? 0, dy: BG.figY ?? 0, g: ground }
+                   : { k: 1, dx: 0, dy: 0, g: ground };
+  sceneFrame = { left, top, right: -left, bottom, ground };
+  svg += `<g id="figure" transform="translate(${f1(figureT.dx)} ${f1(figureT.dy + ground)}) scale(${figureT.k.toFixed(3)}) translate(0 ${f1(-ground)})">`;
   svg += `<ellipse cx="0" cy="${f1(ground)}" rx="${f1(hw + 70)}" ry="12" fill="#000" opacity="0.08"/>`;
   // behind everything: long hair's back layer, in the face's frame
   if (!C) svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">` +
@@ -2054,6 +2091,7 @@ function draw() {
       svg += handSvg(H[0], H[1], angle, side, broomH && side > 0 ? { ...own, style: "round" } : own, skin);
     }
   }
+  svg += `</g>`;   // the figure
 
   const pic = document.getElementById("pic");
   pic.setAttribute("viewBox", `${f1(left)} ${f1(top)} ${f1(width)} ${f1(bottom - top)}`);
@@ -2241,11 +2279,14 @@ const TABS = [
   ["🏞️ Background", "background", [
     ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
                                       ["beach", "🏖️ beach"]]],
+    ["range", "figSize", "🧍 size in the scene (drag it to move it)", 10, 200, 100, 100],
+    ["action", "recenter", "↺ back to the middle", () => { state.background.figX = 0; state.background.figY = 0; }],
   ]],
 ];
 
 let tab = 0;
 let syncs = [];   // each control's refresh, run after every change
+let hudSyncs = [];   // ...and the full-screen controls'
 
 function set(part, key, value) {
   state[part][key] = value;
@@ -2258,7 +2299,12 @@ function set(part, key, value) {
   if (part === "undies" && key === "style") state.undies.top = value === "bikini";
   changed();
 }
-function changed() { draw(); for (const f of syncs) f(); persist(); }
+function changed() {
+  draw(); for (const f of syncs) f(); for (const f of hudSyncs) f(); persist();
+  // a new friend (loaded, started over, surprised) or a scene turned on or
+  // off rebuilds the HUD; a slider moving in it does not
+  if (!hud.hidden && hudKey() !== hudShown) renderHud();
+}
 
 function el(tag, attrs = {}, kids = []) {
   const e = document.createElement(tag);
@@ -2297,6 +2343,8 @@ const SHOWN_WHEN = {
   "costume.catSize": c => c.kind === "witch" && c.witchCat,
   "costume.broomSize": c => c.kind === "witch" && c.broom,
   "costume.bootColor": c => c.kind === "witch",
+  "background.figSize": b => b.kind !== "none",
+  "background.recenter": b => b.kind !== "none" && ((b.figX ?? 0) !== 0 || (b.figY ?? 0) !== 0),
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => !!ANIMALS[c.kind],
@@ -2327,9 +2375,29 @@ const SHOWN_WHEN = {
   "pants.patternColor": c => c.pattern !== "plain",
 };
 
+// Pinning a slider puts it in the full-screen controls (the HUD); the
+// pins are part of the friend, saved and loaded with it.
+const pinned = id => (state.hud.pins || []).includes(id);
+function togglePin(id) {
+  const pins = state.hud.pins || [];
+  state.hud.pins = pinned(id) ? pins.filter(x => x !== id) : [...pins, id];
+  changed(); renderHud();
+}
 function control(part, [kind, key, label, ...rest]) {
   const val = el("span", { class: "val" });
-  const box = el("div", { class: "ctl" }, [el("div", { class: "lbl" }, [label, val])]);
+  const lbl = el("div", { class: "lbl" }, [label, val]);
+  const box = el("div", { class: "ctl" }, [lbl]);
+  if (kind === "range" || kind === "turn") {
+    // (the scene's own sliders are always in the HUD: no pin)
+    const id = part + "." + key, pin = el("button", { class: "pin", title: "Pin to the full-screen controls",
+                                                       onclick: () => togglePin(id) }, "📌");
+    if (part !== "background") { lbl.firstChild.after(pin); syncs.push(() => pin.setAttribute("aria-pressed", pinned(id))); }
+  }
+  if (kind === "action") {
+    const b = el("button", { onclick: () => { rest[0](); changed(); } }, label);
+    lbl.replaceChildren();
+    box.append(b);
+  }
   if (kind === "range") {
     const [lo, hi] = rest;
     const input = el("input", { type: "range", min: lo, max: hi,
@@ -2432,6 +2500,7 @@ function showTab() {
 const maxBtn = document.getElementById("max");
 function setBig(on) {
   document.body.classList.toggle("big", on);
+  if (!on) setHud(false);
   maxBtn.textContent = on ? "✕" : "⤢";
   maxBtn.title = on ? "Back to the controls" : "Full screen";
   maxBtn.setAttribute("aria-label", maxBtn.title);
@@ -2448,6 +2517,41 @@ document.addEventListener("keydown", e => {
 document.addEventListener("fullscreenchange", () => {
   if (!document.fullscreenElement && document.body.classList.contains("big")) setBig(false);
 });
+
+// ===================== THE HEADS-UP DISPLAY =====================
+// In full screen, a strip of controls along the bottom, hidden until its
+// button is pressed: a scene's own controls (the figure's size; drag the
+// figure to move it), then every pinned slider, made by control() as in
+// the panel, with their own refreshes.
+const hud = document.getElementById("hud"), hudBtn = document.getElementById("hud-btn");
+const hudKey = () => JSON.stringify(state.hud.pins || []) + (state.background.kind !== "none");
+let hudShown = "";
+function renderHud() {
+  if (hud.hidden) return;
+  hudShown = hudKey();
+  const saved = syncs;
+  syncs = [];
+  const boxes = [];
+  if (state.background.kind !== "none")
+    for (const spec of TABS.find(t => t[1] === "background")[2].filter(c => c[1] !== "kind")) boxes.push(control("background", spec));
+  for (const id of state.hud.pins || []) {
+    const [part, key] = id.split("."), tabEntry = TABS.find(t => t[1] === part);
+    const spec = tabEntry && tabEntry[2].find(c => c[1] === key);
+    if (spec) boxes.push(control(part, spec));
+  }
+  if (!boxes.length)
+    boxes.push(el("div", { class: "empty" }, "Pin sliders with 📌 in the controls, and they show up here."));
+  hud.replaceChildren(...boxes);
+  hudSyncs = syncs;
+  syncs = saved;
+  for (const f of hudSyncs) f();
+}
+function setHud(on) {
+  hud.hidden = !on;
+  hudBtn.setAttribute("aria-pressed", on);
+  if (on) renderHud(); else { hud.replaceChildren(); hudSyncs = []; }
+}
+hudBtn.addEventListener("click", () => setHud(hud.hidden));
 
 // ===================== SURPRISE, SAVE, START OVER =====================
 
@@ -2611,10 +2715,20 @@ document.getElementById("load-file").addEventListener("change", async e => {
 
 let drag = null;
 const pic = document.getElementById("pic");
+// the pointer in the picture's units, then in the figure's (undoing its
+// size and place in a scene), then in the face's
+const picUnits = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(pic.getScreenCTM().inverse());
 function faceUnits(e) {
-  const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(pic.getScreenCTM().inverse());
-  return [(p.x - faceFrame.tx) / faceFrame.s, (p.y - faceFrame.ty) / faceFrame.s];
+  const p = picUnits(e), T = figureT;
+  const x = (p.x - T.dx) / T.k, y = (p.y - T.dy - T.g) / T.k + T.g;
+  return [(x - faceFrame.tx) / faceFrame.s, (y - faceFrame.ty) / faceFrame.s];
 }
+// in a scene, a press on the figure (not its face) picks it up
+const onFigure = e => {
+  if (state.background.kind === "none") return false;
+  const t = document.elementFromPoint(e.clientX, e.clientY);
+  return !!(t && t.closest && t.closest("#figure"));
+};
 const onFace = e => {
   const [x, y] = faceUnits(e);
   return (x - 100) ** 2 + (y - 110) ** 2 <= 90 ** 2;
@@ -2624,14 +2738,21 @@ const onFace = e => {
 // drag (the page used to opt the whole picture out of zooming). A second
 // finger lets go of the face, so a pinch goes to the browser.
 pic.addEventListener("touchstart", e => {
-  if (e.touches.length === 1 && onFace(e.touches[0])) e.preventDefault();
+  if (e.touches.length === 1 && (onFace(e.touches[0]) || onFigure(e.touches[0]))) e.preventDefault();
   else drag = null;
 }, { passive: false });
 pic.addEventListener("touchmove", e => {
   if (drag && e.touches.length === 1) e.preventDefault();
 }, { passive: false });
 pic.addEventListener("pointerdown", e => {
-  if (!e.isPrimary || !onFace(e)) return;
+  if (!e.isPrimary) return;
+  if (!onFace(e)) {
+    if (!onFigure(e)) return;
+    const p = picUnits(e);
+    drag = { figure: true, x0: state.background.figX ?? 0, y0: state.background.figY ?? 0, px: p.x, py: p.y };
+    pic.setPointerCapture(e.pointerId);
+    return;
+  }
   const [x, y] = faceUnits(e);
   const feature = y < faceLayout(state.face).eyeY - 12 - browLift(state.face) ? "brow" : "smile";
   drag = { feature, v0: state.face[feature], y0: e.clientY };
@@ -2640,6 +2761,15 @@ pic.addEventListener("pointerdown", e => {
 // One step per screen pixel, however big the picture is drawn.
 pic.addEventListener("pointermove", e => {
   if (!drag) return;
+  if (drag.figure) {
+    // kept in the scene: its feet within the frame, from the frame's top
+    // half down to just below the ground
+    const p = picUnits(e), F = sceneFrame;
+    state.background.figX = Math.round(clamp(drag.x0 + p.x - drag.px, F.left, F.right));
+    state.background.figY = Math.round(clamp(drag.y0 + p.y - drag.py, (F.top - F.ground) * 0.6, F.bottom - F.ground));
+    changed();
+    return;
+  }
   state.face[drag.feature] = clamp(Math.round(drag.v0 + (e.clientY - drag.y0)), -100, 200);
   changed();
 });
