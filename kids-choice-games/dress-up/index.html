@@ -109,7 +109,7 @@ const DEFAULTS = {
            tongue: "in", tongueLen: 100, tongueW: 100, tongueColor: "#e75480",
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
-           faceW: 100, faceH: 100, alien: 0, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100 },
+           faceW: 100, faceH: 100, alien: 0, eyeGap: 38, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100 },
   hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -283,7 +283,13 @@ function mouthTopAsDrawn(F) {
 // stretches by however far the mouth moved (`stretch`).
 function faceLayout(F) {
   const kx = 1 + 0.6 * (F.faceW / 100 - 1), ky = 1 + 0.6 * (F.faceH / 100 - 1);
-  const eyeY = HEAD_C + (100 - HEAD_C) * ky, eyeDX = 32 * kx;
+  // The eyes keep the eye gap between them, edge to edge, however big,
+  // narrow or slanted they are, and however wide the face: each middle is
+  // half the gap and the eye's own half-width from the face's middle
+  // line. The default gap, 38, puts the default eyes where they always
+  // were, 32 out. The brows go with the eyes.
+  const eyeY = HEAD_C + (100 - HEAD_C) * ky, eyeDX = F.eyeGap / 2 + eyeHalfW(F);
+  const bx = eyeDX / 32;
   const noseTop = eyeY + 6;
   const nose = F.noseView && F.noseView !== "none";
   const uh = 30 * F.noseH / 100, uw = 30 * F.noseW / 100;
@@ -300,7 +306,7 @@ function faceLayout(F) {
   const bottom = mouthY + (75 + lips(F.smile, F.open)[1] / 2 + 2.5 - 150) * ky;
   const chin = HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
   const stretch = Math.round(Math.max(noseDrop + riseDrop, bottom + 12 - chin, 0));
-  return { kx, ky, eyeY, eyeDX, noseTop, uh, uw, mouthY, stretch };
+  return { kx, ky, bx, eyeY, eyeDX, noseTop, uh, uw, mouthY, stretch };
 }
 const mouthDrop = F => faceLayout(F).stretch;
 function noseSvg(F) {
@@ -359,6 +365,28 @@ function browLift(F) {
   }
   // the brows' ends sit at y = 78; keep them 8 above the eyes' top
   return Math.max(0, reach - 14);
+}
+// How far one eye reaches to either side of its middle, as drawn: a plain
+// eye's outermost ring (eye white, iris or pupil), squashed and slanted
+// as eye() draws it; a star's or heart's glyph; an x's two strokes.
+function eyeHalfW(F) {
+  const r = 6 + idiv(F.eyes, 7), t = F.tilt * Math.PI / 180;
+  if (F.xeyes) return r * (Math.abs(Math.cos(t)) + Math.abs(Math.sin(t)));
+  if (F.stars || F.hearts) return r * (F.stars && F.hearts ? 1.75 : 1.5);
+  const irisR = F.iris > 0 ? r + F.iris * 0.25 : 0;
+  const whiteR = irisR > 0 && F.whites > 0 ? irisR + F.whites * 0.25 : 0;
+  const R = whiteR || irisR || r, k = 1 - 0.88 * F.oval / 100;
+  return Math.hypot(R * Math.cos(t), R * k * Math.sin(t));
+}
+// ...and how far above and below it.
+function eyeHalfH(F) {
+  const r = 6 + idiv(F.eyes, 7), t = F.tilt * Math.PI / 180;
+  if (F.xeyes) return r * (Math.abs(Math.cos(t)) + Math.abs(Math.sin(t)));
+  if (F.stars || F.hearts) return r * 1.5;
+  const irisR = F.iris > 0 ? r + F.iris * 0.25 : 0;
+  const whiteR = irisR > 0 && F.whites > 0 ? irisR + F.whites * 0.25 : 0;
+  const R = whiteR || irisR || r, k = 1 - 0.88 * F.oval / 100;
+  return Math.hypot(R * Math.sin(t), R * k * Math.cos(t));
 }
 function eye(x, size, stars, hearts, xs, F, angle = 0) {
   const r = 6 + idiv(size, 7);
@@ -595,13 +623,68 @@ function hairReach(h) {
 // 80 stretched by face width and height, and, as `alien` goes up, wider
 // across the top and narrowing to a pointed chin, like an alien's head.
 const HEAD_C = 110.6;
+// The head's width, as a stretch of the round head: the face width, or
+// wider when the eyes need it -- big, narrow-and-slanted, or far apart
+// eyes, plus a margin of 8 beside each, at the eye line. (There the head
+// is the round head's width at that height, times the alien top's 12%.)
+function headWidth(F) {
+  const LY = faceLayout(F), a = F.alien / 100;
+  const sn = Math.max(-1, Math.min(1, (LY.eyeY - HEAD_C) / (80 * (F.faceH / 100) * (1 + 0.05 * a))));
+  const across = 80 * Math.sqrt(1 - sn * sn) * (1 + 0.12 * a);
+  return Math.max(F.faceW / 100, (LY.eyeDX + eyeHalfW(F) + 8) / across);
+}
+// How far the head's top half (side -1) or bottom half (side 1) must
+// reach from its middle to hold the eyes, if it is an ellipse as wide as
+// the head: the farthest, over 24 points around the eye grown by 8, of
+// |py| / sqrt(1 - (px / A)^2), the half-height an ellipse A wide needs
+// for the point (px, py) to be inside it.
+function eyeNeed(F, side) {
+  const LY = faceLayout(F), A = 80 * headWidth(F) * (1 + 0.12 * F.alien / 100);
+  const w = eyeHalfW(F) + 8, h = eyeHalfH(F) + 8;
+  let need = 0;
+  for (let i = 0; i < 24; i++) {
+    const t = i * Math.PI / 12;
+    const px = LY.eyeDX + w * Math.cos(t), py = LY.eyeY - HEAD_C + h * Math.sin(t);
+    if (py * side <= 0) continue;
+    const u = Math.min(0.99, Math.abs(px) / A);
+    need = Math.max(need, Math.abs(py) / Math.sqrt(1 - u * u));
+  }
+  return need;
+}
+// How far the head's top half grows for the eyes, as a deep mouth grows
+// its bottom half (mouthDrop). Big or tall eyes push the crown up, for
+// two things. The forehead: once the eyes reach 25% higher above the
+// head's middle than the usual eyes would on this face (23.6 on the
+// usual face), the top half grows with them, so the hair's fringe and
+// the brows, which stretch with it, keep their room above the eyes. And
+// the outline: the eyes stay 8 inside it all round (eyeNeed), which
+// matters for eyes far apart, where the head is lower. Nothing at
+// everyday sizes.
+function eyeLift(F) {
+  const LY = faceLayout(F), a = F.alien / 100;
+  const upper = 80 * (F.faceH / 100) * (1 + 0.05 * a);
+  const reach = HEAD_C - (LY.eyeY - eyeHalfH(F));
+  const usual = (HEAD_C - LY.eyeY) + 13;
+  const forehead = upper * reach / (usual * 1.25);
+  return Math.max(0, forehead - upper, eyeNeed(F, -1) - upper);
+}
+// ...and how far its bottom half grows: the eyes stay 8 inside the
+// outline below them too (eyeNeed). A deep mouth may want more
+// (mouthDrop); the head takes the larger of the two.
+function headDrop(F) {
+  const lower = 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100);
+  return Math.max(mouthDrop(F), eyeNeed(F, 1) - lower);
+}
+// The head's height as a stretch of the round head, for what is drawn
+// over it (hair, a hood): the face height, and the top half's growth.
+const headH = F => F.faceH / 100 + eyeLift(F) / 80;
 function headPoints(F) {
-  const W = F.faceW / 100, H = F.faceH / 100, a = F.alien / 100, pts = [], drop = mouthDrop(F);
+  const W = headWidth(F), H = F.faceH / 100, a = F.alien / 100, pts = [], drop = headDrop(F), lift = eyeLift(F);
   for (let i = 0; i < 72; i++) {
     const t = i * Math.PI / 36, c = Math.cos(t), sn = Math.sin(t);
     const sx = c * (1 + a * (sn < 0 ? 0.12 : -0.85 * sn));
     const sy = sn * (1 + a * (sn > 0 ? 0.25 : 0.05));
-    pts.push([100 + 80 * W * sx, HEAD_C + 80 * H * sy + (sn > 0 ? drop * sn : 0)]);
+    pts.push([100 + 80 * W * sx, HEAD_C + 80 * H * sy + (sn > 0 ? drop : lift) * sn]);
   }
   return pts;
 }
@@ -614,13 +697,13 @@ function acrossAt(pts, Y) {
   });
   return xs.length ? [Math.min(...xs), Math.max(...xs)] : [100, 100];
 }
-const headChin = F => HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100) + mouthDrop(F);
-const headCrown = F => HEAD_C - 80 * (F.faceH / 100) * (1 + 0.05 * F.alien / 100);
+const headChin = F => HEAD_C + 80 * (F.faceH / 100) * (1 + 0.25 * F.alien / 100) + headDrop(F);
+const headCrown = F => HEAD_C - 80 * (F.faceH / 100) * (1 + 0.05 * F.alien / 100) - eyeLift(F);
 // The head's stretch, for the hair: hair drawn for the round head is
 // stretched the same way about the head's center.
 const hairStretch = F =>
-  `translate(100 ${HEAD_C}) scale(${(F.faceW / 100 * (1 + 0.12 * F.alien / 100)).toFixed(3)} ` +
-  `${(F.faceH / 100).toFixed(3)}) translate(-100 ${-HEAD_C})`;
+  `translate(100 ${HEAD_C}) scale(${(headWidth(F) * (1 + 0.12 * F.alien / 100)).toFixed(3)} ` +
+  `${headH(F).toFixed(3)}) translate(-100 ${-HEAD_C})`;
 
 // What sits on top of the head (hair, or a costume's hood) when the head
 // explodes: it flies off with the lid, tilting as the lid does, and higher
@@ -671,7 +754,7 @@ function faceSvg(F, ground) {
     // the brows spread with the eyes (their path's points, so the line
     // keeps its width)
     `<path d="${(F.unibrow ? browPath(F.brow) : browPair(F.brow)).replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
-        f1(100 + (Number(x) - 100) * LY.kx) + " " + f1(Number(y) + LY.eyeY - 100 - browLift(F)))}" ` +
+        f1(100 + (Number(x) - 100) * LY.bx) + " " + f1(Number(y) + LY.eyeY - 100 - browLift(F)))}" ` +
       `stroke="black" fill="none" stroke-width="${F.unibrow ? 7 : 6}" stroke-linecap="round"/>` +
     // the mouth, at its place and grown with the head
     `<g transform="translate(100 ${f1(LY.mouthY)}) scale(${LY.kx.toFixed(3)} ${LY.ky.toFixed(3)}) translate(-100 -150)">` +
@@ -755,8 +838,8 @@ function furDefs(C, kind) {
 // (which an open mouth moves down), at any height. Drawn inside the
 // face's stretch, so its ends are placed where they land once stretched.
 function hoodEllipse(F) {
-  const H = F.faceH / 100;
-  const top = HEAD_C - 80 - 32.6 / H, bottom = HEAD_C + (80 * H + mouthDrop(F) + 27.4) / H;
+  const H = F.faceH / 100, Hs = headH(F);
+  const top = HEAD_C - 80 - 32.6 / Hs, bottom = HEAD_C + (80 * H + headDrop(F) + 27.4) / Hs;
   return `cx="100" cy="${f1((top + bottom) / 2)}" rx="106" ry="${f1((bottom - top) / 2)}"`;
 }
 function hoodBack(C, kind, F) {
@@ -769,9 +852,9 @@ function hoodBack(C, kind, F) {
     for (let i = 0; i < 48; i++) {
       // the head's outline plus the mane's own 50-70, however tall the
       // head (placed where it lands once stretched)
-      const t = i * Math.PI / 24, r = i % 2 ? 130 : 150, H = F.faceH / 100;
-      const below = Math.sin(t) > 0 ? mouthDrop(F) : 0;
-      pts.push([100 + r * Math.cos(t), HEAD_C + ((80 * H + below) * Math.sin(t) + (r - 80) * Math.sin(t)) / H]);
+      const t = i * Math.PI / 24, r = i % 2 ? 130 : 150, H = F.faceH / 100, Hs = headH(F);
+      const grown = Math.sin(t) > 0 ? headDrop(F) : eyeLift(F);
+      pts.push([100 + r * Math.cos(t), HEAD_C + ((80 * H + grown) * Math.sin(t) + (r - 80) * Math.sin(t)) / Hs]);
     }
     s += poly(pts, C.marks, darker(C.marks), 3);
   }
@@ -1242,9 +1325,9 @@ function draw() {
   // room for big hair on a tall head, a lid blown far off, and candy
   // and hair, stretched with the head (it hangs and spreads in face units)
   const hr = C ? { top: 0, bottom: 0, half: 0 } : hairReach(state.hair);
-  const hairY = y => HEAD_C + (y - HEAD_C) * F.faceH / 100;
+  const hairY = y => HEAD_C + (y - HEAD_C) * headH(F);
   const flying = F.burst > 0 ? idiv(F.burst * 7, 10) + idiv(F.burst * 4, 10) + 40 : 0;   // see topFlies
-  const faceTop = Math.min(-90, HEAD_C - 175 * F.faceH / 100, headCrown(F) + 50.6 - 1.4 * F.burst - 40,
+  const faceTop = Math.min(-90, HEAD_C - 175 * headH(F), headCrown(F) + 50.6 - 1.4 * F.burst - 40,
                            hairY(hr.top) - 40 - flying, (C ? -90 : 0) - flying);
   const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)));
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
@@ -1253,10 +1336,10 @@ function draw() {
   const skirtHem = !suit && !undies && (P.style === "skirt" || P.style === "dress")
     ? L + LL * (P.skirtLen ?? 50) / 100 + 30 : 0;
   const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem);
-  const hairHalf = hr.half * (F.faceW / 100) * (1 + 0.12 * F.alien / 100) * s;
+  const hairHalf = hr.half * headWidth(F) * (1 + 0.12 * F.alien / 100) * s;
   const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
-                        -((80 + (C ? 30 : 0)) * F.faceW / 100 * (1 + 0.12 * F.alien / 100) * s + 20));
+                        -((80 + (C ? 30 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20));
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
@@ -1357,14 +1440,18 @@ function draw() {
   if (sleeve > 0 && !winged) for (const arm of arms) { const E = sleeveEnd(arm); svg += line(arm.A[0], arm.A[1], E[0], E[1], armW + 9, sf); }
 
   if (winged) for (const arm of arms) svg += armWing(C, arm, armW);
-  else {
+
+  // the face, in its own units
+  const groundInFace = (ground - ty) / s;
+  svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">${faceSvg(F, groundInFace)}</g>`;
+
+  // and the hands last, in front of everything, the face too: raised
+  // arms put them by the cheeks or over the eyes, not behind the head
+  // (a bird suit's wings stay behind it, or they would hide the face)
+  if (!winged) {
     const hands = suit ? suitHands(C, kind) : state.hands;
     for (const { side, H, angle } of arms) svg += handSvg(H[0], H[1], angle, side, hands, skin);
   }
-
-  // the face last, on top, in its own units
-  const groundInFace = (ground - ty) / s;
-  svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">${faceSvg(F, groundInFace)}</g>`;
 
   const pic = document.getElementById("pic");
   pic.setAttribute("viewBox", `${f1(left)} ${f1(top)} ${f1(width)} ${f1(bottom - top)}`);
@@ -1401,6 +1488,7 @@ const TABS = [
     ["range", "faceW", "face width", 40, 600, 85, 115],
     ["range", "faceH", "face height", 40, 600, 85, 115],
     ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
+    ["range", "eyeGap", "eye gap", 0, 200, 25, 55],
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
