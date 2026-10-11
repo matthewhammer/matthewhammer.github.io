@@ -114,7 +114,8 @@ const DEFAULTS = {
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
-  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100, clawCount: 4, starPoints: 5, starAngle: 0 },
+  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100, clawCount: 4, starPoints: 5, starAngle: 0,
+           mittenAngle: 0, clawAngle: 0, humanAngle: 0, alienAngle: 0 },
   pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto", skirtLen: 50 },
   undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
             patternColor: "auto" },
@@ -1244,9 +1245,21 @@ function manyFingers(n) {
   return out;
 }
 const starPoints = h => Math.max(1, Math.min(100, Math.round(h.starPoints ?? 5)));
+// Each hand style's own angle slider, in radians, turning the hand about
+// the wrist (0, as it always was, unless the slider says otherwise): a
+// star's turns only as far as its next point, where it looks as it began;
+// the others have no such symmetry, so they turn all the way round. (A
+// round hand looks the same however it turns, so it has none.)
+const HAND_TURN = { mitten: "mittenAngle", claw: "clawAngle", human: "humanAngle", alien: "alienAngle",
+                    alien4: "alienAngle", alien3: "alienAngle" };
+const handPeriod = h => h.style === "star" ? 2 * Math.PI / starPoints(h) : 2 * Math.PI;
 function handSvg(x, y, angle, side, h, skin) {
   const c = h.color === "skin" ? skin : h.color, st = darker(c), r = h.size;
-  const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${inner}</g>`;
+  // (the star turns its own points; the others turn whole, in the mirror
+  // the left hand gets, so the two hands turn alike)
+  const turn = HAND_TURN[h.style] ? (h[HAND_TURN[h.style]] ?? 0) * 180 / Math.PI : 0;
+  const turned = inner => turn ? `<g transform="rotate(${f1(turn)})">${inner}</g>` : inner;
+  const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${turned(inner)}</g>`;
   switch (h.style) {
     case "round":
       return g(`<circle r="${r}" fill="${c}" stroke="${st}" stroke-width="2.5"/>`);
@@ -1587,9 +1600,13 @@ const TABS = [
     ["range", "fingers", "✋ number of fingers", 1, 100, 5, 7],
     ["range", "alienFingers", "👽 number of alien fingers", 1, 100, 2, 6],
     ["range", "starPoints", "⭐ number of star points", 1, 100, 4, 8],
-    ["turn", "starAngle", "⭐ star angle (radians)", h => 2 * Math.PI / starPoints(h)],
     ["range", "clawCount", "🐾 number of claws", 1, 100, 3, 6],
     ["range", "clawLen", "🐾 claw length", 20, 300, 70, 140],
+    ["turn", "starAngle", "⭐ star angle (radians)", handPeriod],
+    ["turn", "mittenAngle", "🧤 mitten angle (radians)", handPeriod],
+    ["turn", "clawAngle", "🐾 claw angle (radians)", handPeriod],
+    ["turn", "humanAngle", "✋ human hand angle (radians)", handPeriod],
+    ["turn", "alienAngle", "👽 alien hand angle (radians)", handPeriod],
     ["range", "size", "size", 2, 80, 6, 28],
   ]],
   ["👖 Pants", "pants", [
@@ -1683,6 +1700,10 @@ const SHOWN_WHEN = {
   "hands.alienFingers": h => h.style === "alien",
   "hands.starPoints": h => h.style === "star",
   "hands.starAngle": h => h.style === "star",
+  "hands.mittenAngle": h => h.style === "mitten",
+  "hands.clawAngle": h => h.style === "claw",
+  "hands.humanAngle": h => h.style === "human",
+  "hands.alienAngle": h => h.style === "alien",
   // claws: the claw hand's, or a cat costume's paws
   "hands.clawLen": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
   "hands.clawCount": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
@@ -1801,7 +1822,10 @@ document.getElementById("surprise").addEventListener("click", () => {
   for (const [, part, ctls] of TABS)
     for (const [kind, key, , ...rest] of ctls) {
       if (kind === "range") state[part][key] = rnd(rest[2] ?? rest[0], rest[3] ?? rest[1]);
-      else if (kind === "turn") state[part][key] = Math.random() * rest[0](state[part]);
+      // (a star turned any way still looks like a star; other hands keep
+      // their usual angle most times)
+      else if (kind === "turn")
+        state[part][key] = key === "starAngle" || Math.random() < 0.25 ? Math.random() * rest[0](state[part]) : 0;
       else if (kind === "toggle") state[part][key] = Math.random() < 0.3;
       else if (kind === "choice") state[part][key] = pick(rest[0])[0];
       else if (kind === "color") state[part][key] = pick(rest[0]);
