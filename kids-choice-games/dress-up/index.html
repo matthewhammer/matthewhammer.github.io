@@ -121,7 +121,8 @@ const DEFAULTS = {
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
-             accent: "#e89aa0", furPattern: "stripes", spot: "auto" },
+             accent: "#e89aa0", furPattern: "stripes", spot: "auto",
+             witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 // before the nose views: a nose was a shape (or "none"), a direction and
@@ -177,6 +178,22 @@ const poly = (ps, fill, stroke, sw = 2.5) =>
 // A fill for a part: its color, or a pattern of it.
 // A pattern's tile is 14 units drawn at `size`, its marks in `markColor`
 // ("auto": a lighter shade of the cloth's own color).
+function webTile(c) {
+  // eight threads out from the middle to the outer ring, and four rings
+  // across them, each sagging a little toward the middle between threads;
+  // the webs stop short of each other
+  const ends = [[0, 0], [7, 0], [14, 0], [14, 7], [14, 14], [7, 14], [0, 14], [0, 7]];
+  const at = ([x, y], k) => [7 + (x - 7) * k, 7 + (y - 7) * k];
+  let d = ends.map(e => `M7 7 L${at(e, 0.95).map(f1).join(" ")}`).join(" ");
+  for (const f of [0.3, 0.55, 0.78, 0.95]) {
+    d += " M" + at(ends[0], f).map(f1).join(" ");
+    for (let i = 1; i <= 8; i++) {
+      const a = ends[i - 1], b = ends[i % 8], m = at([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], f * 0.9);
+      d += ` Q${f1(m[0])} ${f1(m[1])} ${at(b, f).map(f1).join(" ")}`;
+    }
+  }
+  return `<path d="${d}" fill="none" stroke="${c}" stroke-width="0.25"/>`;
+}
 function patternDef(id, color, kind, size = 14, markColor = "auto") {
   const lt = markColor === "auto" ? lighter(color) : markColor;
   const inner = {
@@ -184,6 +201,9 @@ function patternDef(id, color, kind, size = 14, markColor = "auto") {
     dots:    `<circle cx="7" cy="7" r="3" fill="${lt}"/>`,
     hearts:  `<text x="7" y="11" font-size="11" text-anchor="middle" fill="${lt}">♥</text>`,
     stars:   `<text x="7" y="11" font-size="11" text-anchor="middle" fill="${lt}">★</text>`,
+    // a spider web: eight threads out from the middle, and three rings
+    // across them, each sagging a little toward the middle between threads
+    web:     webTile(lt),
   }[kind];
   if (!inner) return "";
   return `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse" ` +
@@ -814,6 +834,11 @@ const ANIMALS = {
   // a black jaguar: nearly black, its rosettes just showing
   jaguar: { suit: true, fur: "#1e1c22", marks: "#3d3944", belly: "#2b2830", eyes: "#d4c23a", accent: "#3a363f", furPattern: "rosettes", spot: "auto" },
   cheetah: { suit: true, fur: "#e8b54a", marks: "#1c1410", belly: "#f8eed8", eyes: "#c88a1e", accent: "#2a1d14", furPattern: "spots" },
+  // a grey wolf: tall pointed ears, a bushy tail with a dark tip, claws
+  wolf: { suit: true, fur: "#8b8f97", marks: "#3f4249", belly: "#e8e6e1", eyes: "#e0a020", accent: "#1d1d1f", furPattern: "none" },
+  // a deer, spotted like a fawn: antlers, long ears, a short white tail,
+  // hooves
+  deer: { suit: true, fur: "#a8682f", marks: "#fbf3e4", belly: "#f3e3c3", eyes: "#3b2414", accent: "#2a1a10", furPattern: "spots" },
   // a whole falcon suit: feathers all over, wings on the arms, talons
   falconsuit: { suit: true, fur: "#55616d", marks: "#23282e", belly: "#f2ece0", eyes: "#1a1410", accent: "#f2c230", furPattern: "none" },
   // and a bald eagle's: dark brown feathers, white head and tail
@@ -954,7 +979,23 @@ function hoodBack(C, kind, F) {
   }
   for (const side of [-1, 1]) {
     const x = 100 + side * 68;
-    if (kind === "cat" || kind === "bobcat") {
+    if (kind === "wolf") {
+      // tall pointed ears, pale inside
+      s += poly([[100 + side * 30, 22], [100 + side * 80, -78], [100 + side * 96, 34]], C.fur, line, 3) +
+           poly([[100 + side * 46, 16], [100 + side * 78, -54], [100 + side * 88, 24]], C.belly, "none", 0);
+    } else if (kind === "deer") {
+      // antlers first, their bases under the hood, then long ears out to
+      // the side, pale inside
+      const beam = `M${100 + side * 38} 14 Q${100 + side * 52} -50 ${100 + side * 96} -104 ` +
+                   `M${100 + side * 48} -34 Q${100 + side * 30} -64 ${100 + side * 34} -94 ` +
+                   `M${100 + side * 68} -66 Q${100 + side * 60} -100 ${100 + side * 66} -126 ` +
+                   `M${100 + side * 84} -88 Q${100 + side * 104} -96 ${100 + side * 118} -86`;
+      s += `<path d="${beam}" fill="none" stroke="#7a5a36" stroke-width="12" stroke-linecap="round"/>` +
+           `<path d="${beam}" fill="none" stroke="#d9c29a" stroke-width="7" stroke-linecap="round"/>`;
+      for (const [rx, ry, fill, w] of [[36, 15, C.fur, 3], [24, 8, C.belly, 0]])
+        s += `<ellipse cx="${100 + side * 100}" cy="34" rx="${rx}" ry="${ry}" transform="rotate(${side * -22} ${100 + side * 100} 34)" ` +
+             `fill="${fill}"${w ? ` stroke="${line}" stroke-width="${w}"` : ""}/>`;
+    } else if (kind === "cat" || kind === "bobcat") {
       s += poly([[100 + side * 36, 16], [100 + side * 92, -46], [100 + side * 96, 40]], C.fur, line, 3) +
            poly([[100 + side * 50, 12], [100 + side * 86, -30], [100 + side * 88, 26]],
                 kind === "bobcat" ? C.belly : C.accent, "none", 0);
@@ -1039,7 +1080,7 @@ function hoodFront(C, kind, F) {
   s += FELINE[kind]
     ? `<path d="M94 35 L106 35 L100 42 Z" fill="${C.accent}"/>`
     : `<path d="M91 34 Q100 31 109 34 Q105 43 100 44 Q95 43 91 34 Z" fill="${C.accent}"/>`;
-  if (kind !== "bear") {
+  if (kind !== "bear" && kind !== "deer") {
     const wc = kind === "cat" || kind === "raccoon" || kind === "jaguar" ? "#e8e8e8" : "#222";
     s += `<path d="M86 44 L60 40 M86 47 L60 50 M114 44 L140 40 M114 47 L140 50" stroke="${wc}" stroke-width="1.6" stroke-linecap="round"/>`;
   }
@@ -1052,6 +1093,9 @@ function tailSvg(C, kind, hw, L) {
   const line = darker(C.fur), x0 = hw * 0.55, y0 = L + 5;
   if (kind === "bear")
     return `<circle cx="${f1(hw + 4)}" cy="${f1(L - 14)}" r="17" fill="url(#pat-fur)" stroke="${line}" stroke-width="3"/>`;
+  if (kind === "deer")  // a short white tail, flicked up
+    return `<ellipse cx="${f1(hw + 8)}" cy="${f1(L - 16)}" rx="11" ry="17" transform="rotate(35 ${f1(hw + 8)} ${f1(L - 16)})" ` +
+           `fill="${C.belly}" stroke="${line}" stroke-width="3"/>`;
   if (kind === "bobcat")  // a short stubby tail with a black tip
     return `<ellipse cx="${f1(hw + 10)}" cy="${f1(L - 12)}" rx="13" ry="20" transform="rotate(30 ${f1(hw + 10)} ${f1(L - 12)})" ` +
            `fill="url(#pat-fur)" stroke="${line}" stroke-width="3"/>` +
@@ -1059,7 +1103,7 @@ function tailSvg(C, kind, hw, L) {
   const d = kind === "cat" || kind === "leopard" || kind === "cheetah" || kind === "jaguar"
     ? `M${f1(x0)} ${f1(y0)} C${f1(hw + 80)} ${f1(L + 30)} ${f1(hw + 110)} ${f1(L - 30)} ${f1(hw + 70)} ${f1(L - 110)}`
     : `M${f1(x0)} ${f1(y0)} C${f1(hw + 70)} ${f1(L + 20)} ${f1(hw + 95)} ${f1(L + 90)} ${f1(hw + 60)} ${f1(L + 150)}`;
-  const wd = { tiger: 16, cat: 11, lion: 10, raccoon: 22, leopard: 13, cheetah: 12, jaguar: 14 }[kind];
+  const wd = { tiger: 16, cat: 11, lion: 10, raccoon: 22, leopard: 13, cheetah: 12, jaguar: 14, wolf: 26 }[kind];
   const path = (stroke, width, extra = "") =>
     `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" ${extra}/>`;
   let s = path(line, wd + 5) + path(C.fur, wd);
@@ -1068,6 +1112,9 @@ function tailSvg(C, kind, hw, L) {
   if (kind === "leopard" || kind === "cheetah" || kind === "jaguar") s += path(C.marks, wd * 0.45, `stroke-dasharray="1 13"`);  // spots
   if (kind === "lion")
     s += `<circle cx="${f1(hw + 60)}" cy="${f1(L + 156)}" r="14" fill="${C.marks}" stroke="${darker(C.marks)}" stroke-width="2"/>`;
+  if (kind === "wolf")  // the bushy tail's dark tip
+    s += `<path d="${d}" fill="none" stroke="${C.marks}" stroke-width="${wd}" stroke-linecap="round" pathLength="100" ` +
+         `stroke-dasharray="0 78 22"/>`;
   return s;
 }
 // A falcon suit's wing, built on one arm: the arm runs along its leading
@@ -1207,7 +1254,7 @@ const TOED = {
 };
 // How far each kind of foot reaches out from the ankle, in shoe units,
 // so the picture's frame can hold big feet (and big shoes).
-const FOOT_REACH = { sneaker: 46, boot: 44, clown: 76, bare: 36, paw: 40,
+const FOOT_REACH = { sneaker: 46, boot: 44, clown: 76, bare: 36, paw: 40, hoof: 34,
                      toes5: 44, alien4: 52, alien3: 62, talons: 56 };
 function toedFoot(x, y, side, sc, skin, style) {
   const T = TOED[style], st = darker(skin), lw = 2.5 / sc;
@@ -1230,6 +1277,15 @@ function toedFoot(x, y, side, sc, skin, style) {
 }
 function shoeSvg(x, y, side, sh, skin) {
   const sc = sh.size / 100;
+  if (sh.style === "hoof") {
+    // a deer's: a dark hoof, split down the front
+    const cx = x + side * 8 * sc, cy = y + 13 * sc;
+    return `<path d="M${f1(cx - side * 18 * sc)} ${f1(cy + 12 * sc)} L${f1(cx - side * 14 * sc)} ${f1(cy - 10 * sc)} ` +
+           `Q${f1(cx + side * 6 * sc)} ${f1(cy - 16 * sc)} ${f1(cx + side * 20 * sc)} ${f1(cy + 12 * sc)} Z" ` +
+           `fill="#3a2a1e" stroke="#1d140d" stroke-width="2.5" stroke-linejoin="round"/>` +
+           `<line x1="${f1(cx + side * 4 * sc)}" y1="${f1(cy - 8 * sc)}" x2="${f1(cx + side * 6 * sc)}" y2="${f1(cy + 12 * sc)}" ` +
+           `stroke="#1d140d" stroke-width="2"/>`;
+  }
   if (sh.style === "paw") {
     const cx = x + side * 10 * sc, cy = y + 12 * sc;
     return `<ellipse cx="${f1(cx)}" cy="${f1(cy)}" rx="${f1(28 * sc)}" ry="${f1(14 * sc)}" fill="${sh.color}" ` +
@@ -1300,14 +1356,14 @@ function talons(r, R, clawLen = 100, n = 4) {
   }).join("");
 }
 // The cat costumes (lion too) have claws on their paws.
-const CLAWED = { cat: 1, tiger: 1, lion: 1, bobcat: 1, leopard: 1, cheetah: 1, jaguar: 1 };
+const CLAWED = { cat: 1, tiger: 1, lion: 1, bobcat: 1, leopard: 1, cheetah: 1, jaguar: 1, wolf: 1 };
 // A suit's hands: paws in the fur color, with claws on a cat.
-const suitHands = (C, kind) => ({ style: "paw", size: Math.max(state.hands.size, 12), color: C.fur, pad: C.accent,
+const suitHands = (C, kind) => ({ style: kind === "deer" ? "hoof" : "paw", size: Math.max(state.hands.size, 12), color: C.fur, pad: C.accent,
                                   claws: !!CLAWED[kind], clawLen: state.hands.clawLen ?? 100,
                                   clawCount: state.hands.clawCount ?? 4 });
 // How far a hand reaches from where it joins the arm, in any direction,
 // in units of its size (fingers and claws stick out; a round hand doesn't).
-const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, claw: 2.4,
+const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, hoof: 1.2, claw: 2.4,
                      human: 2.3, alien: 3.2, alien4: 2.7, alien3: 3.2 };
 const handReach = h => {
   const k = (h.clawLen ?? 100) / 100;
@@ -1401,6 +1457,12 @@ function handSvg(x, y, angle, side, h, skin) {
                [[0.62, -0.6], [0.86, 0], [0.62, 0.6]].map(([px, py]) =>
                  `<circle cx="${r * px}" cy="${r * py}" r="${r * 0.22}" fill="${pad}"/>`).join(""));
     }
+    case "hoof": {
+      // a deer suit's hand: a dark split hoof at the end of the furry arm
+      return g(`<circle r="${r * 1.05}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
+               `<path d="M${r * 0.35} ${-r * 0.95} Q${r * 1.45} 0 ${r * 0.35} ${r * 0.95} Z" fill="#3a2a1e" stroke="#1d140d" stroke-width="2"/>` +
+               `<line x1="${r * 0.4}" y1="0" x2="${r * 1.2}" y2="0" stroke="#1d140d" stroke-width="2"/>`);
+    }
     case "claw": {
       // a furry paw with four hooked talons
       return g(talons(r, r * 0.7, h.clawLen, h.clawCount) +
@@ -1422,15 +1484,64 @@ function handSvg(x, y, angle, side, h, skin) {
   return "";
 }
 
+// A WITCH'S THINGS. The hat, in the round head's units: a wide brim just
+// below the crown, a tall cone leaning over, bent at the tip, a band in
+// the trim color and a gold buckle.
+function witchHat(WC) {
+  const c = WC.witchColor, ln = darker(c);
+  return `<ellipse cx="100" cy="44" rx="128" ry="18" fill="${c}" stroke="${ln}" stroke-width="3"/>` +
+    `<path d="M46 42 Q72 -24 98 -84 Q112 -116 154 -126 Q128 -104 122 -80 Q134 -20 154 42 Q100 54 46 42 Z" ` +
+    `fill="${c}" stroke="${ln}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M52 24 Q100 34 149 24 L152 38 Q100 48 49 38 Z" fill="${WC.trimColor}"/>` +
+    `<rect x="89" y="25" width="22" height="16" rx="2" fill="none" stroke="#f2c230" stroke-width="3.5"/>`;
+}
+// A black cat sitting on the left shoulder (the picture's left), in body
+// units: its tail hanging down behind, its body, its head with pointed
+// ears and green-gold eyes.
+function shoulderCat(w) {
+  const x = -(w - 4), y = -9, fur = "#1f1f22", ln = "#000000";
+  return `<path d="M${x + 8} ${y - 6} Q${x + 34} ${y + 6} ${x + 24} ${y + 42}" fill="none" stroke="${fur}" stroke-width="6" stroke-linecap="round"/>` +
+    `<ellipse cx="${x}" cy="${y - 17}" rx="15" ry="18" fill="${fur}" stroke="${ln}" stroke-width="1.5"/>` +
+    poly([[x - 15, y - 44], [x - 13, y - 64], [x - 4, y - 52]], fur, ln, 1.5) +
+    poly([[x + 1, y - 52], [x + 8, y - 64], [x + 9, y - 44]], fur, ln, 1.5) +
+    `<circle cx="${x - 3}" cy="${y - 42}" r="13" fill="${fur}" stroke="${ln}" stroke-width="1.5"/>` +
+    [x - 8, x + 2].map(ex => `<ellipse cx="${ex}" cy="${y - 43}" rx="3.2" ry="3.8" fill="#c6d43a"/>` +
+                             `<ellipse cx="${ex}" cy="${y - 43}" rx="1" ry="3.2" fill="#111"/>`).join("") +
+    `<path d="M${x - 5} ${y - 37} L${x - 1} ${y - 37} L${x - 3} ${y - 35} Z" fill="#f4a0b0"/>`;
+}
+// A broom through the hand at H, in body units: the stick, leaning a
+// little, 120 above the hand and 52 below it, then the bristles flaring
+// out under a band in the trim color.
+function broomSvg([hx, hy], trim) {
+  const top = [hx + 16, hy - 120], b = [hx - 8, hy + 52];
+  const dx = b[0] - top[0], dy = b[1] - top[1], d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d, nx = -uy, ny = ux;
+  const at = (along, across) => [b[0] + ux * along + nx * across, b[1] + uy * along + ny * across];
+  return line(top[0], top[1], b[0], b[1], 7, "#8b5a2b", "#4a2f16") +
+    poly([at(0, 8), at(58, 25), at(66, 0), at(58, -25), at(0, -8)], "#d9a441", "#8a6420", 2.5) +
+    [-2, -1, 0, 1, 2].map(k => { const [x1, y1] = at(4, k * 3), [x2, y2] = at(58, k * 9);
+      return `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#a87a2a" stroke-width="1.5"/>`; }).join("") +
+    line(at(5, 9)[0], at(5, 9)[1], at(5, -9)[0], at(5, -9)[1], 6, trim);
+}
+
 let faceFrame = { tx: 0, ty: 0, s: 1 };   // where the face is, for dragging it
 
 function draw() {
-  const { face: F, body: B, shirt: SH, pants: P } = state;
+  const { face: F, body: B } = state;
+  let { shirt: SH, pants: P } = state;
   const skin = F.color, skinLine = darker(skin);
   // A costume: a suit is fur over everything below the hood; a falcon is
   // wings and a tail over the clothes.
   const C = costumeOn(), kind = state.costume.kind, suit = C && ANIMALS[kind].suit;
   const limb = suit ? C.fur : skin, limbLine = suit ? darker(C.fur) : skinLine;
+  // A witch: a long dress -- long sleeves, a long skirt with a ragged hem
+  // -- in the hat's color with a spider web on it; striped stockings; a
+  // pointed hat; and, if chosen, a cat on her shoulder and a broom in her
+  // hand. Her own hair and face show.
+  const witch = kind === "witch", WC = state.costume;
+  if (witch) {
+    SH = { ...SH, style: "long", color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
+    P = { ...P, style: "dress", skirtLen: 92, color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
+  }
   const w = SH.width, L = SH.length;
   const nw = Math.max(22, B.neckW / 2 + 6);           // the collar fits the neck
 
@@ -1443,7 +1554,7 @@ function draw() {
   });
   // no clothes: underwear or a swimsuit instead of the shirt and pants
   // (a full animal suit still covers everything)
-  const U = state.undies, undies = U.on && !suit;
+  const U = state.undies, undies = U.on && !suit && !witch;
   const sleeve = suit ? 0.97 : undies ? 0 : { tee: 0.38, long: 0.95, tank: 0 }[SH.style];
 
   // PANTS: their hips under the shirt's hem, their feet under the legs.
@@ -1471,18 +1582,23 @@ function draw() {
   const hairY = y => HEAD_C + (y - HEAD_C) * headH(F);
   const flying = F.burst > 0 ? idiv(F.burst * 7, 10) + idiv(F.burst * 4, 10) + 40 : 0;   // see topFlies
   const faceTop = Math.min(-90, HEAD_C - 175 * headH(F), headCrown(F) + 50.6 - 1.4 * F.burst - 40,
-                           hairY(hr.top) - 40 - flying, (C ? -90 : 0) - flying);
-  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)));
+                           hairY(hr.top) - 40 - flying, (C ? (kind === "deer" ? -140 : -90) : 0) - flying,
+                           witch ? hairY(-130) - 20 - flying : 0);
+  // (a broom stands 120 above the hand that holds it, its bristles 66 below)
+  const broomH = witch && WC.broom ? arms[0].H : null;
+  const top = Math.min(ty + faceTop * s, ...handYs.map(y => y - Math.max(40, reach)), broomH ? broomH[1] - 140 : 0);
   const pileP = F.sick > 100 ? 100 + (F.sick - 100) / 2 : F.sick > 30 ? (F.sick - 30) * 100 / 70 : 0;
   const pileRx = (6 + pileP * 84 / 100) * 1.6 * s;
   // and a long skirt or dress, which can reach past the feet
   const skirtHem = !suit && !undies && (P.style === "skirt" || P.style === "dress")
     ? L + LL * (P.skirtLen ?? 50) / 100 + 30 : 0;
-  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem);
+  const bottom = Math.max(ground + 24, ty + hairY(hr.bottom) * s + 16, ...handYs.map(y => y + reach), skirtHem,
+                          broomH ? broomH[1] + 140 : 0);
   const hairHalf = hr.half * headWidth(F) * (1 + 0.12 * F.alien / 100) * s;
   const left = Math.min(-200, C ? -(w + 185) : -200, ...arms.map(x => x.H[0] - Math.max(40, reach)), ...arms.map(x => -x.H[0] - Math.max(40, reach)),
                         -(fx + half + 70), -(fx + (FOOT_REACH[state.shoes.style] ?? 76) * shoeSc + 20), -(w + 40), -(pileRx + 20), -(B.neckW / 2 + 40), -(hairHalf + 20),
-                        -((80 + (C ? 30 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20));
+                        -((80 + (C ? (kind === "deer" ? 60 : 30) : witch ? 50 : 0)) * headWidth(F) * (1 + 0.12 * F.alien / 100) * s + 20),
+                        broomH ? -(Math.abs(broomH[0]) + 60) : 0);
   const width = -2 * left;
 
   let svg = `<defs>${patternDef("pat-shirt", SH.color, SH.pattern, SH.patternSize, SH.patternColor)}${patternDef("pat-pants", P.color, P.pattern, P.patternSize, P.patternColor)}` +
@@ -1502,7 +1618,12 @@ function draw() {
 
   // legs, then shoes, then pants over both: long pants cover a boot's top
   for (const side of [1, -1]) svg += line(side * fx, L, side * fx, feetY, B.legW, limb, limbLine);
+  if (witch)   // striped stockings
+    for (const side of [1, -1])
+      svg += `<line x1="${f1(side * fx)}" y1="${f1(L)}" x2="${f1(side * fx)}" y2="${f1(feetY)}" stroke="${WC.trimColor}" ` +
+             `stroke-width="${f1(B.legW)}" stroke-dasharray="9 9"/>`;
   const feet = BIRD_SUIT[kind] ? { style: "talons", size: state.shoes.size }
+             : kind === "deer" ? { style: "hoof", size: state.shoes.size }
              : suit ? { style: "paw", size: state.shoes.size, color: C.fur, pad: C.accent } : state.shoes;
   // (a falcon suit's talons are yellow, like a falcon's feet)
   for (const side of [1, -1]) svg += shoeSvg(side * fx, feetY, side, feet, BIRD_SUIT[kind] ? C.accent : skin);
@@ -1522,11 +1643,13 @@ function draw() {
       svg += `<path d="M${-hw} ${L - 10} L${hw} ${L - 10} L${f1(hw + 30)} ${f1(L + sl)} Q0 ${f1(L + sl + 14)} ${f1(-hw - 30)} ${f1(L + sl)} Z" ` +
              `fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
     else {
-      const fl = hw + 26 + sl * 0.25, n = 6;
+      const fl = hw + 26 + sl * 0.25, n = witch ? 9 : 6;
       let d = `M${-hw} ${L - 10} L${hw} ${L - 10} L${f1(fl)} ${f1(L + sl)}`;
       for (let i = 1; i <= n; i++) {
         const x0 = fl - (i - 1) * 2 * fl / n, x1 = fl - i * 2 * fl / n;
-        d += ` Q${f1((x0 + x1) / 2)} ${f1(L + sl + 16)} ${f1(x1)} ${f1(L + sl)}`;
+        // (a witch's hem is ragged: points, not scallops)
+        d += witch ? ` L${f1((x0 + x1) / 2)} ${f1(L + sl + 18)} L${f1(x1)} ${f1(L + sl)}`
+                   : ` Q${f1((x0 + x1) / 2)} ${f1(L + sl + 16)} ${f1(x1)} ${f1(L + sl)}`;
       }
       svg += `<path d="${d} Z" fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
     }
@@ -1579,6 +1702,13 @@ function draw() {
   // the face, in its own units
   const groundInFace = (ground - ty) / s;
   svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})">${faceSvg(F, groundInFace)}</g>`;
+  // a witch's hat over it, stretched with the head as hair is (and flying
+  // off with the lid); her cat on her shoulder
+  if (witch) {
+    svg += `<g transform="translate(${f1(tx)} ${f1(ty)}) scale(${s.toFixed(4)})"><g transform="${topFlies(F)}">` +
+           `<g transform="${hairStretch(F)}">${witchHat(WC)}</g></g></g>`;
+    if (WC.witchCat) svg += shoulderCat(w);
+  }
 
   // then the arms again, over the hair and the face: raised arms cross
   // the chin and cheeks in front of the head, not behind it
@@ -1598,6 +1728,9 @@ function draw() {
     if (wrapStripes(C))
       for (const arm of arms) svg += limbStripes(arm.A, sleeveEnd(arm), armW + 9, C.marks, `arm-stripes${arm.side}`, 22);
   }
+
+  // a witch's broom, held in her right hand (on the picture's right)
+  if (broomH) svg += broomSvg(broomH, WC.trimColor);
 
   // and the hands last, in front of everything, the face too: raised
   // arms put them by the cheeks or over the eyes, not behind the head
@@ -1749,7 +1882,8 @@ const TABS = [
                                    ["lion", "🦁 lion"], ["bear", "🐻 bear"], ["falcon", "🦅 peregrine falcon"],
                                    ["raccoon", "🦝 raccoon"], ["bobcat", "🐈 bobcat"], ["leopard", "🐆 leopard"],
                                    ["eagle", "🦅 bald eagle"], ["cheetah", "🐆 cheetah"], ["jaguar", "🐈‍⬛ black jaguar"],
-                                   ["falconsuit", "🦅 falcon suit"], ["eaglesuit", "🦅 bald eagle suit"]]],
+                                   ["falconsuit", "🦅 falcon suit"], ["eaglesuit", "🦅 bald eagle suit"],
+                                   ["wolf", "🐺 wolf"], ["deer", "🦌 deer"], ["witch", "🧙 witch"]]],
     ["color", "fur", "fur / feather color", FURS],
     ["choice", "furPattern", "fur pattern", [["none", "plain"], ["stripes", "stripes"], ["spots", "spots"],
                                              ["rosettes", "rosettes"], ["patches", "patches"]]],
@@ -1758,6 +1892,11 @@ const TABS = [
     ["color", "belly", "belly & muzzle color", BELLIES],
     ["color", "eyes", "animal eye color", ANIMAL_EYES],
     ["color", "accent", "nose, ear & beak color", ACCENTS],
+    ["color", "witchColor", "🧙 hat & dress color", ["#6a2c91", "#1f1f22", "#2e7d32", "#1e3a8a", "#b71c1c", "#f28c28", "#ff69b4"]],
+    ["color", "webColor", "🕸️ spider web color", ["#3fae4a", "#ffffff", "#c0c0c0", "#f28c28", "#1f1f22", "#b38bff"]],
+    ["color", "trimColor", "hat band & stocking color", ["#f28c28", "#3fae4a", "#6a2c91", "#1f1f22", "#ffffff", "#e53935"]],
+    ["toggle", "witchCat", "🐈‍⬛ cat on the shoulder"],
+    ["toggle", "broom", "🧹 broom"],
   ]],
 ];
 
@@ -1798,13 +1937,18 @@ const SHOWN_WHEN = {
   "face.noseH": f => f.noseView !== "none",
   "face.noseW": f => f.noseView !== "none",
   "face.whites": f => f.iris > 0,
-  "costume.fur": c => c.kind !== "none",
+  "costume.fur": c => !!ANIMALS[c.kind],
   "costume.furPattern": c => !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
-  "costume.marks": c => c.kind !== "none",
+  "costume.witchColor": c => c.kind === "witch",
+  "costume.webColor": c => c.kind === "witch",
+  "costume.trimColor": c => c.kind === "witch",
+  "costume.witchCat": c => c.kind === "witch",
+  "costume.broom": c => c.kind === "witch",
+  "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
-  "costume.belly": c => c.kind !== "none",
-  "costume.eyes": c => c.kind !== "none",
-  "costume.accent": c => c.kind !== "none",
+  "costume.belly": c => !!ANIMALS[c.kind],
+  "costume.eyes": c => !!ANIMALS[c.kind],
+  "costume.accent": c => !!ANIMALS[c.kind],
   "hair.length": h => ["long", "curly", "pigtails", "spiky", "afro"].includes(h.style),
   "pants.skirtLen": p => p.style === "skirt" || p.style === "dress",
   "hands.fingers": h => h.style === "human",
