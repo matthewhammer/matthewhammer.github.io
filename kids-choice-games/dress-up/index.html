@@ -114,7 +114,7 @@ const DEFAULTS = {
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
            patternSize: 14, patternColor: "auto" },
-  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100 },
+  hands: { style: "round", size: 14, color: "skin", fingers: 5, alienFingers: 3, clawLen: 100, clawCount: 4, starPoints: 5, starAngle: 0 },
   pants: { style: "long", color: "#34495e", pattern: "plain", patternSize: 14, patternColor: "auto", skirtLen: 50 },
   undies: { on: false, style: "trunks", top: false, color: "#3b82f6", pattern: "plain", patternSize: 14,
             patternColor: "auto" },
@@ -1167,26 +1167,38 @@ function fingered(r, c, st, fingers, palm = 0.75) {
     }).join("");
   return layer(st, lw) + layer(c, 0);
 }
-// Four hooked talons fanned out from a paw of radius R, in the hand's frame
-// (the arm along +x): each a curved, tapering point, wide where it leaves
-// the paw and sharp at the tip. `clawLen` is a percent of the usual length
-// (the hand size sets the paw; this sets only the claws).
-function talons(r, R, clawLen = 100) {
+// n hooked talons (4 unless the claws slider says otherwise) fanned out
+// from a paw of radius R, in the hand's frame (the arm along +x): each a
+// curved, tapering point, wide where it leaves the paw and sharp at the
+// tip. `clawLen` is a percent of the usual length (the hand size sets the
+// paw; this sets only the claws). Up to 4 they keep the usual spacing;
+// more fan out wider, to nearly all the way round at 100, and get thinner
+// so each still shows.
+function talons(r, R, clawLen = 100, n = 4) {
   const k = (clawLen ?? 100) / 100;
-  return [-62, -22, 18, 56].map(deg => {
+  n = Math.max(1, Math.min(100, Math.round(n ?? 4)));
+  const span = n <= 4 ? 118 * (n - 1) / 3 : Math.min(330, 118 + (n - 4) * 20);
+  const step = n > 1 ? span / (n - 1) : 0;
+  const degs = n === 4 ? [-62, -22, 18, 56] : Array.from({ length: n }, (_, i) => -3 - span / 2 + i * step);
+  // half a gap between neighbours, where they leave the paw
+  const room = n > 4 ? R * 0.8 * Math.sin(step * Math.PI / 360) : Infinity;
+  const sw = n > 4 ? Math.max(0.6, Math.min(2, room * 0.5)) : 2;
+  return degs.map(deg => {
     const t = deg * Math.PI / 180, dx = Math.cos(t), dy = Math.sin(t);
     const nx = -dy, ny = dx;                              // across the talon
-    const len = r * 1.4 * k, w = r * 0.25 * Math.min(1, 0.6 + 0.4 * k), hook = r * 0.55 * Math.max(0.5, Math.min(k, 2));
+    const len = r * 1.4 * k, hook = r * 0.55 * Math.max(0.5, Math.min(k, 2));
+    const w = Math.max(r * 0.03, Math.min(r * 0.25 * Math.min(1, 0.6 + 0.4 * k), room * 1.1));
     const P = (along, across) => `${f1(dx * along + nx * across)} ${f1(dy * along + ny * across)}`;
     return `<path d="M${P(R * 0.8, -w)} Q${P(R + len * 0.75, -w * 0.9)} ${P(R + len, hook)} ` +
-           `Q${P(R + len * 0.45, w * 0.6)} ${P(R * 0.8, w)} Z" fill="#f4ecd6" stroke="#5c4a2e" stroke-width="2" stroke-linejoin="round"/>`;
+           `Q${P(R + len * 0.45, w * 0.6)} ${P(R * 0.8, w)} Z" fill="#f4ecd6" stroke="#5c4a2e" stroke-width="${f1(sw)}" stroke-linejoin="round"/>`;
   }).join("");
 }
 // The cat costumes (lion too) have claws on their paws.
 const CLAWED = { cat: 1, tiger: 1, lion: 1, bobcat: 1, leopard: 1, cheetah: 1, jaguar: 1 };
 // A suit's hands: paws in the fur color, with claws on a cat.
 const suitHands = (C, kind) => ({ style: "paw", size: Math.max(state.hands.size, 12), color: C.fur, pad: C.accent,
-                                  claws: !!CLAWED[kind], clawLen: state.hands.clawLen ?? 100 });
+                                  claws: !!CLAWED[kind], clawLen: state.hands.clawLen ?? 100,
+                                  clawCount: state.hands.clawCount ?? 4 });
 // How far a hand reaches from where it joins the arm, in any direction,
 // in units of its size (fingers and claws stick out; a round hand doesn't).
 const HAND_REACH = { round: 1, mitten: 1.65, star: 1.4, paw: 1.2, claw: 2.4,
@@ -1200,9 +1212,9 @@ const handReach = h => {
 };
 // An alien hand with n long, thin fingers, each with a round pad at its
 // tip, fanned out: 3 is the tree-frog hand (big pads), more spread wider
-// with smaller pads, 99 is nearly a full circle of them.
+// with smaller pads, 100 is nearly a full circle of them.
 function alienFingers(n) {
-  n = Math.max(1, Math.min(99, Math.round(n)));
+  n = Math.max(1, Math.min(100, Math.round(n)));
   const span = n <= 1 ? 0 : Math.min(330, 90 + (n - 3) * 14);
   const step = n > 1 ? span / (n - 1) : 90, half = Math.sin(step * Math.PI / 360);
   const w = Math.max(0.018, Math.min(0.2, 0.55 * half)), tip = Math.max(0.03, Math.min(0.36, 0.95 * half));
@@ -1231,6 +1243,7 @@ function manyFingers(n) {
   out.push({ a: -Math.min(span / 2 + 40, 175), len: 0.85, w: Math.max(w, 0.12), base: 0.5 });
   return out;
 }
+const starPoints = h => Math.max(1, Math.min(100, Math.round(h.starPoints ?? 5)));
 function handSvg(x, y, angle, side, h, skin) {
   const c = h.color === "skin" ? skin : h.color, st = darker(c), r = h.size;
   const g = inner => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(angle)}) scale(1 ${side})">${inner}</g>`;
@@ -1241,18 +1254,30 @@ function handSvg(x, y, angle, side, h, skin) {
       return g(`<ellipse cx="${r * 0.4}" rx="${r * 1.2}" ry="${r * 0.85}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
                `<ellipse cx="${r * 0.1}" cy="${-r * 0.9}" rx="${r * 0.35}" ry="${r * 0.5}" fill="${c}" stroke="${st}" stroke-width="2.5"/>`);
     case "star": {
+      // n points (5 unless the slider says otherwise), the first straight
+      // up, then turned by the angle slider (radians, up to the turn to
+      // the next point), with a dip between each two; a wide gap (1 or 2
+      // points) dips in a rounded curve, so 1 is a teardrop and 2 a lens.
+      // Many points get a thinner outline, so each still shows.
+      const n = starPoints(h);
+      const gap = 2 * Math.PI / n, dips = n >= 3 ? 1 : n === 2 ? 2 : 5;
       const ps = [];
-      for (let i = 0; i < 10; i++) {
-        const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.55 : r * 1.4;
-        ps.push([rr * Math.cos(a), rr * Math.sin(a)]);
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (h.starAngle ?? 0) + i * gap;
+        ps.push([r * 1.4 * Math.cos(a), r * 1.4 * Math.sin(a)]);
+        for (let j = 1; j <= dips; j++) {
+          const b = a + gap * j / (dips + 1);
+          ps.push([r * 0.55 * Math.cos(b), r * 0.55 * Math.sin(b)]);
+        }
       }
-      return g(poly(ps, c, st));
+      const sw = n > 5 ? Math.max(0.6, Math.min(2.5, Math.PI * r * 0.55 / n)) : 2.5;
+      return g(poly(ps, c, st, sw));
     }
     case "paw": {
       // a costume's paw: fur, with a pad and three toe pads (and on a cat
       // costume, the claw hand's talons sticking out of it)
       const pad = h.pad;
-      return g((h.claws ? talons(r, r * 1.0, h.clawLen) : "") +
+      return g((h.claws ? talons(r, r * 1.0, h.clawLen, h.clawCount) : "") +
                `<circle r="${r * 1.15}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
                `<ellipse cx="${-r * 0.15}" rx="${r * 0.42}" ry="${r * 0.5}" fill="${pad}"/>` +
                [[0.62, -0.6], [0.86, 0], [0.62, 0.6]].map(([px, py]) =>
@@ -1260,7 +1285,7 @@ function handSvg(x, y, angle, side, h, skin) {
     }
     case "claw": {
       // a furry paw with four hooked talons
-      return g(talons(r, r * 0.7, h.clawLen) +
+      return g(talons(r, r * 0.7, h.clawLen, h.clawCount) +
                `<ellipse cx="${r * 0.1}" rx="${r * 0.85}" ry="${r * 0.8}" fill="${c}" stroke="${st}" stroke-width="2.5"/>` +
                `<ellipse cx="${-r * 0.1}" cy="${r * 0.05}" rx="${r * 0.32}" ry="${r * 0.36}" fill="${st}" opacity="0.35"/>`);
     }
@@ -1560,7 +1585,10 @@ const TABS = [
                                   ["human", "✋ human"], ["alien", "👽 alien"]]],
     ["color", "color", "color", ["skin", ...BRIGHT]],
     ["range", "fingers", "✋ number of fingers", 1, 100, 5, 7],
-    ["range", "alienFingers", "👽 number of alien fingers", 1, 99, 2, 6],
+    ["range", "alienFingers", "👽 number of alien fingers", 1, 100, 2, 6],
+    ["range", "starPoints", "⭐ number of star points", 1, 100, 4, 8],
+    ["turn", "starAngle", "⭐ star angle (radians)", h => 2 * Math.PI / starPoints(h)],
+    ["range", "clawCount", "🐾 number of claws", 1, 100, 3, 6],
     ["range", "clawLen", "🐾 claw length", 20, 300, 70, 140],
     ["range", "size", "size", 2, 80, 6, 28],
   ]],
@@ -1653,8 +1681,11 @@ const SHOWN_WHEN = {
   "pants.skirtLen": p => p.style === "skirt" || p.style === "dress",
   "hands.fingers": h => h.style === "human",
   "hands.alienFingers": h => h.style === "alien",
+  "hands.starPoints": h => h.style === "star",
+  "hands.starAngle": h => h.style === "star",
   // claws: the claw hand's, or a cat costume's paws
   "hands.clawLen": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
+  "hands.clawCount": h => h.style === "claw" || (!!CLAWED[state.costume.kind] && !!costumeOn()),
   "undies.style": u => u.on,
   "undies.top": u => u.on && u.style !== "onepiece",
   "undies.color": u => u.on,
@@ -1676,6 +1707,19 @@ function control(part, [kind, key, label, ...rest]) {
                                 oninput: e => set(part, key, Number(e.target.value)) });
     box.append(input);
     syncs.push(() => { input.value = state[part][key]; val.textContent = state[part][key]; });
+  } else if (kind === "turn") {
+    // an angle in radians, from 0 to a period that the other settings
+    // decide (a star's turn to its next point), in hundredths shown; past
+    // the period (fewer points made it shorter) it shows, as it draws,
+    // the same turn within the period
+    const period = () => rest[0](state[part]);
+    const input = el("input", { type: "range", min: 0, step: "any",
+                                oninput: e => set(part, key, Number(e.target.value)) });
+    box.append(input);
+    syncs.push(() => {
+      const p = period(), v = state[part][key] ?? 0, w = v > p ? v % p : v;
+      input.max = p; input.value = w; val.textContent = w.toFixed(2);
+    });
   } else if (kind === "toggle") {
     const b = el("button", { onclick: () => set(part, key, !state[part][key]) });
     box.querySelector(".lbl").textContent = "";
@@ -1757,6 +1801,7 @@ document.getElementById("surprise").addEventListener("click", () => {
   for (const [, part, ctls] of TABS)
     for (const [kind, key, , ...rest] of ctls) {
       if (kind === "range") state[part][key] = rnd(rest[2] ?? rest[0], rest[3] ?? rest[1]);
+      else if (kind === "turn") state[part][key] = Math.random() * rest[0](state[part]);
       else if (kind === "toggle") state[part][key] = Math.random() < 0.3;
       else if (kind === "choice") state[part][key] = pick(rest[0])[0];
       else if (kind === "color") state[part][key] = pick(rest[0]);
