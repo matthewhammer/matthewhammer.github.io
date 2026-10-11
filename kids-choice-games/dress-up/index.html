@@ -122,7 +122,8 @@ const DEFAULTS = {
            tongue: "in", tongueLen: 100, tongueW: 100, tongueColor: "#e75480",
            lightX: -0.6, lightY: -0.6, shine: "#ffffff", shineMix: 100, shineSize: 45,
            pupil: "#000000", iris: 0, irisColor: "#3b82f6", whites: 0, oval: 0, tilt: 0,
-           faceW: 100, faceH: 100, alien: 0, eyeGap: 38, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100 },
+           faceW: 100, faceH: 100, alien: 0, eyeGap: 38, noseView: "none", nose: "L", noseFront: "round", noseW: 100, noseH: 100,
+           witchDir: "center", witchLen: 100 },
   hair:  { style: "long", color: "#2b2b2b", length: 100 },
   body:  { neck: 22, neckW: 26, arms: 55, armLen: 95, armW: 16, legLen: 140, legW: 20 },
   shirt: { style: "tee", collar: "v", width: 60, length: 150, color: "#5b8bd0", pattern: "plain",
@@ -246,6 +247,8 @@ function isSkin([r, g, b]) {
 // cartoon yellow's row), so a skin colour never changes the feeling; an
 // unnatural colour (red, green, grey) has its own silly ones.
 function family(hex) {
+  // the witch's green has a row of its own: witchy, never sick
+  if (hex.toLowerCase() === WITCH_SKIN) return 4;
   const [r, g, b] = hexToRgb(hex);
   if (isSkin([r, g, b])) return 3;
   const d = PRESETS.map(([pr, pg, pb]) => (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2);
@@ -258,6 +261,7 @@ function mood(f, brow, smile) {
     ["sick", "relieved", "queasy", "grumpy"],
     ["curious", "puzzled", "scheming", "homesick"],
     ["happy", "worried", "determined", "sulky"],
+    ["witchy", "spooked", "cackling", "hexed"],
   ][f];
   return table[(up ? 0 : 2) + (smiling ? 0 : 1)];
 }
@@ -344,7 +348,10 @@ function faceLayout(F) {
   // then clear the nose, measured to the mouth's top as drawn (a frown's
   // arch, an open mouth's upper lip), not to a flat mouth's line
   const top = mouthY0 + riseDrop + (mouthTopAsDrawn(F) - 150) * ky;
-  const noseDrop = nose ? Math.max(0, noseTop + 1.1 * uh + 6 - top) : 0;
+  // (a witch's nose pointing straight out of the face hangs down its whole
+  // length, 1.3 of the nose's height at the usual length)
+  const hang = F.noseView === "witch" && F.witchDir === "center" ? 1.3 * (F.witchLen ?? 100) / 100 : 1.1;
+  const noseDrop = nose ? Math.max(0, noseTop + hang * uh + 6 - top) : 0;
   // the eyes: along the mouth's top curve as drawn (a smile's corners, a
   // frown's middle, an open mouth's upper lip), it keeps 8 below each
   // eye's lower edge, found right above each point of the curve. A plain
@@ -385,10 +392,18 @@ function faceLayout(F) {
 }
 const mouthDrop = F => faceLayout(F).stretch;
 function noseSvg(F) {
-  const view = F.noseView;
+  let view = F.noseView;
   if (!view || view === "none") return "";
+  // a witch's nose: out to the left or right, its length times the
+  // length slider, or (C) straight out of the face, hanging down
+  const witch = view === "witch" || ((view === "left" || view === "right") && F.nose === "witch");
+  const len = view === "witch" ? (F.witchLen ?? 100) / 100 : 1;
+  if (view === "witch") {
+    if ((F.witchDir ?? "center") === "center") return witchNoseFront(F, len);
+    view = F.witchDir;
+  }
   const front = view === "front";
-  const shape = front ? FRONT_NOSES[F.noseFront] || FRONT_NOSES.round : NOSES[F.nose] || NOSES.L;
+  const shape = front ? FRONT_NOSES[F.noseFront] || FRONT_NOSES.round : witch ? NOSES.witch : NOSES[F.nose] || NOSES.L;
   // as tall as asked: the mouth makes room (faceLayout)
   const { noseTop, uh, uw } = faceLayout(F);
   const sw = f1(3 + (F.noseH + F.noseW) / 200);
@@ -399,19 +414,33 @@ function noseSvg(F) {
   // eyes where the usual width (30) puts it, not off under one eye. (From
   // the front it is mirrored, so centred.)
   const top = Number(shape.match(/-?[\d.]+/)[0]);
-  const X = (sx, x, y) => 100 + sx * (front ? wAt(y) * x : top * 30 + (x - top) * uw);
+  const X = (sx, x, y) => 100 + sx * (front ? wAt(y) * x : top * 30 + (x - top) * uw * len);
   // (a witch's nose is filled, a shade darker than the skin: a nose, not
   // a line)
-  const fill = !front && F.nose === "witch" ? mix(F.color, "#000000", 0.14) : "none";
+  const fill = witch ? mix(F.color, "#000000", 0.14) : "none";
   const at = (sx, d) => `<path d="${d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) =>
       f1(X(sx, Number(x), Number(y))) + " " + f1(noseTop + uh * Number(y)))}" ` +
     `fill="${fill}" stroke="black" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
   if (front) return at(1, shape) + at(-1, shape) + at(1, NOSE_TIP);
   const sx = view === "left" ? -1 : 1;
-  return at(sx, shape) + (F.nose === "witch"
+  return at(sx, shape) + (witch
     ? NOSE_WARTS.map(([x, y, r]) => `<circle cx="${f1(X(sx, x, y))}" cy="${f1(noseTop + uh * y)}" r="${f1(Math.max(3.5, r * uh))}" ` +
                                      `fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("")
     : "");
+}
+// A witch's nose seen straight on: from a narrow bridge it widens down to
+// a hooked point, its length times `len`, nostrils either side of the
+// point, warts on it. Filled a shade darker than the skin.
+function witchNoseFront(F, len) {
+  const { noseTop, uh, uw } = faceLayout(F);
+  const sw = f1(3 + (F.noseH + F.noseW) / 200), L = 1.3 * len;
+  const P = (x, y) => `${f1(100 + x * uw)} ${f1(noseTop + y * uh)}`;
+  const d = `M${P(-0.12, 0)} Q${P(-0.26, L * 0.55)} ${P(-0.64, L * 0.86)} Q${P(-0.46, L * 1.03)} ${P(0, L)} ` +
+            `Q${P(0.46, L * 1.03)} ${P(0.64, L * 0.86)} Q${P(0.26, L * 0.55)} ${P(0.12, 0)}`;
+  return `<path d="${d}" fill="${mix(F.color, "#000000", 0.14)}" stroke="black" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>` +
+    [-1, 1].map(sd => `<ellipse cx="${f1(100 + sd * 0.3 * uw)}" cy="${f1(noseTop + L * 0.9 * uh)}" rx="${f1(0.09 * uw + 1)}" ry="${f1(0.05 * uh + 1)}" fill="#111"/>`).join("") +
+    [[0.14, 0.45, 0.13], [-0.3, 0.74, 0.11]].map(([x, y, r]) =>
+      `<circle cx="${f1(100 + x * uw)}" cy="${f1(noseTop + y * L * uh)}" r="${f1(Math.max(3.5, r * uh))}" fill="${darker(F.color)}" stroke="black" stroke-width="1.5"/>`).join("");
 }
 function browPair(v) {
   const inner = 66 + idiv(v * 24, 100), top = Math.min(inner, 80) - 8;
@@ -2025,8 +2054,11 @@ function draw() {
 
 // ===================== CONTROLS =====================
 
-// a witch's green skin, its swatch marked with a witch
+// a witch's green skin
 const WITCH_SKIN = "#6fa34a";
+// the skin swatches that mean something, marked so: what they mean
+const SKIN_MARKS = { "#cfa000": ["😀", "smiley yellow"], "#aab2ba": ["👽", "alien grey"], "#dc143c": ["😡", "mad red"], "#8cbe32": ["🤢", "sick green"],
+                     [WITCH_SKIN]: ["🧙", "witch green"] };
 const SKINS = ["#cfa000", "#dc143c", "#8cbe32", "#aab2ba", "#ffdbac", "#f1c27d", "#e0ac69", "#c68642", "#8d5524", WITCH_SKIN];
 const BRIGHT = ["#e74c3c", "#ff69b4", "#f39c12", "#f1c40f", "#2ecc71", "#5b8bd0", "#34495e", "#8e44ad", "#ffffff", "#2b2b2b"];
 const HAIRS = ["#2b2b2b", "#6f4e37", "#e8c35a", "#b5562b", "#ff69b4", "#3b82f6", "#22c55e", "#8b5cf6"];
@@ -2055,9 +2087,11 @@ const TABS = [
     ["range", "smile", "smile", -100, 200, 0, 100],
     ["range", "brow", "eyebrows", -100, 200, 0, 100],
     ["toggle", "unibrow", "one big eyebrow"],
-    ["choice", "noseView", "👃 nose", [["none", "none"], ["right", "side, L →"], ["left", "side, ← backwards L"], ["front", "front"]]],
-    ["choice", "nose", "side shape", [["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "bulbous"], ["witch", "🧙 witch, warts"]]],
+    ["choice", "noseView", "👃 nose", [["none", "none"], ["right", "side, L →"], ["left", "side, ← backwards L"], ["front", "front"], ["witch", "🧙 witch, warts"]]],
+    ["choice", "nose", "side shape", [["L", "L"], ["angle", "<"], ["soft", "soft"], ["hook", "bulbous"]]],
     ["choice", "noseFront", "front shape", [["pointed", "pointed"], ["round", "round"]]],
+    ["choice", "witchDir", "🧙 witch nose points", [["left", "L ←"], ["center", "C"], ["right", "R →"]]],
+    ["range", "witchLen", "🧙 witch nose length", 30, 400, 70, 200],
     ["range", "noseH", "nose height", 20, 300, 70, 150],
     ["range", "noseW", "nose width", 20, 300, 70, 150],
     ["range", "open", "mouth open", 0, 300, 0, 100],
@@ -2217,6 +2251,8 @@ const SHOWN_WHEN = {
   "face.irisColor": f => f.iris > 0,
   "face.nose": f => f.noseView === "right" || f.noseView === "left",
   "face.noseFront": f => f.noseView === "front",
+  "face.witchDir": f => f.noseView === "witch",
+  "face.witchLen": f => f.noseView === "witch",
   "face.teeth": f => f.teethStyle === "spikes",
   "face.tongueLen": f => f.tongue === "out",
   "face.tongueW": f => f.tongue === "out",
@@ -2311,9 +2347,9 @@ function control(part, [kind, key, label, ...rest]) {
                          title: c === "skin" ? "same as skin" : c === "off" ? "none: the fur shows through"
                               : key === "spot" ? "a warm brown" : "a lighter shade",
                          onclick: () => set(part, key, c) }, c)
-        : c === WITCH_SKIN
-        ? el("button", { class: "swatch", title: "witch green", style: `background:${c};font-size:18px;line-height:1`,
-                         onclick: () => set(part, key, c) }, "🧙")
+        : key === "color" && part === "face" && SKIN_MARKS[c]
+        ? el("button", { class: "swatch", title: SKIN_MARKS[c][1], "aria-label": SKIN_MARKS[c][1],
+                         style: `background:${c};font-size:18px;line-height:1`, onclick: () => set(part, key, c) }, SKIN_MARKS[c][0])
         : el("button", { class: "swatch", title: c, style: `background:${c}`, onclick: () => set(part, key, c) });
       row.append(b); return [c, b];
     });
