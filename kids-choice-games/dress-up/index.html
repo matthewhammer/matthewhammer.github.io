@@ -1795,6 +1795,127 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
     }
     for (let i = 0; i < 16; i++)
       s += `<circle cx="${f1(x0 + W * R(i, 17))}" cy="${f1(y0 + (g - y0) * R(i, 18))}" r="${f1((3 + 6 * R(i, 19)) * k)}" fill="none" stroke="#ffffff" stroke-width="${f1(1.5 * k)}" opacity="0.7"/>`;
+  } else if (kind === "cemetery") {
+    // The stag's stone, below its cross: a slab, a tall tapered pedestal,
+    // and on it a light shield with a stag's head, lettering above and
+    // below.
+    const stoneDeer = (x, b, h, sw, base, bw, c, ln, lt) => {
+      const pt = b - base, sh = base * 0.42, sy = pt + base * 0.3, sx = sh * 0.42;
+      return `<rect x="${f1(x - bw * 0.62)}" y="${f1(b - base * 0.14)}" width="${f1(bw * 1.24)}" height="${f1(base * 0.14)}" fill="#8a8b8e" stroke="${ln}" stroke-width="${f1(1.3 * k)}"/>` +
+        `<path d="M${P(x - bw / 2, b - base * 0.14)} L${P(x - bw * 0.42, pt)} L${P(x + bw * 0.42, pt)} L${P(x + bw / 2, b - base * 0.14)} Z" fill="${c}" stroke="${ln}" stroke-width="${f1(1.3 * k)}"/>` +
+        `<line x1="${f1(x - bw * 0.28)}" y1="${f1(pt + base * 0.16)}" x2="${f1(x + bw * 0.28)}" y2="${f1(pt + base * 0.16)}" stroke="${lt}" stroke-width="${f1(1.6 * k)}"/>` +
+        `<line x1="${f1(x - bw * 0.22)}" y1="${f1(b - base * 0.22)}" x2="${f1(x + bw * 0.22)}" y2="${f1(b - base * 0.22)}" stroke="${lt}" stroke-width="${f1(1.3 * k)}"/>` +
+        `<path d="M${P(x - sx, sy)} L${P(x + sx, sy)} L${P(x + sx, sy + sh * 0.55)} Q${P(x + sx, sy + sh * 0.9)} ${P(x, sy + sh)} Q${P(x - sx, sy + sh * 0.9)} ${P(x - sx, sy + sh * 0.55)} Z" fill="${lt}"/>` +
+        // the stag: a long head pointing down, ears, and two branching antlers
+        `<path d="M${P(x - sx * 0.22, sy + sh * 0.42)} L${P(x + sx * 0.22, sy + sh * 0.42)} L${P(x + sx * 0.1, sy + sh * 0.82)} L${P(x - sx * 0.1, sy + sh * 0.82)} Z" fill="${c}"/>` +
+        [-1, 1].map(sd => `<path d="M${P(x + sd * sx * 0.2, sy + sh * 0.45)} L${P(x + sd * sx * 0.42, sy + sh * 0.38)} L${P(x + sd * sx * 0.24, sy + sh * 0.52)} Z" fill="${c}"/>` +
+          `<path d="M${P(x + sd * sx * 0.12, sy + sh * 0.42)} Q${P(x + sd * sx * 0.55, sy + sh * 0.3)} ${P(x + sd * sx * 0.62, sy + sh * 0.06)} ` +
+          `M${P(x + sd * sx * 0.32, sy + sh * 0.35)} L${P(x + sd * sx * 0.24, sy + sh * 0.16)} M${P(x + sd * sx * 0.5, sy + sh * 0.24)} L${P(x + sd * sx * 0.78, sy + sh * 0.14)} ` +
+          `M${P(x + sd * sx * 0.58, sy + sh * 0.14)} L${P(x + sd * sx * 0.46, sy + sh * 0.04)}" fill="none" stroke="${c}" stroke-width="${f1(Math.max(1.2, sh * 0.05))}" stroke-linecap="round"/>`).join("");
+    };
+    // A peaceful old cemetery on a bright day: clouds, green hills, dark
+    // yews, round trees and a weeping willow by a brook that winds down to
+    // the front; Celtic crosses and rounded headstones in the grass, bushes,
+    // and flowers everywhere.
+    s += `<defs>${grad("bg-day", "#4fa8e8", "#cfeeff", y0, g - 60 * k)}${grad("bg-brook", "#7fd0f5", "#3a95d0", g - 70 * k, y1)}</defs>` + all("url(#bg-day)");
+    s += `<circle cx="${f1(x1 - W * 0.12)}" cy="${f1(y0 + H * 0.12)}" r="${f1(36 * k)}" fill="#fff4b0" opacity="0.9"/>`;
+    const cloud = (x, y, sc) => [[0, 0, 26], [-26, 6, 18], [26, 6, 20], [-12, -12, 18], [12, -14, 20], [40, 10, 14], [-40, 10, 12]]
+      .map(([dx, dy, r]) => `<circle cx="${f1(x + dx * sc * k)}" cy="${f1(y + dy * sc * k)}" r="${f1(r * sc * k)}" fill="#ffffff"/>`).join("") +
+      `<ellipse cx="${f1(x)}" cy="${f1(y + 16 * sc * k)}" rx="${f1(52 * sc * k)}" ry="${f1(8 * sc * k)}" fill="#e6eef6"/>`;
+    for (let i = 0; i < 5; i++) s += cloud(x0 + W * (0.08 + 0.21 * i + 0.05 * R(i, 60)), y0 + H * (0.08 + 0.14 * R(i, 61)), 0.8 + 0.6 * R(i, 62));
+    s += land(g - 150 * k, 26, "#8fcf7a", 0.3) + land(g - 105 * k, 18, "#76bd62", 1.7);
+    // trees far off: dark yews like flames, and round leafy ones
+    for (let i = 0; i < 9; i++) {
+      const x = x0 + W * (i + 0.5 * R(i, 63)) / 9, b = g - 95 * k + 10 * k * R(i, 64);
+      if (R(i, 65) < 0.5) {
+        const h = (110 + 60 * R(i, 66)) * k, w = h * 0.32;
+        s += `<path d="M${P(x, b - h)} Q${P(x + w * 0.9, b - h * 0.55)} ${P(x + w / 2, b)} L${P(x - w / 2, b)} Q${P(x - w * 0.9, b - h * 0.55)} ${P(x, b - h)} Z" fill="#2f5d3a"/>` +
+             `<path d="M${P(x - w * 0.1, b - h * 0.85)} Q${P(x + w * 0.3, b - h * 0.5)} ${P(x + w * 0.15, b - h * 0.1)}" fill="none" stroke="#3f7a4a" stroke-width="${f1(3 * k)}"/>`;
+      } else {
+        const r = (30 + 16 * R(i, 66)) * k;
+        s += `<rect x="${f1(x - 4 * k)}" y="${f1(b - r * 1.2)}" width="${f1(8 * k)}" height="${f1(r * 1.2)}" fill="#6b4a2b"/>` +
+             [[0, -1.6, 1], [-0.7, -1.2, 0.75], [0.7, -1.2, 0.75]].map(([dx, dy, rr]) =>
+               `<circle cx="${f1(x + dx * r)}" cy="${f1(b + dy * r)}" r="${f1(rr * r)}" fill="${R(i, 67) < 0.5 ? "#5aa04a" : "#6cb85a"}"/>`).join("");
+      }
+    }
+    // the grass
+    s += land(g - 62 * k, 6, "#7cc66a", 2.4);
+    // a Celtic cross: a ring round the crossing, carved bosses and a little
+    // knotwork, on a stepped base -- or a rounded headstone
+    const stone = (x, b, h, kind, seed) => {
+      const c = R(seed, 70) < 0.5 ? "#b4b8ba" : "#a3a8a6", ln = "#6b7072", dk = "#8a9092";
+      if (kind === "head") {
+        const w = h * 0.62;
+        return `<path d="M${P(x - w / 2, b)} L${P(x - w / 2, b - h * 0.7)} Q${P(x - w / 2, b - h)} ${P(x, b - h)} Q${P(x + w / 2, b - h)} ${P(x + w / 2, b - h * 0.7)} L${P(x + w / 2, b)} Z" ` +
+               `fill="${c}" stroke="${ln}" stroke-width="${f1(1.5 * k)}"/>` +
+               `<path d="M${P(x - w * 0.3, b - h * 0.62)} L${P(x + w * 0.3, b - h * 0.62)} M${P(x - w * 0.24, b - h * 0.48)} L${P(x + w * 0.24, b - h * 0.48)} M${P(x - w * 0.27, b - h * 0.34)} L${P(x + w * 0.27, b - h * 0.34)}" stroke="${dk}" stroke-width="${f1(1.3 * k)}"/>` +
+               `<ellipse cx="${f1(x)}" cy="${f1(b)}" rx="${f1(w * 0.7)}" ry="${f1(3 * k)}" fill="#5f9e52" opacity="0.6"/>`;
+      }
+      // (the stag's stone: dark granite, light knotwork, a tall pedestal
+      // with a shield on it, a stag's head on the shield)
+      const deer = kind === "deer";
+      const c2 = deer ? "#3c3d42" : c, ln2 = deer ? "#1e1f22" : ln, dk2 = deer ? "#c9cacd" : dk;
+      const sw = h * 0.13, base = h * (deer ? 0.32 : 0.16), top = b - h, cy = top + h * (deer ? 0.22 : 0.26), arm = h * 0.25, ring = h * 0.15, bw = sw * (deer ? 3.4 : 2.6);
+      return (deer ? stoneDeer(x, b, h, sw, base, bw, c2, ln2, dk2) : "") + `<ellipse cx="${f1(x)}" cy="${f1(b)}" rx="${f1(bw * 0.9)}" ry="${f1(3.5 * k)}" fill="#5f9e52" opacity="0.6"/>` +
+        (deer ? "" : `<rect x="${f1(x - bw / 2 - sw * 0.3)}" y="${f1(b - base * 0.45)}" width="${f1(bw + sw * 0.6)}" height="${f1(base * 0.45)}" fill="${dk}" stroke="${ln}" stroke-width="${f1(1.3 * k)}"/>` +
+          `<path d="M${P(x - bw / 2, b - base * 0.45)} L${P(x - bw * 0.38, b - base)} L${P(x + bw * 0.38, b - base)} L${P(x + bw / 2, b - base * 0.45)} Z" fill="${c}" stroke="${ln}" stroke-width="${f1(1.3 * k)}"/>`) +
+        `<circle cx="${f1(x)}" cy="${f1(cy)}" r="${f1(ring)}" fill="none" stroke="${ln2}" stroke-width="${f1(sw * 0.55 + 2.6 * k)}"/>` +
+        `<circle cx="${f1(x)}" cy="${f1(cy)}" r="${f1(ring)}" fill="none" stroke="${c2}" stroke-width="${f1(sw * 0.55)}"/>` +
+        `<path d="M${P(x - sw / 2, b - base)} L${P(x - sw / 2, cy + sw / 2)} L${P(x - arm, cy + sw / 2)} L${P(x - arm, cy - sw / 2)} L${P(x - sw / 2, cy - sw / 2)} ` +
+        `L${P(x - sw / 2, top)} L${P(x + sw / 2, top)} L${P(x + sw / 2, cy - sw / 2)} L${P(x + arm, cy - sw / 2)} L${P(x + arm, cy + sw / 2)} ` +
+        `L${P(x + sw / 2, cy + sw / 2)} L${P(x + sw / 2, b - base)} Z" fill="${c2}" stroke="${ln2}" stroke-width="${f1(1.5 * k)}" stroke-linejoin="round"/>` +
+        [[0, 0, 0.45], [-arm + sw * 0.5, 0, 0.3], [arm - sw * 0.5, 0, 0.3], [0, -(cy - top) + sw * 0.5, 0.3]].map(([dx, dy, rr]) =>
+          `<circle cx="${f1(x + dx)}" cy="${f1(cy + dy)}" r="${f1(sw * rr)}" fill="none" stroke="${dk2}" stroke-width="${f1(1.2 * k)}"/>`).join("") +
+        // knotwork down the shaft: a little interlace of crossing curves
+        [0, 1, 2, 3].map(j => { const y = cy + sw * 1.2 + j * (b - base - cy - sw * 1.6) / 4, d = (b - base - cy - sw * 1.6) / 8;
+          return `<path d="M${P(x - sw * 0.3, y)} Q${P(x, y + d)} ${P(x + sw * 0.3, y + 2 * d)} M${P(x + sw * 0.3, y)} Q${P(x, y + d)} ${P(x - sw * 0.3, y + 2 * d)}" fill="none" stroke="${dk2}" stroke-width="${f1(deer ? 1.6 * k : 1.1 * k)}"/>`; }).join("") +
+        (deer ? [-1, 1].map(sd => `<path d="M${P(x + sd * (arm - sw * 0.9), cy - sw * 0.3)} Q${P(x + sd * (arm - sw * 1.5), cy)} ${P(x + sd * (arm - sw * 0.9), cy + sw * 0.3)} ` +
+                  `M${P(x + sd * sw * 0.9, cy - sw * 0.3)} Q${P(x + sd * sw * 1.5, cy)} ${P(x + sd * sw * 0.9, cy + sw * 0.3)}" fill="none" stroke="${dk2}" stroke-width="${f1(1.6 * k)}"/>`).join("")
+              : `<circle cx="${f1(x - sw * 0.2)}" cy="${f1(b - base - h * 0.08)}" r="${f1(sw * 0.18)}" fill="#7fa36a" opacity="0.5"/>`);
+    };
+    // the far stones, small, on the slope
+    for (const [fx, dy, h, kd, seed] of [[-0.3, -52, 46, "cross", 1], [-0.16, -56, 30, "head", 2], [0.06, -54, 34, "head", 3], [0.1, -50, 50, "cross", 4], [-0.42, -48, 32, "head", 5]])
+      s += stone(W * fx, g + dy * k, h * k, kd, seed);
+    // the brook, winding down from the hills to the front on the right,
+    // ripples on it, stones along it
+    {
+      const pts = t => { const y = g - 62 * k + t * (y1 + 40 * k - (g - 62 * k));
+        return [W * (0.2 + 0.2 * t) + W * 0.05 * Math.sin(t * Math.PI * 1.6), y, (8 + 70 * t * t) * k]; };
+      let left = [], right = [];
+      for (let i = 0; i <= 20; i++) { const [cx, y, w] = pts(i / 20); left.push([cx - w, y]); right.push([cx + w, y]); }
+      const ring = [...left, ...right.reverse()];
+      s += `<polygon points="${pts ? ring.map(([x, y]) => `${f1(x)},${f1(y)}`).join(" ") : ""}" fill="url(#bg-brook)" stroke="#5f9e52" stroke-width="${f1(4 * k)}" stroke-linejoin="round"/>`;
+      for (let i = 2; i < 18; i += 2) {
+        const [cx, y, w] = pts(i / 20 + 0.02 * R(i, 71));
+        s += `<path d="M${P(cx - w * 0.4, y)} q${f1(w * 0.2)} ${f1(-3 * k)} ${f1(w * 0.4)} 0" fill="none" stroke="#e8f8ff" stroke-width="${f1(1.8 * k)}" opacity="0.85"/>`;
+      }
+      for (let i = 0; i < 7; i++) {
+        const [cx, y, w] = pts(0.25 + 0.1 * i), sd = i % 2 ? 1 : -1;
+        s += `<ellipse cx="${f1(cx + sd * w * 1.05)}" cy="${f1(y)}" rx="${f1((5 + 4 * R(i, 72)) * k * (0.6 + i * 0.12))}" ry="${f1(3.5 * k * (0.6 + i * 0.12))}" fill="#9a9a94" stroke="#6b6b66" stroke-width="${f1(1 * k)}"/>`;
+      }
+      // and a weeping willow on its bank
+      const [wx, wy] = pts(0.18);
+      const tx = wx + 70 * k, tb = wy + 4 * k, th = 150 * k;
+      s += `<path d="M${P(tx - 7 * k, tb)} Q${P(tx - 2 * k, tb - th * 0.5)} ${P(tx + 6 * k, tb - th * 0.8)} L${P(tx + 12 * k, tb - th * 0.78)} Q${P(tx + 6 * k, tb - th * 0.5)} ${P(tx + 7 * k, tb)} Z" fill="#6b4a2b"/>` +
+           `<ellipse cx="${f1(tx + 8 * k)}" cy="${f1(tb - th * 0.82)}" rx="${f1(62 * k)}" ry="${f1(30 * k)}" fill="#8cc06b"/>` +
+           [...Array(15)].map((_, j) => { const sx = tx + 8 * k + (j - 7) * 8 * k, len = (60 + 35 * R(j, 73)) * k;
+             return `<path d="M${P(sx, tb - th * 0.86)} Q${P(sx + (j - 7) * 2 * k, tb - th * 0.6)} ${P(sx + (j - 7) * 3 * k, tb - th * 0.86 + len)}" fill="none" stroke="${j % 2 ? "#7fb35e" : "#9ccc78"}" stroke-width="${f1(4 * k)}" stroke-linecap="round"/>`; }).join("");
+    }
+    // bushes, some in flower
+    const bush = (x, b, r, fl) => [[-0.7, -0.5, 0.7], [0.7, -0.5, 0.7], [0, -0.9, 0.85]].map(([dx, dy, rr]) =>
+        `<circle cx="${f1(x + dx * r)}" cy="${f1(b + dy * r)}" r="${f1(rr * r)}" fill="#3f8a3f"/>`).join("") +
+      (fl ? [...Array(7)].map((_, j) => `<circle cx="${f1(x + (R(j, x | 0) - 0.5) * 1.6 * r)}" cy="${f1(b - (0.3 + 1.1 * R(j + 9, x | 0)) * r)}" r="${f1(3 * k)}" fill="${fl}"/>`).join("") : "");
+    // the near stones and bushes, at the sides
+    for (const [fx, dy, h, kd, seed] of [[-0.36, 30, 215, "deer", 6], [-0.2, 4, 62, "head", 7], [0.26, 6, 120, "cross", 8], [0.44, 26, 80, "head", 9]])
+      s += stone(W * fx, g + dy * k, h * k, kd, seed);
+    s += bush(-W * 0.47, g + 30 * k, 24 * k, "#ff7eb6") + bush(-W * 0.12, g - 2 * k, 16 * k, null) + bush(W * 0.36, g + 34 * k, 20 * k, "#ffffff") +
+         bush(-W * 0.28, g - 30 * k, 14 * k, "#ffd23f");
+    // flowers everywhere, in every color
+    for (let i = 0; i < 46; i++) {
+      const x = x0 + W * R(i, 74), y = g - 40 * k + 140 * k * R(i, 75), c = ["#ff6fa5", "#ffd23f", "#ffffff", "#b388ff", "#ff8c42", "#ff4d4d"][i % 6];
+      s += [0, 72, 144, 216, 288].map(a => `<circle cx="${f1(x + 4.5 * k * Math.cos(a * Math.PI / 180))}" cy="${f1(y + 4.5 * k * Math.sin(a * Math.PI / 180))}" r="${f1(3.3 * k)}" fill="${c}"/>`).join("") +
+           `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(2.3 * k)}" fill="#f2a900"/>`;
+    }
   } else if (kind === "witch") {
     // A witch's woods at dusk: a moon and bats, dark hills and trees; far
     // off, a hut on giant clawed chicken legs; a fence across the middle
@@ -2503,7 +2624,8 @@ const TABS = [
   ]],
   ["🏞️ Background", "background", [
     ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
-                                      ["beach", "🏖️ beach"], ["witch", "🧙 witch's woods"]]],
+                                      ["beach", "🏖️ beach"], ["witch", "🧙 witch's woods"],
+                                      ["cemetery", "🌿 cemetery"]]],
     ["range", "figSize", "🧍 size in the scene", 10, 200, 100, 100],
     ["place", "figPos", "🧍 place in the scene (or drag the figure)"],
   ]],
