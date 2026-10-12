@@ -171,7 +171,7 @@ const DEFAULTS = {
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
   // the figure's size and place in a background scene (dragged there)
-  background: { kind: "none", figSize: 100, figX: 0, figY: 0 },
+  background: { kind: "none", figSize: 100, figX: 0, figY: 0, chickenLegs: false, legSize: 100, hutNear: 0 },
   // the sliders pinned to the full-screen controls, as "part.key"
   hud: { pins: [], min: [] },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
@@ -1665,7 +1665,7 @@ function broomSvg([hx, hy], trim) {
 // the same however big the figure's frame; its sky and ground run well
 // past the frame (a blown lid can widen it). Things stand off to the
 // sides, where the figure is not.
-function backgroundSvg(kind, x0, y0, x1, y1, g) {
+function backgroundSvg(kind, x0, y0, x1, y1, g, opts = {}) {
   const W = x1 - x0, H = y1 - y0, k = H / 700, pad = Math.max(W, H);
   // the same "random" every time, for a scene that holds still
   const R = (i, j = 0) => { const v = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return v - Math.floor(v); };
@@ -1970,12 +1970,18 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
           s += deadTree(seed, x, base + 10 * k * R(seed, 12), h, (row ? 8 : 6) * k * (0.8 + 0.5 * R(seed, 13)), col,
                         kind < 0.45 ? 4 : 3, kind > 0.8 ? 1 : 0);
       }
-    // behind the fence, up on a rise: a log hut on giant chicken legs, red-
-    // orange and scaly, white feathers at the top, three long splayed toes
-    // and a spur on each foot, every one clawed
-    s += `<path d="M${P(W * 0.02, g - 40 * k)} Q${P(W * 0.16, g - 140 * k)} ${P(W * 0.36, g - 40 * k)} Z" fill="#3b2f2a"/>`;
+    // behind the fence, up on a rise: a log hut, on its own or (chosen) on
+    // giant chicken legs, red-orange and scaly, white feathers at the top,
+    // three long splayed toes and a spur on each foot, every one clawed --
+    // the legs as long as their slider says. Nearer, it comes down toward
+    // the fence and grows, but stays behind it (drawn before it).
+    const legs = !!opts.chickenLegs, ls = (opts.legSize ?? 100) / 100, near = (opts.hutNear ?? 0) / 100;
+    const hutBase = g - 112 * k, hutAt = hutBase + near * 76 * k, hutScale = 1 + 1.1 * near, hutX = W * 0.19;
+    s += `<g transform="translate(${f1(hutX)} ${f1(hutAt)}) scale(${hutScale.toFixed(3)}) translate(${f1(-hutX)} ${f1(-hutBase)})">`;
+    s += `<path d="M${P(hutX - W * 0.17, g - 40 * k)} Q${P(hutX - W * 0.03, g - 140 * k)} ${P(hutX + W * 0.17, g - 40 * k)} Z" fill="#3b2f2a"/>`;
     {
-      const hx = W * 0.19, feet = g - 112 * k, legH = 120 * k, hw = 120 * k, hh = 84 * k, top = feet - legH - hh;
+      const hx = hutX, feet = hutBase, legH = legs ? 120 * k * ls : 0, hw = 120 * k, hh = 84 * k, top = feet - legH - hh;
+      const lw = Math.sqrt(ls);   // (longer legs, a little thicker)
       const red = "#e0552b", dark = "#8f2a12";
       const leg = sd => {
         const hip = [hx + sd * 30 * k, feet - legH], knee = [hx + sd * 52 * k, feet - legH * 0.5], ankle = [hx + sd * 34 * k, feet];
@@ -1987,7 +1993,7 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
                  `<path d="M${P(tx - uy * 3 * k, ty + ux * 3 * k)} Q${P(tx + ux * 10 * k, ty + uy * 10 * k)} ${P(tx + ux * 14 * k + uy * 6 * k, ty + uy * 14 * k - ux * 6 * k)} ` +
                  `L${P(tx + uy * 3 * k, ty - ux * 3 * k)} Z" fill="#f2ead8" stroke="#3a2614" stroke-width="${f1(1.2 * k)}"/>`;
         };
-        return limb(18, dark) + limb(13, red) +
+        return limb(18 * lw, dark) + limb(13 * lw, red) +
           [0.15, 0.3, 0.6, 0.75, 0.88].map(t => { const a = t < 0.5 ? [hip, knee, t * 2] : [knee, ankle, (t - 0.5) * 2];
             const x = a[0][0] + (a[1][0] - a[0][0]) * a[2], y = a[0][1] + (a[1][1] - a[0][1]) * a[2];
             return `<line x1="${f1(x - 6 * k)}" y1="${f1(y)}" x2="${f1(x + 6 * k)}" y2="${f1(y + 2 * k)}" stroke="${dark}" stroke-width="${f1(1.6 * k)}"/>`; }).join("") +
@@ -1995,7 +2001,7 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
           [-1, 0, 1].map(t => `<path d="M${P(hip[0] + t * 8 * k, hip[1] - 4 * k)} q${f1(-4 * k)} ${f1(14 * k)} ${f1(2 * k)} ${f1(22 * k)} q${f1(6 * k)} ${f1(-8 * k)} ${f1(4 * k)} ${f1(-22 * k)} Z" fill="#ffffff" stroke="#c9c9c9" stroke-width="${f1(1 * k)}"/>`).join("") +
           toe(sd * 44, 8) + toe(sd * 20, 16) + toe(-sd * 8, 14) + toe(-sd * 26, 4);
       };
-      s += leg(-1) + leg(1);
+      if (legs) s += leg(-1) + leg(1);
       // the logs, a red door with a window either side, the roof
       for (let r = 0; r < 6; r++) {
         const y = top + r * hh / 6;
@@ -2008,6 +2014,7 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
            `<polygon points="${P(hx - hw / 2 - 20 * k, top + 4 * k)} ${P(hx, top - 52 * k)} ${P(hx + hw / 2 + 20 * k, top + 4 * k)}" fill="#6b4a2b" stroke="#3a2614" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
            [1, 2, 3].map(j => `<line x1="${f1(hx - (hw / 2 + 20 * k) * (1 - j / 4))}" y1="${f1(top + 4 * k - 56 * k * (1 - j / 4) * 0 - 14 * k * j + 14 * k * 0)}" x2="${f1(hx + (hw / 2 + 20 * k) * (1 - j / 4))}" y2="${f1(top + 4 * k - 14 * k * j)}" stroke="#4a301a" stroke-width="${f1(1.5 * k)}"/>`).join("");
     }
+    s += `</g>`;   // the hut
     // the ground, dark earth, with tufts of grass
     s += land(g - 40 * k, 8, "#4a3a2a", 1.9);
     for (let i = 0; i < 22; i++) {
@@ -2032,31 +2039,25 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
              [-3, 0, 3].map(t => `<line x1="${f1(sx + t * k)}" y1="${f1(sy + 6 * k)}" x2="${f1(sx + t * k)}" y2="${f1(sy + 10 * k)}" stroke="#6b6355" stroke-width="${f1(1 * k)}"/>`).join("");
       }
     }
-    // and nearer: one giant on the left, behind her cabin, its trunk
-    // massive and its limbs sprawling wide toward the middle, and a
-    // middling one at the right edge; roots spreading into the ground, a
-    // knot hole
+    // and nearer: one giant on the left, its trunk massive and its limbs
+    // sprawling wide toward the middle, its roots humped up out of the
+    // ground and reaching far across it; and a middling one at the right
+    // edge; roots spreading into the ground, a knot hole
     for (const [seed, fx, h, w, roots, droop, wide, lean] of [[23, 0.1, 560, 64, 16, 0.45, 1.7, 0.22], [7, 0.98, 250, 16, 7, 0.1, 1, -0.1]]) {
       const x = x0 + W * fx, b = g + 40 * k, col = "#2a1f1a";
       s += [-2, -1, 0, 1, 2].map(t => `<path d="M${P(x, b - 10 * k)} Q${P(x + t * 2 * roots * k, b - 2 * k)} ${P(x + t * 4 * roots * k, b + 8 * k)}" ` +
              `fill="none" stroke="${col}" stroke-width="${f1(roots * k)}" stroke-linecap="round"/>`).join("") +
+           // (the giant's roots: thick, arching up out of the ground and
+           // down again, far out to the right and a little to the left)
+           (h > 400 ? [[30, 230, 30, 15], [18, 170, 46, 12], [24, 120, -6, 13], [10, 300, 62, 9], [-14, -60, 20, 11], [6, 70, 66, 8]].map(([dx, reach, dy, rw], r) => {
+             const sx = x + dx * k, ex = x + reach * k, ey = b + dy * k, hump = (18 + 14 * R(r, 80)) * k;
+             const m1 = sx + (ex - sx) * 0.35, m2 = sx + (ex - sx) * 0.7;
+             return `<path d="M${P(sx, b - 14 * k)} C${P(m1, b - 14 * k - hump)} ${P(m2, ey - hump * 0.6)} ${P(ex, ey)}" fill="none" stroke="#1a130f" stroke-width="${f1((rw + 3) * k)}" stroke-linecap="round"/>` +
+                    `<path d="M${P(sx, b - 14 * k)} C${P(m1, b - 14 * k - hump)} ${P(m2, ey - hump * 0.6)} ${P(ex, ey)}" fill="none" stroke="${col}" stroke-width="${f1(rw * k)}" stroke-linecap="round"/>` +
+                    `<path d="M${P(m1, b - 10 * k - hump * 0.75)} C${P(m1 + 8 * k, b - 12 * k - hump * 0.8)} ${P(m2, ey - hump * 0.5)} ${P(m2 + 10 * k, ey - hump * 0.42)}" fill="none" stroke="#4a3a30" stroke-width="${f1(1.6 * k)}" opacity="0.7"/>`;
+           }).join("") : "") +
            deadTree(seed, x, b, h * k, w * k, col, h > 400 ? 6 : 4, droop, wide, lean) +
            `<ellipse cx="${f1(x - w * 0.12 * k)}" cy="${f1(b - h * 0.2 * k)}" rx="${f1(w * 0.14 * k)}" ry="${f1(w * 0.26 * k)}" fill="#120c0a"/>`;
-    }
-    // her cabin on the left: crooked, a glowing window, a round door, a
-    // chimney with smoke
-    {
-      const cx = -Math.max(W * 0.33, 190 * k), b = g + 30 * k, cw = 150 * k, ch = 110 * k, top = b - ch;
-      s += `<rect x="${f1(cx + 30 * k)}" y="${f1(top - 80 * k)}" width="${f1(20 * k)}" height="${f1(60 * k)}" fill="#6b6b73" stroke="#38383f" stroke-width="${f1(2 * k)}"/>` +
-           [0, 1, 2].map(j => `<circle cx="${f1(cx + 40 * k + j * 12 * k)}" cy="${f1(top - 96 * k - j * 22 * k)}" r="${f1((10 + 5 * j) * k)}" fill="#c9c3d6" opacity="${(0.55 - 0.15 * j).toFixed(2)}"/>`).join("") +
-           `<polygon points="${P(cx - cw / 2, b)} ${P(cx - cw / 2 + 4 * k, top)} ${P(cx + cw / 2 - 2 * k, top + 6 * k)} ${P(cx + cw / 2, b)}" fill="#7a5a3a" stroke="#3a2614" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
-           [1, 2, 3].map(j => `<line x1="${f1(cx - cw / 2 + 2 * k)}" y1="${f1(top + ch * j / 4)}" x2="${f1(cx + cw / 2 - 1 * k)}" y2="${f1(top + 4 * k + ch * j / 4)}" stroke="#4a301a" stroke-width="${f1(2 * k)}"/>`).join("") +
-           `<polygon points="${P(cx - cw / 2 - 18 * k, top + 8 * k)} ${P(cx - 10 * k, top - 70 * k)} ${P(cx + cw / 2 + 16 * k, top + 14 * k)}" fill="#3f2a4f" stroke="#24192f" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
-           `<path d="M${P(cx - 18 * k, b)} L${P(cx - 18 * k, b - 46 * k)} Q${P(cx, b - 66 * k)} ${P(cx + 18 * k, b - 46 * k)} L${P(cx + 18 * k, b)} Z" fill="#3a2614"/>` +
-           `<circle cx="${f1(cx + 11 * k)}" cy="${f1(b - 22 * k)}" r="${f1(2.5 * k)}" fill="#d9a441"/>` +
-           `<rect x="${f1(cx + 34 * k)}" y="${f1(top + 24 * k)}" width="${f1(28 * k)}" height="${f1(24 * k)}" fill="#ffd166" stroke="#3a2614" stroke-width="${f1(2.5 * k)}"/>` +
-           `<line x1="${f1(cx + 48 * k)}" y1="${f1(top + 24 * k)}" x2="${f1(cx + 48 * k)}" y2="${f1(top + 48 * k)}" stroke="#3a2614" stroke-width="${f1(2 * k)}"/>` +
-           `<line x1="${f1(cx + 34 * k)}" y1="${f1(top + 36 * k)}" x2="${f1(cx + 62 * k)}" y2="${f1(top + 36 * k)}" stroke="#3a2614" stroke-width="${f1(2 * k)}"/>`;
     }
     // skeletons reaching up out of the ground: a skull half buried, an arm
     // bone up to a bony hand
@@ -2279,7 +2280,7 @@ function draw() {
   // the background first, behind everything, its ground at the feet
   const BG = state.background;
   if (scened)
-    svg += `<g id="bg">${backgroundSvg(BG.kind, left, top, -left, bottom, SCENE.ground)}</g>`;
+    svg += `<g id="bg">${backgroundSvg(BG.kind, left, top, -left, bottom, SCENE.ground, BG)}</g>`;
   // and in a scene, the figure's feet (its ground, g) on the stage's
   // ground (sg), at its own size about them, where it was dragged
   figureT = scened ? { k: (BG.figSize ?? 100) / 100, dx: BG.figX ?? 0, dy: BG.figY ?? 0, g: ground, sg: SCENE.ground }
@@ -2628,6 +2629,10 @@ const TABS = [
                                       ["cemetery", "🌿 cemetery"]]],
     ["range", "figSize", "🧍 size in the scene", 10, 200, 100, 100],
     ["place", "figPos", "🧍 place in the scene (or drag the figure)"],
+    // the witch's woods: the hut behind the fence, on chicken legs or not
+    ["toggle", "chickenLegs", "🐔 chicken legs on the hut"],
+    ["range", "legSize", "🐔 leg size", 20, 300, 80, 140],
+    ["range", "hutNear", "🛖 hut: far ↔ near (behind the fence)", 0, 100, 0, 60],
   ]],
 ];
 
@@ -2700,6 +2705,9 @@ const SHOWN_WHEN = {
   "costume.bootColor": c => c.kind === "witch",
   "background.figSize": b => b.kind !== "none",
   "background.figPos": b => b.kind !== "none",
+  "background.chickenLegs": b => b.kind === "witch",
+  "background.legSize": b => b.kind === "witch" && b.chickenLegs,
+  "background.hutNear": b => b.kind === "witch",
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => !!ANIMALS[c.kind],
@@ -2759,9 +2767,9 @@ function control(part, [kind, key, label, ...rest]) {
     name.before(eye);
     syncs.push(() => { eye.setAttribute("aria-pressed", !folded(id)); box.classList.toggle("min", folded(id)); });
   }
-  if ((kind === "range" || kind === "turn") && part !== "background" && !buildingHud) {
-    // the pin, left of the name (the scene's own sliders are always in the
-    // HUD: no pin)
+  if ((kind === "range" || kind === "turn") && !(part === "background" && key === "figSize") && !buildingHud) {
+    // the pin, left of the name (the figure's size is always in the HUD:
+    // no pin)
     const id = part + "." + key, pin = el("button", { class: "pin", title: "Pin to the full-screen controls",
                                                        onclick: () => togglePin(id) }, "📌");
     name.before(pin);
@@ -2942,7 +2950,7 @@ function renderHud() {
   buildingHud = true;
   const boxes = [];
   if (state.background.kind !== "none")
-    for (const spec of TABS.find(t => t[1] === "background")[2].filter(c => c[1] !== "kind")) boxes.push(control("background", spec));
+    for (const spec of TABS.find(t => t[1] === "background")[2].filter(c => c[1] === "figSize" || c[1] === "figPos")) boxes.push(control("background", spec));
   for (const id of state.hud.pins || []) {
     const [part, key] = id.split("."), tabEntry = TABS.find(t => t[1] === part);
     const spec = tabEntry && tabEntry[2].find(c => c[1] === key);
