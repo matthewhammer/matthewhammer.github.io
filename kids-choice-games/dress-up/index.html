@@ -48,6 +48,9 @@
   input[type=range] { width: 100%; height: 28px; accent-color: var(--accent); }
   input[type=color] { width: 40px; height: 34px; border: none; padding: 0; background: none; }
   .hint { color: var(--muted); font-size: 0.9em; }
+  /* the figure's place in its scene: the stage in small, the figure a box */
+  svg.place { display: block; width: 100%; max-width: 240px; height: auto; touch-action: none; cursor: crosshair;
+              border-radius: 10px; border: 2px solid var(--line); }
   svg.pad { width: 140px; height: 140px; display: block; touch-action: none; cursor: crosshair;
             border-radius: 14px; border: 2px solid var(--line); }
   /* On a phone the controls are below the picture, so the picture is
@@ -106,6 +109,8 @@
   .hud .ctl.min { flex: 0 0 auto; }
   .hud .ctl.min input, .hud .ctl.min .val { display: none; }
   .hud .ctl.min > .lbl { margin: 0; }
+  .hud svg.place { max-width: 130px; }
+  .hud .ctl.min svg.place { display: none; }
 </style>
 </head>
 <body>
@@ -2319,8 +2324,8 @@ const TABS = [
   ["🏞️ Background", "background", [
     ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
                                       ["beach", "🏖️ beach"]]],
-    ["range", "figSize", "🧍 size in the scene (drag it to move it)", 10, 200, 100, 100],
-    ["action", "recenter", "↺ back to the middle", () => { state.background.figX = 0; state.background.figY = 0; }],
+    ["range", "figSize", "🧍 size in the scene", 10, 200, 100, 100],
+    ["place", "figPos", "🧍 place in the scene (or drag the figure)"],
   ]],
 ];
 
@@ -2392,7 +2397,7 @@ const SHOWN_WHEN = {
   "costume.broomSize": c => c.kind === "witch" && c.broom,
   "costume.bootColor": c => c.kind === "witch",
   "background.figSize": b => b.kind !== "none",
-  "background.recenter": b => b.kind !== "none" && ((b.figX ?? 0) !== 0 || (b.figY ?? 0) !== 0),
+  "background.figPos": b => b.kind !== "none",
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => !!ANIMALS[c.kind],
@@ -2446,7 +2451,7 @@ function control(part, [kind, key, label, ...rest]) {
   const name = el("span", { class: "name" }, [label]);
   const lbl = el("div", { class: "lbl" }, [el("span", {}, [name]), val]);
   const box = el("div", { class: "ctl" }, [lbl]);
-  if ((kind === "range" || kind === "turn") && buildingHud) {
+  if ((kind === "range" || kind === "turn" || kind === "place") && buildingHud) {
     const id = part + "." + key, eye = el("button", { class: "eye", title: "Fold this slider away, or open it (it stays pinned)",
                                                        onclick: () => { toggleMin(id); } }, "👁️");
     name.before(eye);
@@ -2519,6 +2524,40 @@ function control(part, [kind, key, label, ...rest]) {
     syncs.push(() => {
       for (const [c, b] of bs) b.setAttribute("aria-pressed", state[part][key] === c);
       if (state[part][key].startsWith("#")) pick.value = state[part][key];
+    });
+  } else if (kind === "place") {
+    // The stage in small, its sky and its ground, and the figure a box as
+    // tall as it stands, its feet where they are: tap or drag to put the
+    // feet there (near the middle, exactly the middle).
+    const NS = "http://www.w3.org/2000/svg", W = -2 * SCENE.left, H = SCENE.bottom - SCENE.top;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `${SCENE.left} ${SCENE.top} ${W} ${H}`);
+    svg.setAttribute("class", "place");
+    svg.innerHTML = `<rect x="${SCENE.left}" y="${SCENE.top}" width="${W}" height="${SCENE.ground - SCENE.top}" fill="#9fd8f5"/>` +
+      `<rect x="${SCENE.left}" y="${SCENE.ground}" width="${W}" height="${SCENE.bottom - SCENE.ground}" fill="#e8d39a"/>` +
+      `<line x1="0" y1="${SCENE.top}" x2="0" y2="${SCENE.bottom}" stroke="#ffffff" stroke-width="3" stroke-dasharray="12 10" opacity="0.8"/>` +
+      `<rect id="fig" rx="14" fill="#7c3aed" fill-opacity="0.75" stroke="#ffffff" stroke-width="5"/>`;
+    const fig = svg.querySelector("#fig");
+    const at = e => {
+      const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse()), F = sceneFrame;
+      let x = clamp(p.x, F.left, F.right), y = clamp(p.y - F.ground, (F.top - F.ground) * 0.6, F.bottom - F.ground);
+      if (Math.abs(x) < W * 0.03) x = 0;
+      if (Math.abs(y) < H * 0.03) y = 0;
+      state.background.figX = Math.round(x); state.background.figY = Math.round(y); changed();
+    };
+    let held = false;
+    svg.addEventListener("pointerdown", e => { held = true; svg.setPointerCapture(e.pointerId); at(e); });
+    svg.addEventListener("pointermove", e => { if (held) at(e); });
+    svg.addEventListener("pointerup", () => { held = false; });
+    svg.addEventListener("pointercancel", () => { held = false; });
+    box.append(svg);
+    syncs.push(() => {
+      const B = state.background, k = (B.figSize ?? 100) / 100;
+      const h = Math.max(30, (naturalFrame.ground - naturalFrame.top) * k), w = Math.max(16, h * 0.4);
+      const fx = B.figX ?? 0, fy = SCENE.ground + (B.figY ?? 0);
+      fig.setAttribute("x", f1(fx - w / 2)); fig.setAttribute("y", f1(fy - h));
+      fig.setAttribute("width", f1(w)); fig.setAttribute("height", f1(h));
+      val.textContent = !B.figX && !B.figY ? "middle" : "";
     });
   } else if (kind === "pad") {
     // A square to tap or drag: the sun marks where the light comes from,
@@ -2609,6 +2648,7 @@ function renderHud() {
   }
   if (!boxes.length)
     boxes.push(el("div", { class: "empty" }, "Pin sliders with 📌 in the controls, and they show up here."));
+  // (only when there is nothing else: a scene always has its size and place)
   buildingHud = false;
   hud.replaceChildren(...boxes);
   hudSyncs = syncs;
