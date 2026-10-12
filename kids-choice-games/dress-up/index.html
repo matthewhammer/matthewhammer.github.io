@@ -171,7 +171,8 @@ const DEFAULTS = {
             patternColor: "auto" },
   shoes: { style: "sneaker", size: 100, color: "#c0392b" },
   // the figure's size and place in a background scene (dragged there)
-  background: { kind: "none", figSize: 100, figX: 0, figY: 0, chickenLegs: false, legSize: 100, hutNear: 0 },
+  background: { kind: "none", figSize: 100, figX: 0, figY: 0, chickenLegs: false, legSize: 100, hutNear: 0,
+                eyeRate: 30, eyeGlow: 70 },
   // the sliders pinned to the full-screen controls, as "part.key"
   hud: { pins: [], min: [] },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
@@ -1918,11 +1919,23 @@ function backgroundSvg(kind, x0, y0, x1, y1, g, opts = {}) {
     }
   } else if (kind === "witch") {
     // A witch's woods at dusk: a moon and bats, dark hills and trees; far
-    // off, a hut on giant clawed chicken legs; a fence across the middle
-    // with a skull on each post; her cabin on the left, smoke from its
-    // chimney; her cauldron bubbling over a fire on the right; skeletons
-    // reaching up out of the ground.
+    // off, a hut (on giant clawed chicken legs, if chosen); a fence across
+    // the middle with skulls on its posts; a giant tree on the left, its
+    // roots humped out of the ground; her cauldron bubbling over a fire on
+    // the right; skeletons reaching up out of the ground.
     s += `<defs>${grad("bg-dusk", "#2b1d4a", "#e0874a", y0, g - 40 * k)}</defs>` + all("url(#bg-dusk)");
+    // The skulls' eyes: a red dot in each eye hole, all growing and
+    // shrinking together, so many times a minute (0: a steady glow), as
+    // big as the size slider says (a share of the hole). SVG's own
+    // animation, on the picture's clock, so a redraw keeps them in step.
+    const blinks = opts.eyeRate ?? 30, glow = (opts.eyeGlow ?? 70) / 100;
+    const eyeDot = (cx, cy, hole) => {
+      if (glow <= 0) return "";
+      const r = hole * glow;
+      const anim = blinks > 0 ? `<animate attributeName="r" values="${f1(r * 0.08)};${f1(r)};${f1(r * 0.08)}" keyTimes="0;0.5;1" ` +
+        `calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" dur="${(60 / blinks).toFixed(3)}s" begin="0s" repeatCount="indefinite"/>` : "";
+      return `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="#ff2626">${anim}</circle>`;
+    };
     const mx = x1 - W * 0.17, my = y0 + H * 0.15;
     s += `<circle cx="${f1(mx)}" cy="${f1(my)}" r="${f1(44 * k)}" fill="#fff3c4"/>` +
          `<circle cx="${f1(mx + 14 * k)}" cy="${f1(my - 8 * k)}" r="${f1(9 * k)}" fill="#efe0a8"/>` +
@@ -2035,6 +2048,7 @@ function backgroundSvg(kind, x0, y0, x1, y1, g, opts = {}) {
         s += `<path d="M${P(sx - 11 * k, sy + 2 * k)} Q${P(sx - 12 * k, sy - 14 * k)} ${P(sx, sy - 15 * k)} Q${P(sx + 12 * k, sy - 14 * k)} ${P(sx + 11 * k, sy + 2 * k)} ` +
              `L${P(sx + 6 * k, sy + 4 * k)} L${P(sx + 5 * k, sy + 10 * k)} L${P(sx - 5 * k, sy + 10 * k)} L${P(sx - 6 * k, sy + 4 * k)} Z" fill="#efe8d8" stroke="#6b6355" stroke-width="${f1(1.2 * k)}"/>` +
              `<circle cx="${f1(sx - 4.5 * k)}" cy="${f1(sy - 3 * k)}" r="${f1(3.4 * k)}" fill="#1a1426"/><circle cx="${f1(sx + 4.5 * k)}" cy="${f1(sy - 3 * k)}" r="${f1(3.4 * k)}" fill="#1a1426"/>` +
+             eyeDot(sx - 4.5 * k, sy - 3 * k, 3.4 * k) + eyeDot(sx + 4.5 * k, sy - 3 * k, 3.4 * k) +
              `<path d="M${P(sx - 1.5 * k, sy + 3 * k)} L${P(sx, sy)} L${P(sx + 1.5 * k, sy + 3 * k)} Z" fill="#1a1426"/>` +
              [-3, 0, 3].map(t => `<line x1="${f1(sx + t * k)}" y1="${f1(sy + 6 * k)}" x2="${f1(sx + t * k)}" y2="${f1(sy + 10 * k)}" stroke="#6b6355" stroke-width="${f1(1 * k)}"/>`).join("");
       }
@@ -2070,6 +2084,7 @@ function backgroundSvg(kind, x0, y0, x1, y1, g, opts = {}) {
              return `<line x1="${f1(hx)}" y1="${f1(hy)}" x2="${f1(hx + 12 * k * Math.cos(a))}" y2="${f1(hy + 12 * k * Math.sin(a))}" stroke="${bone}" stroke-width="${f1(2.6 * k)}" stroke-linecap="round"/>`; }).join("") +
            `<path d="M${P(x - 13 * k, y)} Q${P(x - 14 * k, y - 20 * k)} ${P(x, y - 21 * k)} Q${P(x + 14 * k, y - 20 * k)} ${P(x + 13 * k, y)} Z" fill="${bone}" stroke="${ln}" stroke-width="${f1(1.2 * k)}"/>` +
            `<circle cx="${f1(x - 5 * k)}" cy="${f1(y - 9 * k)}" r="${f1(3.6 * k)}" fill="#1a1426"/><circle cx="${f1(x + 5 * k)}" cy="${f1(y - 9 * k)}" r="${f1(3.6 * k)}" fill="#1a1426"/>` +
+           eyeDot(x - 5 * k, y - 9 * k, 3.6 * k) + eyeDot(x + 5 * k, y - 9 * k, 3.6 * k) +
            `<ellipse cx="${f1(x)}" cy="${f1(y + 1 * k)}" rx="${f1(26 * k)}" ry="${f1(5 * k)}" fill="#3a2c1e"/>`;
     }
     // her cauldron on the right, bubbling green over a fire
@@ -2633,6 +2648,8 @@ const TABS = [
     ["toggle", "chickenLegs", "🐔 chicken legs on the hut"],
     ["range", "legSize", "🐔 leg size", 20, 300, 80, 140],
     ["range", "hutNear", "🛖 hut: far ↔ near (behind the fence)", 0, 100, 0, 60],
+    ["range", "eyeRate", "💀 skull eyes: blinks a minute (0 = steady)", 0, 240, 20, 60],
+    ["range", "eyeGlow", "💀 skull eyes: size", 0, 100, 40, 90],
   ]],
 ];
 
@@ -2708,6 +2725,8 @@ const SHOWN_WHEN = {
   "background.chickenLegs": b => b.kind === "witch",
   "background.legSize": b => b.kind === "witch" && b.chickenLegs,
   "background.hutNear": b => b.kind === "witch",
+  "background.eyeRate": b => b.kind === "witch",
+  "background.eyeGlow": b => b.kind === "witch",
   "costume.marks": c => !!ANIMALS[c.kind],
   "costume.spot": c => c.furPattern === "rosettes" && !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.belly": c => !!ANIMALS[c.kind],
