@@ -177,7 +177,7 @@ const DEFAULTS = {
   hud: { pins: [], min: [] },
   costume: { kind: "none", fur: "#e8862a", marks: "#1f1a17", belly: "#f7ead8", eyes: "#e0a800",
              accent: "#e89aa0", furPattern: "stripes", spot: "auto",
-             witchColor: "#6a2c91", webColor: "#3fae4a", trimColor: "#f28c28", witchCat: false, broom: false,
+             witchColor: "#6a2c91", webColor: "#3fae4a", webStyle: "tiled", trimColor: "#f28c28", witchCat: false, broom: false,
              catFur: "#1f1f22", catWhite: "#ffffff", catEyes: "#c6d43a", catNose: "#f4a0b0", catSize: 100, broomSize: 100, bootColor: "#1f1f22" },
 };
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -249,6 +249,16 @@ function webTile(c) {
     }
   }
   return `<path d="${d}" fill="none" stroke="${c}" stroke-width="0.25"/>`;
+}
+// One spider web, as the Hazel slide draws it: eight straight threads out
+// from (cx, cy), r long, and three rings across them, straight between
+// threads, at 35%, 65% and 95% of the way out.
+function spiderWeb(cx, cy, r, c) {
+  const at = (f, i) => [cx + f * r * Math.cos(i * Math.PI / 4), cy + f * r * Math.sin(i * Math.PI / 4)];
+  let d = [0, 1, 2, 3, 4, 5, 6, 7].map(i => `M${f1(cx)} ${f1(cy)} L${at(1, i).map(f1).join(" ")}`).join(" ");
+  for (const f of [0.35, 0.65, 0.95])
+    d += " M" + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => at(f, i).map(f1).join(" ")).join(" L");
+  return `<path d="${d}" fill="none" stroke="${c}" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>`;
 }
 function patternDef(id, color, kind, size = 14, markColor = "auto") {
   const lt = markColor === "auto" ? lighter(color) : markColor;
@@ -2209,9 +2219,12 @@ function draw() {
   const brimRx = witch ? Math.min(300, Math.max(128, hairReach(state.hair).half + 14)) : 128;
   const tucked = (inner, id) => witch ? `<clipPath id="${id}"><rect x="-4000" y="40" width="8200" height="8000"/></clipPath>` +
                                         `<g clip-path="url(#${id})">${inner}</g>` : inner;
+  // (her web is tiled all over the dress, or "a few" separate webs on it,
+  // as the Hazel slide draws them)
+  const fewWebs = witch && WC.webStyle === "few", webPat = fewWebs ? "plain" : "web";
   if (witch) {
-    SH = { ...SH, style: "long", color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
-    P = { ...P, style: "dress", skirtLen: 72, color: WC.witchColor, pattern: "web", patternSize: 96, patternColor: WC.webColor };
+    SH = { ...SH, style: "long", color: WC.witchColor, pattern: webPat, patternSize: 96, patternColor: WC.webColor };
+    P = { ...P, style: "dress", skirtLen: 72, color: WC.witchColor, pattern: webPat, patternSize: 96, patternColor: WC.webColor };
   }
   const w = SH.width, L = SH.length;
   const nw = Math.max(22, B.neckW / 2 + 6);           // the collar fits the neck
@@ -2352,6 +2365,10 @@ function draw() {
                    : ` Q${f1((x0 + x1) / 2)} ${f1(L + sl + 16)} ${f1(x1)} ${f1(L + sl)}`;
       }
       svg += `<path d="${d} Z" fill="${pf}" stroke="${ps}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      // a few webs on the skirt: two side by side, a smaller one below
+      if (fewWebs)
+        svg += spiderWeb(-0.5 * fl, L + 0.42 * sl, 0.24 * fl, WC.webColor) + spiderWeb(0.5 * fl, L + 0.42 * sl, 0.24 * fl, WC.webColor) +
+               spiderWeb(0, L + 0.8 * sl, 0.18 * fl, WC.webColor);
     }
   } else {
     const len = !suit && P.style === "shorts" ? LL * 0.38 : LL;
@@ -2387,6 +2404,9 @@ function draw() {
            `<polyline points="${pts(body)}" fill="none" stroke="${limbLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
     svg += undiesTop(U, w, nw, hw, fx, L);
   } else svg += poly(torso, sf, ss);
+  // a few webs on the bodice, side by side
+  if (fewWebs && !undies)
+    svg += spiderWeb(-0.42 * hw, -20 + 0.48 * (L + 20), 0.3 * hw, WC.webColor) + spiderWeb(0.42 * hw, -20 + 0.48 * (L + 20), 0.3 * hw, WC.webColor);
   // a witch's belt round her waist, its buckle in the middle
   if (witch) {
     const bc = WC.bootColor ?? "#1f1f22";
@@ -2627,6 +2647,7 @@ const TABS = [
     ["color", "accent", "nose, ear & beak color", ACCENTS],
     ["color", "witchColor", "🧙 hat & dress color", ["#6a2c91", "#1f1f22", "#2e7d32", "#1e3a8a", "#b71c1c", "#f28c28", "#ff69b4"]],
     ["color", "webColor", "🕸️ spider web color", ["#3fae4a", "#ffffff", "#c0c0c0", "#f28c28", "#1f1f22", "#b38bff"]],
+    ["choice", "webStyle", "🕸️ spider web", [["tiled", "all over"], ["few", "a few webs"]]],
     ["color", "trimColor", "hat band & stocking color", ["#f28c28", "#3fae4a", "#6a2c91", "#1f1f22", "#ffffff", "#e53935"]],
     ["toggle", "witchCat", "🐈‍⬛ cat on the shoulder"],
     ["color", "catFur", "🐈‍⬛ cat's fur", ["#1f1f22", "#6b4226", "#e8862a", "#9ca3af", "#ffffff", "#8b5cf6"]],
@@ -2710,6 +2731,7 @@ const SHOWN_WHEN = {
   "costume.furPattern": c => !!(ANIMALS[c.kind] && ANIMALS[c.kind].suit),
   "costume.witchColor": c => c.kind === "witch",
   "costume.webColor": c => c.kind === "witch",
+  "costume.webStyle": c => c.kind === "witch",
   "costume.trimColor": c => c.kind === "witch",
   "costume.witchCat": c => c.kind === "witch",
   "costume.catFur": c => c.kind === "witch" && c.witchCat,
