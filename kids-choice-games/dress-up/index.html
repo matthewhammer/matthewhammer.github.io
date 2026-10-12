@@ -1795,6 +1795,186 @@ function backgroundSvg(kind, x0, y0, x1, y1, g) {
     }
     for (let i = 0; i < 16; i++)
       s += `<circle cx="${f1(x0 + W * R(i, 17))}" cy="${f1(y0 + (g - y0) * R(i, 18))}" r="${f1((3 + 6 * R(i, 19)) * k)}" fill="none" stroke="#ffffff" stroke-width="${f1(1.5 * k)}" opacity="0.7"/>`;
+  } else if (kind === "witch") {
+    // A witch's woods at dusk: a moon and bats, dark hills and trees; far
+    // off, a hut on giant clawed chicken legs; a fence across the middle
+    // with a skull on each post; her cabin on the left, smoke from its
+    // chimney; her cauldron bubbling over a fire on the right; skeletons
+    // reaching up out of the ground.
+    s += `<defs>${grad("bg-dusk", "#2b1d4a", "#e0874a", y0, g - 40 * k)}</defs>` + all("url(#bg-dusk)");
+    const mx = x1 - W * 0.17, my = y0 + H * 0.15;
+    s += `<circle cx="${f1(mx)}" cy="${f1(my)}" r="${f1(44 * k)}" fill="#fff3c4"/>` +
+         `<circle cx="${f1(mx + 14 * k)}" cy="${f1(my - 8 * k)}" r="${f1(9 * k)}" fill="#efe0a8"/>` +
+         `<circle cx="${f1(mx - 16 * k)}" cy="${f1(my + 12 * k)}" r="${f1(6 * k)}" fill="#efe0a8"/>`;
+    for (let i = 0; i < 4; i++) {
+      // a bat: two scalloped wings and a small body
+      const bx = x0 + W * (0.12 + 0.2 * i + 0.06 * R(i, 30)), by = y0 + H * (0.08 + 0.18 * R(i, 31)), b = (14 + 6 * R(i, 32)) * k;
+      s += `<path d="M${P(bx, by)} Q${P(bx - b * 0.5, by - b * 0.6)} ${P(bx - b * 1.2, by - b * 0.2)} Q${P(bx - b * 0.9, by + b * 0.05)} ${P(bx - b * 0.75, by + b * 0.25)} ` +
+           `Q${P(bx - b * 0.5, by + 0.02 * b)} ${P(bx - b * 0.3, by + b * 0.3)} Q${P(bx - b * 0.15, by + b * 0.05)} ${P(bx, by + b * 0.2)} ` +
+           `Q${P(bx + b * 0.15, by + b * 0.05)} ${P(bx + b * 0.3, by + b * 0.3)} Q${P(bx + b * 0.5, by + 0.02 * b)} ${P(bx + b * 0.75, by + b * 0.25)} ` +
+           `Q${P(bx + b * 0.9, by + b * 0.05)} ${P(bx + b * 1.2, by - b * 0.2)} Q${P(bx + b * 0.5, by - b * 0.6)} ${P(bx, by)} Z" fill="#1a1426"/>`;
+    }
+    s += land(g - 150 * k, 30, "#3a2c4f", 0.7);
+    // Dead trees, each grown from its own seed: a trunk, then limbs that
+    // fork two or three ways, bending as they go, thinner each time. A
+    // tree has its own lean, height, spread and twist; some droop like
+    // weeping trees, some are snapped-off stumps.
+    const deadTree = (seed, x, y, h, w, col, depth, droop = 0, wide = 1, lean0 = 0) => {
+      const out = [], lean = lean0 + (R(seed, 1) - 0.5) * 0.35, twist = 0.3 + 0.6 * R(seed, 2), spread = (0.45 + 0.4 * R(seed, 3)) * wide;
+      const grow = (x, y, a, len, wd, lvl, id) => {
+        const bend = (R(seed, id * 7 + 1) - 0.5) * twist;
+        const mx = x + Math.cos(a) * len * 0.5, my = y + Math.sin(a) * len * 0.5;
+        const ex = mx + Math.cos(a + bend) * len * 0.5, ey = my + Math.sin(a + bend) * len * 0.5;
+        out.push(`<path d="M${P(x, y)} Q${P(mx, my)} ${P(ex, ey)}" fill="none" stroke="${col}" stroke-width="${f1(Math.max(0.8 * k, wd))}" stroke-linecap="round"/>`);
+        if (lvl === 0) return;
+        const n = 2 + (R(seed, id * 7 + 2) > 0.55 ? 1 : 0);
+        for (let c = 0; c < n; c++) {
+          // (droop pulls limbs down, on either side, more the farther out)
+          const a0 = a + bend + (c - (n - 1) / 2) * spread * (0.7 + 0.6 * R(seed, id * 7 + 3 + c)), dr = droop * 0.22 * (depth - lvl + 1);
+          const na = Math.atan2(Math.sin(a0) + dr, Math.cos(a0));
+          grow(ex, ey, na, len * (0.55 + 0.3 * R(seed, id * 11 + c)), wd * 0.6, lvl - 1, id * 3 + c + 1);
+        }
+      };
+      grow(x, y, -Math.PI / 2 + lean, h * 0.38, w, depth, 1);
+      return out.join("");
+    };
+    // two rows far off, the farther paler
+    for (const [row, base, col, n] of [[0, g - 130 * k, "#3b2c52", 9], [1, g - 92 * k, "#24192f", 8]])
+      for (let i = 0; i < n; i++) {
+        const seed = 100 + row * 40 + i, x = x0 + W * (i + 0.2 + 0.6 * R(seed, 9)) / n;
+        const kind = R(seed, 10), h = (row ? 200 : 150) * k * (0.65 + 0.6 * R(seed, 11));
+        if (kind < 0.12)   // a snapped-off stump
+          s += deadTree(seed, x, base, h * 0.45, (row ? 9 : 6) * k, col, 2);
+        else
+          s += deadTree(seed, x, base + 10 * k * R(seed, 12), h, (row ? 8 : 6) * k * (0.8 + 0.5 * R(seed, 13)), col,
+                        kind < 0.45 ? 4 : 3, kind > 0.8 ? 1 : 0);
+      }
+    // behind the fence, up on a rise: a log hut on giant chicken legs, red-
+    // orange and scaly, white feathers at the top, three long splayed toes
+    // and a spur on each foot, every one clawed
+    s += `<path d="M${P(W * 0.02, g - 40 * k)} Q${P(W * 0.16, g - 140 * k)} ${P(W * 0.36, g - 40 * k)} Z" fill="#3b2f2a"/>`;
+    {
+      const hx = W * 0.19, feet = g - 112 * k, legH = 120 * k, hw = 120 * k, hh = 84 * k, top = feet - legH - hh;
+      const red = "#e0552b", dark = "#8f2a12";
+      const leg = sd => {
+        const hip = [hx + sd * 30 * k, feet - legH], knee = [hx + sd * 52 * k, feet - legH * 0.5], ankle = [hx + sd * 34 * k, feet];
+        const limb = (w, c) => `<path d="M${P(...hip)} L${P(...knee)} L${P(...ankle)}" fill="none" stroke="${c}" stroke-width="${f1(w * k)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+        const toe = (dx, dy) => {
+          const tx = ankle[0] + dx * k, ty = ankle[1] + dy * k, ux = dx / Math.hypot(dx, dy), uy = dy / Math.hypot(dx, dy);
+          return `<line x1="${f1(ankle[0])}" y1="${f1(ankle[1])}" x2="${f1(tx)}" y2="${f1(ty)}" stroke="${dark}" stroke-width="${f1(10 * k)}" stroke-linecap="round"/>` +
+                 `<line x1="${f1(ankle[0])}" y1="${f1(ankle[1])}" x2="${f1(tx)}" y2="${f1(ty)}" stroke="${red}" stroke-width="${f1(7 * k)}" stroke-linecap="round"/>` +
+                 `<path d="M${P(tx - uy * 3 * k, ty + ux * 3 * k)} Q${P(tx + ux * 10 * k, ty + uy * 10 * k)} ${P(tx + ux * 14 * k + uy * 6 * k, ty + uy * 14 * k - ux * 6 * k)} ` +
+                 `L${P(tx + uy * 3 * k, ty - ux * 3 * k)} Z" fill="#f2ead8" stroke="#3a2614" stroke-width="${f1(1.2 * k)}"/>`;
+        };
+        return limb(18, dark) + limb(13, red) +
+          [0.15, 0.3, 0.6, 0.75, 0.88].map(t => { const a = t < 0.5 ? [hip, knee, t * 2] : [knee, ankle, (t - 0.5) * 2];
+            const x = a[0][0] + (a[1][0] - a[0][0]) * a[2], y = a[0][1] + (a[1][1] - a[0][1]) * a[2];
+            return `<line x1="${f1(x - 6 * k)}" y1="${f1(y)}" x2="${f1(x + 6 * k)}" y2="${f1(y + 2 * k)}" stroke="${dark}" stroke-width="${f1(1.6 * k)}"/>`; }).join("") +
+          // white feathers where the leg meets the hut
+          [-1, 0, 1].map(t => `<path d="M${P(hip[0] + t * 8 * k, hip[1] - 4 * k)} q${f1(-4 * k)} ${f1(14 * k)} ${f1(2 * k)} ${f1(22 * k)} q${f1(6 * k)} ${f1(-8 * k)} ${f1(4 * k)} ${f1(-22 * k)} Z" fill="#ffffff" stroke="#c9c9c9" stroke-width="${f1(1 * k)}"/>`).join("") +
+          toe(sd * 44, 8) + toe(sd * 20, 16) + toe(-sd * 8, 14) + toe(-sd * 26, 4);
+      };
+      s += leg(-1) + leg(1);
+      // the logs, a red door with a window either side, the roof
+      for (let r = 0; r < 6; r++) {
+        const y = top + r * hh / 6;
+        s += `<rect x="${f1(hx - hw / 2 - 6 * k)}" y="${f1(y)}" width="${f1(hw + 12 * k)}" height="${f1(hh / 6)}" rx="${f1(hh / 12)}" fill="${r % 2 ? "#8a5a32" : "#9b6a3c"}" stroke="#4a2c14" stroke-width="${f1(1.5 * k)}"/>`;
+      }
+      s += `<rect x="${f1(hx - 14 * k)}" y="${f1(top + 20 * k)}" width="${f1(28 * k)}" height="${f1(hh - 20 * k)}" fill="#c0392b" stroke="#4a1410" stroke-width="${f1(2 * k)}"/>` +
+           `<path d="M${P(hx - 9 * k, top + 34 * k)} l${f1(18 * k)} ${f1(18 * k)} M${P(hx + 9 * k, top + 34 * k)} l${f1(-18 * k)} ${f1(18 * k)}" stroke="#4a1410" stroke-width="${f1(2 * k)}"/>` +
+           [-1, 1].map(sd => `<rect x="${f1(hx + sd * 38 * k - 11 * k)}" y="${f1(top + 18 * k)}" width="${f1(22 * k)}" height="${f1(24 * k)}" fill="#ffd166" stroke="#2a3a8a" stroke-width="${f1(3 * k)}"/>` +
+             `<line x1="${f1(hx + sd * 38 * k)}" y1="${f1(top + 18 * k)}" x2="${f1(hx + sd * 38 * k)}" y2="${f1(top + 42 * k)}" stroke="#2a3a8a" stroke-width="${f1(2 * k)}"/>`).join("") +
+           `<polygon points="${P(hx - hw / 2 - 20 * k, top + 4 * k)} ${P(hx, top - 52 * k)} ${P(hx + hw / 2 + 20 * k, top + 4 * k)}" fill="#6b4a2b" stroke="#3a2614" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
+           [1, 2, 3].map(j => `<line x1="${f1(hx - (hw / 2 + 20 * k) * (1 - j / 4))}" y1="${f1(top + 4 * k - 56 * k * (1 - j / 4) * 0 - 14 * k * j + 14 * k * 0)}" x2="${f1(hx + (hw / 2 + 20 * k) * (1 - j / 4))}" y2="${f1(top + 4 * k - 14 * k * j)}" stroke="#4a301a" stroke-width="${f1(1.5 * k)}"/>`).join("");
+    }
+    // the ground, dark earth, with tufts of grass
+    s += land(g - 40 * k, 8, "#4a3a2a", 1.9);
+    for (let i = 0; i < 22; i++) {
+      const x = x0 + W * R(i, 41), y = g - 30 * k + 120 * k * R(i, 42);
+      s += `<path d="M${P(x - 7 * k, y)} L${P(x - 3 * k, y - 12 * k)} L${P(x, y)} L${P(x + 3 * k, y - 14 * k)} L${P(x + 7 * k, y)} Z" fill="#3d5a2a"/>`;
+    }
+    // a palisade across the middle: pointed stakes side by side, a skull
+    // on every other one
+    {
+      const fy = g - 26 * k, ph = 70 * k, step = 22 * k;
+      s += `<rect x="${f1(x0 - 10)}" y="${f1(fy - ph * 0.55)}" width="${f1(W + 20)}" height="${f1(6 * k)}" fill="#3a2a1a"/>`;
+      for (let i = 0, x = x0 - step / 2; x < x1 + step; i++, x += step) {
+        const h = ph * (0.9 + 0.2 * R(i, 50)), c = i % 2 ? "#6b5236" : "#7a5e3e";
+        s += `<polygon points="${P(x - step / 2 + 1, fy)} ${P(x - step / 2 + 1, fy - h)} ${P(x, fy - h - 12 * k)} ${P(x + step / 2 - 1, fy - h)} ${P(x + step / 2 - 1, fy)}" fill="${c}" stroke="#2f2216" stroke-width="${f1(1.4 * k)}"/>` +
+             `<line x1="${f1(x - 3 * k)}" y1="${f1(fy - h * 0.8)}" x2="${f1(x - 2 * k)}" y2="${f1(fy - h * 0.3)}" stroke="#4a3622" stroke-width="${f1(1.2 * k)}"/>`;
+        if (i % 4 !== 1) continue;
+        const sx = x, sy = fy - h - 14 * k;
+        s += `<path d="M${P(sx - 11 * k, sy + 2 * k)} Q${P(sx - 12 * k, sy - 14 * k)} ${P(sx, sy - 15 * k)} Q${P(sx + 12 * k, sy - 14 * k)} ${P(sx + 11 * k, sy + 2 * k)} ` +
+             `L${P(sx + 6 * k, sy + 4 * k)} L${P(sx + 5 * k, sy + 10 * k)} L${P(sx - 5 * k, sy + 10 * k)} L${P(sx - 6 * k, sy + 4 * k)} Z" fill="#efe8d8" stroke="#6b6355" stroke-width="${f1(1.2 * k)}"/>` +
+             `<circle cx="${f1(sx - 4.5 * k)}" cy="${f1(sy - 3 * k)}" r="${f1(3.4 * k)}" fill="#1a1426"/><circle cx="${f1(sx + 4.5 * k)}" cy="${f1(sy - 3 * k)}" r="${f1(3.4 * k)}" fill="#1a1426"/>` +
+             `<path d="M${P(sx - 1.5 * k, sy + 3 * k)} L${P(sx, sy)} L${P(sx + 1.5 * k, sy + 3 * k)} Z" fill="#1a1426"/>` +
+             [-3, 0, 3].map(t => `<line x1="${f1(sx + t * k)}" y1="${f1(sy + 6 * k)}" x2="${f1(sx + t * k)}" y2="${f1(sy + 10 * k)}" stroke="#6b6355" stroke-width="${f1(1 * k)}"/>`).join("");
+      }
+    }
+    // and nearer: one giant on the left, behind her cabin, its trunk
+    // massive and its limbs sprawling wide toward the middle, and a
+    // middling one at the right edge; roots spreading into the ground, a
+    // knot hole
+    for (const [seed, fx, h, w, roots, droop, wide, lean] of [[23, 0.1, 560, 64, 16, 0.45, 1.7, 0.22], [7, 0.98, 250, 16, 7, 0.1, 1, -0.1]]) {
+      const x = x0 + W * fx, b = g + 40 * k, col = "#2a1f1a";
+      s += [-2, -1, 0, 1, 2].map(t => `<path d="M${P(x, b - 10 * k)} Q${P(x + t * 2 * roots * k, b - 2 * k)} ${P(x + t * 4 * roots * k, b + 8 * k)}" ` +
+             `fill="none" stroke="${col}" stroke-width="${f1(roots * k)}" stroke-linecap="round"/>`).join("") +
+           deadTree(seed, x, b, h * k, w * k, col, h > 400 ? 6 : 4, droop, wide, lean) +
+           `<ellipse cx="${f1(x - w * 0.12 * k)}" cy="${f1(b - h * 0.2 * k)}" rx="${f1(w * 0.14 * k)}" ry="${f1(w * 0.26 * k)}" fill="#120c0a"/>`;
+    }
+    // her cabin on the left: crooked, a glowing window, a round door, a
+    // chimney with smoke
+    {
+      const cx = -Math.max(W * 0.33, 190 * k), b = g + 30 * k, cw = 150 * k, ch = 110 * k, top = b - ch;
+      s += `<rect x="${f1(cx + 30 * k)}" y="${f1(top - 80 * k)}" width="${f1(20 * k)}" height="${f1(60 * k)}" fill="#6b6b73" stroke="#38383f" stroke-width="${f1(2 * k)}"/>` +
+           [0, 1, 2].map(j => `<circle cx="${f1(cx + 40 * k + j * 12 * k)}" cy="${f1(top - 96 * k - j * 22 * k)}" r="${f1((10 + 5 * j) * k)}" fill="#c9c3d6" opacity="${(0.55 - 0.15 * j).toFixed(2)}"/>`).join("") +
+           `<polygon points="${P(cx - cw / 2, b)} ${P(cx - cw / 2 + 4 * k, top)} ${P(cx + cw / 2 - 2 * k, top + 6 * k)} ${P(cx + cw / 2, b)}" fill="#7a5a3a" stroke="#3a2614" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
+           [1, 2, 3].map(j => `<line x1="${f1(cx - cw / 2 + 2 * k)}" y1="${f1(top + ch * j / 4)}" x2="${f1(cx + cw / 2 - 1 * k)}" y2="${f1(top + 4 * k + ch * j / 4)}" stroke="#4a301a" stroke-width="${f1(2 * k)}"/>`).join("") +
+           `<polygon points="${P(cx - cw / 2 - 18 * k, top + 8 * k)} ${P(cx - 10 * k, top - 70 * k)} ${P(cx + cw / 2 + 16 * k, top + 14 * k)}" fill="#3f2a4f" stroke="#24192f" stroke-width="${f1(3 * k)}" stroke-linejoin="round"/>` +
+           `<path d="M${P(cx - 18 * k, b)} L${P(cx - 18 * k, b - 46 * k)} Q${P(cx, b - 66 * k)} ${P(cx + 18 * k, b - 46 * k)} L${P(cx + 18 * k, b)} Z" fill="#3a2614"/>` +
+           `<circle cx="${f1(cx + 11 * k)}" cy="${f1(b - 22 * k)}" r="${f1(2.5 * k)}" fill="#d9a441"/>` +
+           `<rect x="${f1(cx + 34 * k)}" y="${f1(top + 24 * k)}" width="${f1(28 * k)}" height="${f1(24 * k)}" fill="#ffd166" stroke="#3a2614" stroke-width="${f1(2.5 * k)}"/>` +
+           `<line x1="${f1(cx + 48 * k)}" y1="${f1(top + 24 * k)}" x2="${f1(cx + 48 * k)}" y2="${f1(top + 48 * k)}" stroke="#3a2614" stroke-width="${f1(2 * k)}"/>` +
+           `<line x1="${f1(cx + 34 * k)}" y1="${f1(top + 36 * k)}" x2="${f1(cx + 62 * k)}" y2="${f1(top + 36 * k)}" stroke="#3a2614" stroke-width="${f1(2 * k)}"/>`;
+    }
+    // skeletons reaching up out of the ground: a skull half buried, an arm
+    // bone up to a bony hand
+    for (const [fx, fy, sd] of [[-0.14, 52, 1], [0.12, 66, -1], [-0.44, 74, -1], [0.45, 70, 1]]) {
+      const x = W * fx, y = g + fy * k, bone = "#efe8d8", ln = "#6b6355";
+      const ax = x + sd * 26 * k, ay = y - 4 * k, ex = ax + sd * 10 * k, ey = ay - 34 * k, hx = ex - sd * 4 * k, hy = ey - 26 * k;
+      s += `<path d="M${P(ax, ay)} L${P(ex, ey)} L${P(hx, hy)}" fill="none" stroke="${ln}" stroke-width="${f1(7 * k)}" stroke-linecap="round" stroke-linejoin="round"/>` +
+           `<path d="M${P(ax, ay)} L${P(ex, ey)} L${P(hx, hy)}" fill="none" stroke="${bone}" stroke-width="${f1(4.5 * k)}" stroke-linecap="round" stroke-linejoin="round"/>` +
+           [-2, -1, 0, 1, 2].map(t => { const a = (-90 + t * 22) * Math.PI / 180;
+             return `<line x1="${f1(hx)}" y1="${f1(hy)}" x2="${f1(hx + 12 * k * Math.cos(a))}" y2="${f1(hy + 12 * k * Math.sin(a))}" stroke="${bone}" stroke-width="${f1(2.6 * k)}" stroke-linecap="round"/>`; }).join("") +
+           `<path d="M${P(x - 13 * k, y)} Q${P(x - 14 * k, y - 20 * k)} ${P(x, y - 21 * k)} Q${P(x + 14 * k, y - 20 * k)} ${P(x + 13 * k, y)} Z" fill="${bone}" stroke="${ln}" stroke-width="${f1(1.2 * k)}"/>` +
+           `<circle cx="${f1(x - 5 * k)}" cy="${f1(y - 9 * k)}" r="${f1(3.6 * k)}" fill="#1a1426"/><circle cx="${f1(x + 5 * k)}" cy="${f1(y - 9 * k)}" r="${f1(3.6 * k)}" fill="#1a1426"/>` +
+           `<ellipse cx="${f1(x)}" cy="${f1(y + 1 * k)}" rx="${f1(26 * k)}" ry="${f1(5 * k)}" fill="#3a2c1e"/>`;
+    }
+    // her cauldron on the right, bubbling green over a fire
+    {
+      const cx = Math.max(W * 0.32, 180 * k), b = g + 55 * k, r = 46 * k, cy = b - 26 * k - r * 0.7;
+      s += [-1, 0, 1].map(t => `<path d="M${P(cx + t * 26 * k - 10 * k, b - 14 * k)} Q${P(cx + t * 26 * k - 6 * k, b - 46 * k)} ${P(cx + t * 26 * k, b - 60 * k)} ` +
+             `Q${P(cx + t * 26 * k + 6 * k, b - 46 * k)} ${P(cx + t * 26 * k + 10 * k, b - 14 * k)} Z" fill="#ff8c1a"/>` +
+             `<path d="M${P(cx + t * 26 * k - 5 * k, b - 14 * k)} Q${P(cx + t * 26 * k - 3 * k, b - 32 * k)} ${P(cx + t * 26 * k, b - 40 * k)} ` +
+             `Q${P(cx + t * 26 * k + 3 * k, b - 32 * k)} ${P(cx + t * 26 * k + 5 * k, b - 14 * k)} Z" fill="#ffd23f"/>`).join("") +
+           [-30, -10, 10, 30].map(t => `<line x1="${f1(cx + t * k)}" y1="${f1(b - 6 * k)}" x2="${f1(cx + t * 1.4 * k)}" y2="${f1(b - 16 * k)}" stroke="#5a3a1c" stroke-width="${f1(6 * k)}" stroke-linecap="round"/>`).join("") +
+           [-1, 1].map(sd => `<line x1="${f1(cx + sd * r * 0.7)}" y1="${f1(cy + r * 0.5)}" x2="${f1(cx + sd * r * 0.9)}" y2="${f1(b - 4 * k)}" stroke="#1b1b1f" stroke-width="${f1(6 * k)}" stroke-linecap="round"/>`).join("") +
+           `<path d="M${P(cx - r, cy)} Q${P(cx - r * 1.1, cy + r * 1.05)} ${P(cx, cy + r * 1.05)} Q${P(cx + r * 1.1, cy + r * 1.05)} ${P(cx + r, cy)} Z" fill="#26262c" stroke="#0e0e12" stroke-width="${f1(3 * k)}"/>` +
+           `<ellipse cx="${f1(cx)}" cy="${f1(cy)}" rx="${f1(r * 1.06)}" ry="${f1(r * 0.24)}" fill="#1b1b1f"/>` +
+           `<ellipse cx="${f1(cx)}" cy="${f1(cy)}" rx="${f1(r * 0.92)}" ry="${f1(r * 0.17)}" fill="#7bd33a"/>` +
+           [[-0.4, -4, 7], [0.1, -8, 9], [0.45, -3, 6], [-0.1, -20, 5], [0.3, -30, 4]].map(([dx, dy, rr]) =>
+             `<circle cx="${f1(cx + dx * r)}" cy="${f1(cy + dy * k)}" r="${f1(rr * k)}" fill="#a6e86a" stroke="#4f9a1f" stroke-width="${f1(1.5 * k)}"/>`).join("") +
+           // a skull on the pot, red-eyed
+           `<path d="M${P(cx - 14 * k, cy + 30 * k)} Q${P(cx - 15 * k, cy + 12 * k)} ${P(cx, cy + 11 * k)} Q${P(cx + 15 * k, cy + 12 * k)} ${P(cx + 14 * k, cy + 30 * k)} ` +
+           `L${P(cx + 7 * k, cy + 33 * k)} L${P(cx + 6 * k, cy + 39 * k)} L${P(cx - 6 * k, cy + 39 * k)} L${P(cx - 7 * k, cy + 33 * k)} Z" fill="#3b3b44" stroke="#55555f" stroke-width="${f1(1.2 * k)}"/>` +
+           [-1, 1].map(sd => `<circle cx="${f1(cx + sd * 6 * k)}" cy="${f1(cy + 22 * k)}" r="${f1(3.6 * k)}" fill="#ff3b3b"/>`).join("") +
+           // the plume: two ribbons twisting up round each other, green and cyan
+           [["#7bd33a", 0], ["#3fd0e0", Math.PI]].map(([c, ph]) => {
+             let d = `M${P(cx, cy - 6 * k)}`;
+             for (let t = 1; t <= 12; t++) d += ` L${P(cx + 18 * k * Math.sin(t * 0.7 + ph) * (1 - t / 16), cy - 6 * k - t * 16 * k)}`;
+             return `<path d="${d}" fill="none" stroke="${c}" stroke-width="${f1(6 * k)}" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+           }).join("");
+    }
   } else if (kind === "beach") {
     const sea = g - 170 * k, shore = g - 55 * k;
     s += `<defs>${grad("bg-sky", "#5fbdf2", "#d6f0ff", y0, sea)}${grad("bg-ocean", "#1f86c4", "#4cc0e6", sea, shore)}</defs>` + all("url(#bg-sky)");
@@ -2183,7 +2363,7 @@ const HAND_STYLES = [["round", "round"], ["mitten", "mittens"], ["star", "stars"
 const TABS = [
   ["😀 Face", "face", [
     ["color", "color", "skin & head color", SKINS],
-    ["range", "size", "head size", 8, 150, 36, 64],
+    ["range", "size", "head size", 8, 750, 36, 64],
     ["range", "faceW", "face width", 40, 600, 85, 115],
     ["range", "faceH", "face height", 40, 600, 85, 115],
     ["range", "alien", "face shape (round ↔ alien)", 0, 100, 0, 0],
@@ -2323,7 +2503,7 @@ const TABS = [
   ]],
   ["🏞️ Background", "background", [
     ["choice", "kind", "background", [["none", "none"], ["forest", "🌲 forest"], ["underwater", "🐠 underwater"],
-                                      ["beach", "🏖️ beach"]]],
+                                      ["beach", "🏖️ beach"], ["witch", "🧙 witch's woods"]]],
     ["range", "figSize", "🧍 size in the scene", 10, 200, 100, 100],
     ["place", "figPos", "🧍 place in the scene (or drag the figure)"],
   ]],
