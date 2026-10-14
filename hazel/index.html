@@ -1,44 +1,182 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+  <meta charset="UTF-8">
 <!-- theme: head begin -->
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 <!-- theme: head end -->
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hazel</title>
-<style>
-  :root { --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8; --accent: #1d4ed8; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d; --accent: #93c5fd; }
-  }
-  :root[data-theme="dark"] { --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d; --accent: #93c5fd; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 640px; margin: 0 auto; padding: 40px 16px 80px; }
-  h1 { font-size: 1.9em; margin: 0 0 18px; }
-  a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-  ul { list-style: none; padding: 0; margin: 0; }
-  li { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin: 10px 0; }
-  .what { color: var(--muted); margin-left: 0.4em; }
-  .home { color: var(--muted); font-size: 0.92em; margin: 0 0 6px; }
-</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matthew Hammer and Hazel</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Matthew Hammer's work on Hazel: livelits, making them fast, the performance analysis reports, and the games his kids design as the test bed.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../style.css">
+  <script src="../outline.js" defer></script>
+  <style>
+    /* The homepage's look, plus a dark palette for the theme switch. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+        --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+    }
+    :root[data-theme="dark"] { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+      --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+    :root[data-theme="dark"] a { border-bottom-color: #3b5573; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) a { border-bottom-color: #3b5573; } }
+
+    code.ref { font-family: var(--mono); font-size: 0.86em; white-space: nowrap; }
+    code.ref b { font-weight: 700; }
+    ol.reports { list-style: none; padding: 0; margin: 0.4rem 0 1.4rem; border-left: 2px solid var(--rule); }
+    ol.reports li { margin: 0; padding: 0.28rem 0 0.28rem 0.9rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+    ol.reports li a { border-bottom: none; }
+    ol.reports li a:hover .t { text-decoration: underline; text-underline-offset: 2px; }
+    ol.reports .t { color: var(--fg); }
+    ol.reports .date { color: var(--dim); font-size: 0.85em; margin-left: auto; font-variant-numeric: tabular-nums; }
+    .more { color: var(--dim); }
+  </style>
 </head>
 <body>
-<main>
-  <p class="home"><a href="../">Matthew Hammer</a></p>
-  <h1>Hazel</h1>
-  <ul>
-    <li><a href="https://hazel.org/">hazel.org</a><span class="what">Hazel itself</span></li>
-    <li><a href="https://fumola.org/hazel-integration/">Fumola in Hazel</a><span class="what">on fumola.org</span></li>
-    <li><a href="performance-analysis/">Hazel performance analysis</a><span class="what">the issues</span></li>
-    <li><a href="work-dashboard/">work-dashboard</a><span class="what">what Matthew and Claude are working on, as it stands</span></li>
-  </ul>
-</main>
+  <button class="outline-toggle" id="outline-toggle" type="button"
+          aria-controls="outline" aria-expanded="false" aria-label="Open page outline">
+    <svg class="bars" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M2 4h12M2 8h12M2 12h12"/>
+    </svg>
+    <svg class="ex" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>
+    </svg>
+  </button>
+  <nav class="outline" id="outline" aria-label="Page outline">
+    <p class="outline-label">Pages</p>
+    <ul class="outline-pages">
+      <li><a href="../">Home</a></li>
+      <li><a href="../pubs.html">Publications</a></li>
+      <li><a href="../hammer-cv.pdf">CV</a></li>
+      <li><a href="https://fumola.org/">fumola.org</a></li>
+      <li><a href="https://adapton.org/">adapton.org</a></li>
+      <li><span class="here">Hazel</span></li>
+    </ul>
+    <p class="outline-label">On this page</p>
+    <ul id="outline-list"></ul>
+  </nav>
+  <main>
+    <header>
+      <h1>Matthew Hammer and Hazel</h1>
+      <p class="tagline">Livelits, making them fast, and games my kids design</p>
+      <nav aria-label="Hazel links">
+        <a href="https://hazel.org/">hazel.org</a>
+        <a href="performance-analysis/">Performance reports</a>
+        <a href="work-dashboard/">Work dashboard</a>
+        <a href="https://github.com/hazelgrove/hazel">Hazel on GitHub</a>
+      </nav>
+    </header>
+
+    <section id="hazel">
+      <h2>Hazel<a class="anchor" href="#hazel" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        <a href="https://hazel.org/">Hazel</a> is a live functional programming
+        environment: every edit state has a meaning, so a program has a type and a
+        result even while it is incomplete. Hazel is developed by Cyrus Omar's group at
+        the University of Michigan. I co-authored the first Hazel papers and its
+        founding grants, around 2017, and since this fall I have been working on it again.
+      </p>
+    </section>
+
+    <section id="now">
+      <h2>What I'm working on<a class="anchor" href="#now" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        <b>Livelits</b> are GUIs for Hazel values, written as ordinary Hazel code and
+        living inside the program they edit: a slider for a number, a color picker,
+        a figure you pose by dragging. I'm working on <em>user-defined</em> livelits,
+        ones that a Hazel programmer writes, and on making them fast enough to feel
+        like plain apps: moving a slider should redraw a picture as quickly as it
+        would in a small JavaScript page.
+      </p>
+      <p>
+        That makes it a performance question, and most of my Hazel work right now is
+        answering it, on two pull requests: <a href="https://github.com/hazelgrove/hazel/pull/2635">hazelgrove/hazel#2635</a>
+        (livelits with modular editors) and <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>
+        (the full livelits branch). The performance tracking issue is
+        <a href="https://github.com/hazelgrove/hazel/issues/2609">#2609</a>.
+      </p>
+    </section>
+
+    <section id="reports">
+      <h2>Performance reports<a class="anchor" href="#reports" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        The <a href="performance-analysis/">Hazel performance analysis</a> series
+        explains that work for anyone following it. Each report takes one question
+        (is it really that slow? where does the time go? what fixed it, and what's
+        left?) and answers it with measurements. Newest first:
+      </p>
+<!-- reports: begin -->
+      <ol class="reports">
+        <li><a href="performance-analysis/013/"><code class="ref"><b>^report(</b>13<b>)</b></code> <span class="t">Telling the request what changed</span></a><span class="date">2026-10-14</span></li>
+        <li><a href="performance-analysis/012/"><code class="ref"><b>^report(</b>12<b>)</b></code> <span class="t">Moving a group, not its points</span></a><span class="date">2026-10-13</span></li>
+        <li><a href="performance-analysis/011/"><code class="ref"><b>^report(</b>11<b>)</b></code> <span class="t">Naming what a slider leaves alone</span></a><span class="date">2026-10-13</span></li>
+        <li><a href="performance-analysis/010/"><code class="ref"><b>^report(</b>10<b>)</b></code> <span class="t">What a slider change touches</span></a><span class="date">2026-10-13</span></li>
+        <li><a href="performance-analysis/009/"><code class="ref"><b>^report(</b>9<b>)</b></code> <span class="t">Names and reuse: what fresh ids cost Hazel</span></a><span class="date">2026-10-13</span></li>
+        <li><a href="performance-analysis/008/"><code class="ref"><b>^report(</b>8<b>)</b></code> <span class="t">One slider, three ways: what modular editing saves</span></a><span class="date">2026-10-12</span></li>
+        <li><a href="performance-analysis/007/"><code class="ref"><b>^report(</b>7<b>)</b></code> <span class="t">Five minutes to the first picture</span></a><span class="date">2026-10-12</span></li>
+        <li><a href="performance-analysis/006/"><code class="ref"><b>^report(</b>6<b>)</b></code> <span class="t">Catching performance regressions in CI</span></a><span class="date">2026-10-12</span></li>
+        <li><a href="performance-analysis/005/"><code class="ref"><b>^report(</b>5<b>)</b></code> <span class="t">Two threads, one picture: the worker, the page, and diffing the view</span></a><span class="date">2026-10-12</span></li>
+        <li><a href="performance-analysis/004/"><code class="ref"><b>^report(</b>4<b>)</b></code> <span class="t">The witch and her woods, ported to Hazel</span></a><span class="date">2026-10-11</span></li>
+        <li><a href="performance-analysis/003/"><code class="ref"><b>^report(</b>3<b>)</b></code> <span class="t">A day of requests from M and N</span></a><span class="date">2026-10-11</span></li>
+        <li><a href="performance-analysis/002/"><code class="ref"><b>^report(</b>2<b>)</b></code> <span class="t">From a game to a slide deck: Messed Up Dress Up in Hazel</span></a><span class="date">2026-10-11</span></li>
+        <li><a href="performance-analysis/001/"><code class="ref"><b>^report(</b>1<b>)</b></code> <span class="t">Why a slider isn't instant yet</span></a><span class="date">2026-10-10</span></li>
+      </ol>
+<!-- reports: end -->
+      <p class="more">The series and its source: <a href="performance-analysis/">matthewhammer.org/hazel/performance-analysis/</a>
+        and <a href="https://github.com/matthewhammer/hazel-performance-analysis">on GitHub</a>.</p>
+    </section>
+
+    <section id="games">
+      <h2>Games with my kids<a class="anchor" href="#games" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        The test bed is a set of small games whose features my kids, M and N, choose
+        as they play. The first is <a href="../kids-choice-games/dress-up/">Messed Up
+        Dress Up</a>, a paper doll with every part on a slider, and costumes, places
+        and music to go with it. Each request goes live as soon as it's ready, so the
+        next round of play tests it.
+      </p>
+      <p>
+        The game is a plain JavaScript page, and it redraws in milliseconds. Its
+        toys are then rebuilt in Hazel, as user-defined livelits on the Livelit
+        Playground, where they first took seconds. Closing that gap is what the
+        reports measure. The games' code is
+        <a href="https://github.com/matthewhammer/kids-choice-games">on GitHub</a>.
+      </p>
+    </section>
+
+    <section id="working">
+      <h2>How I work<a class="anchor" href="#working" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        I work with Claude, Anthropic's AI model, as a partner for the code, the
+        measurements and the writing. The <a href="work-dashboard/">Hazel Work
+        Dashboard</a> shows what we're working on, as it stands: the current ticket,
+        the queue after it, and the pull requests we track. It, its history and our
+        work notes are <a href="https://github.com/matthewhammer/hazel-work-notes">public
+        on GitHub</a>, though written for the two of us; the reports are the version
+        for everyone else.
+      </p>
+    </section>
+
+    <section id="fumola">
+      <h2>Fumola in Hazel<a class="anchor" href="#fumola" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        <a href="https://fumola.org/">Fumola</a>, my current language, with
+        <a href="https://adapton.org/">Adapton</a>'s primitives for incremental
+        computation built in, also runs inside Hazel documents, as described on its
+        <a href="https://fumola.org/hazel-integration/">Hazel integration</a> page.
+      </p>
+    </section>
+
+    <footer>
+      &copy; 2026 Matthew Hammer &mdash; Built with plain HTML + CSS on GitHub Pages
+    </footer>
+  </main>
 <!-- theme: begin -->
 <style>
   .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
-    border-radius: 999px; border: 1px solid var(--line, #ccc); background: var(--paper, Canvas); color: var(--muted, GrayText);
+    border-radius: 999px; border: 1px solid var(--rule, #ccc); background: var(--panel, Canvas); color: var(--dim, GrayText);
     cursor: pointer; opacity: 0.85; }
   .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
   @media print { .theme-toggle { display: none; } }
