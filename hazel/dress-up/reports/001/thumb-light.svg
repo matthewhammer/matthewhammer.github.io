@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 124" role="img" aria-label="Frames a second before and after, for four cases: castle drag 45.8 to 60, pond swim 51.7 to 60, imagination 18 to 59.7, woods drag 55.6 to 59.3">
+<line x1="158.0" y1="8" x2="158.0" y2="112" stroke="#b91c1c" stroke-dasharray="3 2" stroke-width="1"/>
+<text x="158.0" y="120" font-family="system-ui, sans-serif" font-size="6.5" fill="#b91c1c" text-anchor="middle">55</text>
+<text x="65" y="23" font-family="system-ui, sans-serif" font-size="9" fill="#1f2328" text-anchor="end">castle, drag</text>
+<rect x="70" y="12" width="73.3" height="6" fill="#cbbcf0" rx="1"/>
+<rect x="70" y="19" width="96.0" height="8" fill="#6d28d9" rx="1"/>
+<text x="216" y="18" font-family="system-ui, sans-serif" font-size="7" fill="#5b6470" text-anchor="end">45.8</text>
+<text x="216" y="27" font-family="system-ui, sans-serif" font-size="8" font-weight="700" fill="#1f2328" text-anchor="end">60</text>
+<text x="65" y="48" font-family="system-ui, sans-serif" font-size="9" fill="#1f2328" text-anchor="end">pond, swim</text>
+<rect x="70" y="37" width="82.7" height="6" fill="#cbbcf0" rx="1"/>
+<rect x="70" y="44" width="96.0" height="8" fill="#6d28d9" rx="1"/>
+<text x="216" y="43" font-family="system-ui, sans-serif" font-size="7" fill="#5b6470" text-anchor="end">51.7</text>
+<text x="216" y="52" font-family="system-ui, sans-serif" font-size="8" font-weight="700" fill="#1f2328" text-anchor="end">60</text>
+<text x="65" y="73" font-family="system-ui, sans-serif" font-size="9" fill="#1f2328" text-anchor="end">imagination</text>
+<rect x="70" y="62" width="28.8" height="6" fill="#cbbcf0" rx="1"/>
+<rect x="70" y="69" width="95.5" height="8" fill="#6d28d9" rx="1"/>
+<text x="216" y="68" font-family="system-ui, sans-serif" font-size="7" fill="#5b6470" text-anchor="end">18</text>
+<text x="216" y="77" font-family="system-ui, sans-serif" font-size="8" font-weight="700" fill="#1f2328" text-anchor="end">59.7</text>
+<text x="65" y="98" font-family="system-ui, sans-serif" font-size="9" fill="#1f2328" text-anchor="end">woods, drag</text>
+<rect x="70" y="87" width="89.0" height="6" fill="#cbbcf0" rx="1"/>
+<rect x="70" y="94" width="94.9" height="8" fill="#6d28d9" rx="1"/>
+<text x="216" y="93" font-family="system-ui, sans-serif" font-size="7" fill="#5b6470" text-anchor="end">55.6</text>
+<text x="216" y="102" font-family="system-ui, sans-serif" font-size="8" font-weight="700" fill="#1f2328" text-anchor="end">59.3</text>
+</svg>

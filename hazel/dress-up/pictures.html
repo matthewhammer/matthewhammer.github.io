@@ -22,7 +22,11 @@
       --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; --now: #24303d; }
     :root[data-theme="dark"] a { border-bottom-color: #3b5573; }
 
-    main { max-width: 78rem; padding-top: 3.5rem; }
+    /* (Matthew, 2026-10-16) a gallery uses the whole window: no column, no room
+       kept on the left for an outline this page does not have; the header's
+       text keeps its reading width */
+    main { max-width: none; margin: 0; padding: 3.5rem clamp(1rem, 2.5vw, 2rem) 4rem; }
+    @media (min-width: 48rem) { main { margin-left: 0; } }
     header { margin-bottom: 1.6rem; max-width: 45rem; }
     .crumbs { font-size: 0.85rem; color: var(--dim); margin-bottom: 0.8rem; }
     .day { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; font-size: 0.86rem; color: var(--dim); margin: 0 0 0.5rem; }
