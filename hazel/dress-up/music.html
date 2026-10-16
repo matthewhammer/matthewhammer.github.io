@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<!-- theme: head begin -->
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<!-- theme: head end -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dress Up Music</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Every tune in Messed Up Dress Up, recorded from the game, with a player: the newest day's recordings, and every earlier day's.">
+  <link rel="icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+        --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; --now: #24303d; }
+      :root:not([data-theme="light"]) a { border-bottom-color: #3b5573; }
+    }
+    :root { --now: #e6eef7; }
+    :root[data-theme="dark"] { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+      --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; --now: #24303d; }
+    :root[data-theme="dark"] a { border-bottom-color: #3b5573; }
+
+    main { padding-top: 3.5rem; }
+    header { margin-bottom: 2rem; }
+    .crumbs { font-size: 0.85rem; color: var(--dim); margin-bottom: 0.8rem; }
+
+    /* the player: what's playing, its controls, how the list plays */
+    .player { background: var(--bg); padding: 0.8rem 0 0.9rem; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+    @media (min-width: 48rem) { .player { position: sticky; top: 0; z-index: 5; } }   /* (pinned where it fits) */
+    .now { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; min-height: 2.2rem; }
+    .now .title { font-size: 1.35rem; font-weight: 600; color: var(--ink); line-height: 1.25; }
+    .now .meta { color: var(--dim); font-size: 0.84rem; }
+    .bar { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+    .bar audio { flex: 1 1 16rem; min-width: 0; height: 2.4rem; }
+    button.ctl { font: inherit; font-size: 1.05rem; min-width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--rule);
+      background: var(--panel); color: var(--ink); cursor: pointer; }
+    button.ctl.play { min-width: 3.2rem; height: 3.2rem; font-size: 1.25rem; }
+    button.ctl:hover { border-color: var(--blue); }
+    .modes { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .modes button { font: inherit; font-size: 0.82rem; padding: 0.25rem 0.7rem; border-radius: 999px; border: 1px solid var(--rule);
+      background: transparent; color: var(--dim); cursor: pointer; }
+    .modes button[aria-pressed="true"] { background: var(--now); color: var(--ink); border-color: var(--blue); }
+    .day { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; font-size: 0.86rem; color: var(--dim); margin: 0 0 0.6rem; }
+    .day select { font: inherit; padding: 0.2rem 0.4rem; border-radius: 4px; border: 1px solid var(--rule); background: var(--panel); color: var(--fg); max-width: 100%; }
+
+    /* the tracks */
+    ol.tracks { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.35rem; }
+    ol.tracks li { margin: 0; }
+    ol.tracks button { width: 100%; text-align: left; font: inherit; display: flex; gap: 0.5rem; align-items: baseline; padding: 0.55rem 0.7rem;
+      border-radius: 6px; border: 1px solid var(--rule); background: var(--panel); color: var(--fg); cursor: pointer; min-height: 2.75rem; }
+    ol.tracks button:hover { border-color: var(--blue); }
+    ol.tracks button[aria-current="true"] { background: var(--now); border-color: var(--blue); color: var(--ink); }
+    ol.tracks .n { color: var(--dim); font-size: 0.78rem; min-width: 1.4rem; font-variant-numeric: tabular-nums; }
+    ol.tracks .name { flex: 1; }
+    ol.tracks .len { color: var(--dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+    .note { color: var(--dim); font-size: 0.86rem; margin-top: 1.4rem; }
+    .error { border: 1px solid var(--accent); border-radius: 6px; padding: 0.8rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="crumbs"><a href="../">Hazel</a> › <a href="./">Messed Up Dress Up</a> › Music</p>
+      <h1>Dress Up's music</h1>
+      <p class="tagline">Every tune in the game, recorded from the game itself, one loop each</p>
+    </header>
+
+    <p class="day"><label for="day">Recorded on</label> <select id="day"></select> <span id="dayinfo"></span></p>
+
+    <div class="player" id="player">
+      <div class="now"><span class="title" id="title">…</span><span class="meta" id="meta"></span></div>
+      <div class="bar">
+        <button class="ctl" id="prev" type="button" aria-label="Previous tune" title="Previous tune">⏮</button>
+        <button class="ctl play" id="play" type="button" aria-label="Play" title="Play">▶</button>
+        <button class="ctl" id="next" type="button" aria-label="Next tune" title="Next tune">⏭</button>
+        <audio id="audio" controls preload="none"></audio>
+      </div>
+      <div class="modes" role="group" aria-label="How the list plays">
+        <button type="button" data-mode="list" aria-pressed="true">▶️ play the list</button>
+        <button type="button" data-mode="one" aria-pressed="false">🔂 repeat this tune</button>
+        <button type="button" data-mode="shuffle" aria-pressed="false">🔀 shuffle</button>
+      </div>
+    </div>
+
+    <ol class="tracks" id="tracks" aria-label="Tunes"></ol>
+
+    <p class="note" id="note"></p>
+
+    <footer>
+      &copy; 2026 Matthew Hammer &mdash; The recordings are in the public <a href="https://github.com/matthewhammer/dress-up-music">dress-up-music</a> archive.
+    </footer>
+  </main>
+<script>
+// The newest day in the music archive (days.json, written with the archive's
+// front page), its tunes (the day's manifest.json), and a player. A tune
+// unchanged since an earlier day plays that day's recording (its "real" path).
+// The archive is this site's /dress-up-music/, a sibling of /hazel/.
+const ARCHIVE = new URL("../../dress-up-music/", location.href).href;
+const $ = id => document.getElementById(id);
+const audio = $("audio");
+let days = [], day = null, tunes = [], at = -1, mode = "list", order = [];
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const urlOf = t => ARCHIVE + day.day + "/" + (t.real || t.file);
+const params = () => new URLSearchParams(location.search);
+
+async function start() {
+  try {
+    days = await (await fetch(ARCHIVE + "days.json", { cache: "no-cache" })).json();
+  } catch (e) { return fail(); }
+  if (!days.length) return fail();
+  const sel = $("day");
+  sel.innerHTML = days.map((d, i) => `<option value="${esc(d.day)}">${esc(d.day)}${i === 0 ? " (newest)" : ""}</option>`).join("");
+  const want = params().get("day");
+  sel.value = days.some(d => d.day === want) ? want : days[0].day;
+  sel.addEventListener("change", () => { const p = params(); p.set("day", sel.value); history.replaceState(null, "", "?" + p + location.hash); load(sel.value); });
+  await load(sel.value);
+}
+function fail() {
+  $("tracks").innerHTML = `<li class="error">The music archive couldn't be read just now. Its full list is at <a href="${ARCHIVE}">matthewhammer.org/dress-up-music/</a>.</li>`;
+}
+async function load(k) {
+  day = days.find(d => d.day === k);
+  try { tunes = await (await fetch(ARCHIVE + k + "/manifest.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
+  $("dayinfo").innerHTML = day.version ? `from Messed Up Dress Up ${esc(day.version)}` +
+    (day.commit ? ` (<a href="https://github.com/matthewhammer/kids-choice-games/commit/${esc(day.commit)}">${esc(day.commit.slice(0, 7))}</a>)` : "") : "";
+  $("tracks").innerHTML = tunes.map((t, i) => `<li><button type="button" data-i="${i}"><span class="n">${i + 1}</span>` +
+    `<span class="name">${esc(t.name)}</span><span class="len">${fmt(t.loopSecs)}</span></button></li>`).join("");
+  $("note").innerHTML = `${tunes.length} tunes, each at the game's default settings: one loop, plus a short tail for its echoes. ` +
+    `${tunes.filter(t => t.sameAsDay).length ? tunes.filter(t => t.sameAsDay).length + " are unchanged since an earlier day and play that day's recording. " : ""}` +
+    `The day's full list: <a href="${ARCHIVE}${k}/index.html">${k}</a>; <a href="${ARCHIVE}">every day</a>.`;
+  shuffle();
+  const id = decodeURIComponent(location.hash.slice(1));
+  pick(Math.max(0, tunes.findIndex(t => t.id === id)), false);
+}
+function shuffle() {   // (a fresh order for shuffle, starting from the tune playing)
+  order = tunes.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+}
+function pick(i, play = true) {
+  at = i; const t = tunes[i];
+  audio.src = urlOf(t); audio.loop = mode === "one";
+  $("title").textContent = t.name;
+  $("meta").textContent = `${fmt(t.loopSecs)} a loop` + (t.sameAsDay ? ` · recorded ${t.sameAsDay}` : "");
+  document.querySelectorAll("#tracks button").forEach(b => b.setAttribute("aria-current", String(+b.dataset.i === i)));
+  history.replaceState(null, "", location.search + "#" + encodeURIComponent(t.id));
+  if ("mediaSession" in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: "Messed Up Dress Up", album: `${day.day} · ${day.version || ""}` });
+  if (play) audio.play().catch(() => {});
+}
+const step = d => {
+  if (!tunes.length) return;
+  if (mode === "shuffle") { const k = order.indexOf(at); pick(order[(k + d + order.length) % order.length]); }
+  else pick((at + d + tunes.length) % tunes.length);
+};
+$("tracks").addEventListener("click", e => { const b = e.target.closest("button[data-i]"); if (b) pick(+b.dataset.i); });
+$("prev").addEventListener("click", () => step(-1));
+$("next").addEventListener("click", () => step(1));
+$("play").addEventListener("click", () => audio.paused ? audio.play().catch(() => {}) : audio.pause());
+const showPlay = () => { const p = audio.paused; $("play").textContent = p ? "▶" : "⏸"; $("play").setAttribute("aria-label", p ? "Play" : "Pause"); $("play").title = p ? "Play" : "Pause"; };
+audio.addEventListener("play", showPlay); audio.addEventListener("pause", showPlay);
+audio.addEventListener("ended", () => { if (mode !== "one") step(1); });
+document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => {
+  mode = b.dataset.mode; audio.loop = mode === "one";
+  if (mode === "shuffle") shuffle();
+  document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+}));
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.setActionHandler("previoustrack", () => step(-1));
+  navigator.mediaSession.setActionHandler("nexttrack", () => step(1));
+}
+start();
+</script>
+<!-- theme: begin -->
+<style>
+  .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--rule, #ccc); background: var(--panel, Canvas); color: var(--dim, GrayText);
+    cursor: pointer; opacity: 0.85; }
+  .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+<script>
+/* The theme switch: Auto (the system's choice), Light, Dark; remembered for this site. */
+(() => {
+  const order = ["auto", "light", "dark"], label = { auto: "◐ auto", light: "☀ light", dark: "☾ dark" };
+  const get = () => { try { return localStorage.getItem("theme") || "auto"; } catch (_) { return "auto"; } };
+  const apply = m => m === "auto" ? document.documentElement.removeAttribute("data-theme")
+                                  : document.documentElement.setAttribute("data-theme", m);
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "theme-toggle";
+  const show = () => { const m = get(); b.textContent = label[m] || label.auto;
+    b.title = "Theme: " + m + ". Click for " + order[(order.indexOf(m) + 1) % 3] + "; remembered on this site."; };
+  b.addEventListener("click", () => {
+    const m = order[(order.indexOf(get()) + 1) % 3];
+    try { m === "auto" ? localStorage.removeItem("theme") : localStorage.setItem("theme", m); } catch (_) {}
+    apply(m); show();
+  });
+  window.addEventListener("storage", e => { if (e.key === "theme") { apply(get()); show(); } });
+  show(); document.body.append(b);
+})();
+</script>
+<!-- theme: end -->
+</body>
+</html>

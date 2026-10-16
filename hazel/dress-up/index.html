@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<!-- theme: head begin -->
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<!-- theme: head end -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Messed Up Dress Up</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Messed Up Dress Up: a paper doll game my kids design as they play, where Hazel's livelits are prototyped first. Its music and pictures, by day.">
+  <link rel="icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="../../style.css">
+  <script src="../../outline.js" defer></script>
+  <style>
+    /* The homepage's look, plus a dark palette for the theme switch. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+        --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+      :root:not([data-theme="light"]) a { border-bottom-color: #3b5573; }
+    }
+    :root[data-theme="dark"] { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+      --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+    :root[data-theme="dark"] a { border-bottom-color: #3b5573; }
+
+    /* Three doors into the game: play it, hear it, see it. */
+    .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
+    .doors a { display: block; border: 1px solid var(--rule); border-radius: 6px; padding: 0.8rem 0.9rem; background: var(--panel); color: var(--fg); }
+    .doors a:hover { border-color: var(--blue); }
+    .doors .big { display: block; font-size: 1.6rem; line-height: 1.2; }
+    .doors b { display: block; margin: 0.25rem 0 0.15rem; }
+    .doors small { color: var(--dim); font-size: 0.82rem; line-height: 1.4; display: block; }
+    figure.shot { margin: 0 0 1.4rem; }
+    figure.shot img { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--rule); display: block; background: var(--panel); }
+    figure.shot figcaption { color: var(--dim); font-size: 0.84rem; margin-top: 0.4rem; }
+    .loop { list-style: none; padding: 0; counter-reset: step; }
+    .loop li { counter-increment: step; position: relative; padding-left: 2rem; margin-bottom: 0.6rem; }
+    .loop li::before { content: counter(step); position: absolute; left: 0; top: 0.1rem; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+      background: var(--panel); border: 1px solid var(--rule); color: var(--dim); font-size: 0.78rem; text-align: center; line-height: 1.35rem; }
+  </style>
+</head>
+<body>
+  <button class="outline-toggle" id="outline-toggle" type="button"
+          aria-controls="outline" aria-expanded="false" aria-label="Open page outline">
+    <svg class="bars" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M2 4h12M2 8h12M2 12h12"/>
+    </svg>
+    <svg class="ex" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>
+    </svg>
+  </button>
+  <nav class="outline" id="outline" aria-label="Page outline">
+    <p class="outline-label">Pages</p>
+    <ul class="outline-pages">
+      <li><a href="../../">Home</a></li>
+      <li><a href="../">Hazel</a></li>
+      <li><span class="here">Dress Up</span></li>
+      <li><a href="music.html">Dress Up music</a></li>
+      <li><a href="pictures.html">Dress Up pictures</a></li>
+    </ul>
+    <p class="outline-label">On this page</p>
+    <ul id="outline-list"></ul>
+  </nav>
+  <main>
+    <header>
+      <h1>Messed Up Dress Up</h1>
+      <p class="tagline">A paper doll my kids design as they play, and the place where Hazel's livelits are tried out first</p>
+      <nav aria-label="Dress Up links">
+        <a href="../../kids-choice-games/dress-up/">Play it</a>
+        <a href="music.html">Music</a>
+        <a href="pictures.html">Pictures</a>
+        <a href="https://github.com/matthewhammer/kids-choice-games/blob/main/dress-up/VERSIONS.md">Versions</a>
+        <a href="https://github.com/matthewhammer/kids-choice-games">On GitHub</a>
+      </nav>
+    </header>
+
+    <div class="doors">
+      <a href="../../kids-choice-games/dress-up/"><span class="big">🧍</span><b>Play the game</b><small>It runs in any browser, on a laptop or an iPad. Nothing to install.</small></a>
+      <a href="music.html"><span class="big">🎵</span><b>Hear its music</b><small>Every tune in the game, recorded from the game itself, to play here.</small></a>
+      <a href="pictures.html"><span class="big">🖼️</span><b>See its pictures</b><small>Every place, costume and choice, as the game drew them.</small></a>
+    </div>
+
+    <figure class="shot">
+      <img src="../../dress-up-pictures/2026/10/15/thumbs/backgrounds-with-friend/castle.webp" alt="The friend standing on the drawbridge of a castle, with towers, flags, a moat, trees and mountains." width="480" height="356" id="hero">
+      <figcaption>The friend at the castle, one of the game's places. N designed most of the rooms inside it.</figcaption>
+    </figure>
+
+    <section id="what">
+      <h2>What it is<a class="anchor" href="#what" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        Messed Up Dress Up is a paper doll where every part is a slider: the face, the
+        hair, the clothes, the shoes, the colors, how big each part is and how see-through.
+        Around the doll there are costumes, more than twenty places to stand in (a forest, a
+        lake, a tree house with rooms, a witch's woods, a castle with rooms you design
+        yourself), and music written into the game, which the scenes move along with.
+      </p>
+      <p>
+        My kids, M and N, decide what comes next. They play, they ask for things, and each
+        request goes live as soon as it's ready, usually the same day, so the next round of
+        play tests it. The game reached its 46th version on its fourth day.
+      </p>
+    </section>
+
+    <section id="livelits">
+      <h2>A prototype for livelits<a class="anchor" href="#livelits" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        <a href="https://hazel.org/">Hazel</a> is a programming environment where a program
+        can hold live graphical pieces, called <em>livelits</em>: a color picker, a slider,
+        a drawing, standing right inside the code, with the code reading their values. My
+        part of the Hazel work is making it possible for programmers to define their own
+        livelits, and making them fast.
+      </p>
+      <p>
+        Dress Up is where those livelits are tried out first. Each toy is built in plain
+        JavaScript, where nothing stands in the way, and played by real players until it
+        feels right. Then the same toy is rebuilt in Hazel, as a user-defined livelit on the
+        Livelit Playground: the shirt and pants, the shoes and hair, and the picture-making
+        polygons M started with. The game keeps its names and layers plain, so the Hazel
+        versions can follow it closely.
+      </p>
+      <p>
+        The game redraws in milliseconds. In Hazel, the same toys first took seconds. Closing
+        that gap is what my <a href="../performance-analysis/">performance reports</a>
+        measure, one finding at a time.
+      </p>
+    </section>
+
+    <section id="kids">
+      <h2>A creative place, with real children<a class="anchor" href="#kids" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        It is also simply a place to play and make things, and that part matters to me as much
+        as the research. The kids' requests shape the game, and they arrive faster than any
+        plan would:
+      </p>
+      <ul>
+        <li>N designed most of the castle's rooms: the king's room, the greenhouse, the trap room, two dungeons, a hallway and a spiral staircase.</li>
+        <li>M added the dining room, and more doors for the hallways.</li>
+        <li>The skeletons start switched off, because M found them scary.</li>
+      </ul>
+      <p>
+        The loop is short:
+      </p>
+      <ol class="loop">
+        <li>The kids play, and ask for something.</li>
+        <li>I pass it on, and it gets built, drawn and checked, usually within the hour.</li>
+        <li>It goes live, and the next round of play tells us whether it's right.</li>
+      </ol>
+      <p>
+        Someday I'd like their friends and family, cousins and all, to play and ask too.
+      </p>
+    </section>
+
+    <section id="looking-back">
+      <h2>Every version, in pictures and sound<a class="anchor" href="#looking-back" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        Being able to look back at every version matters to me, so each day's game is kept in
+        two public archives. Every tune is recorded from the game at its default settings, one
+        loop each. Every place, costume and choice is drawn as a picture.
+      </p>
+      <ul>
+        <li><a href="music.html">The music</a>: the newest day's tunes, with a player.</li>
+        <li><a href="pictures.html">The pictures</a>: the newest day's pictures, to browse and open.</li>
+        <li>The full lists, by day: <a href="../../dress-up-music/">every tune</a> and <a href="../../dress-up-pictures/">every picture</a>, each with its PNG, SVG and the settings that drew it.</li>
+        <li><a href="https://github.com/matthewhammer/kids-choice-games/blob/main/dress-up/VERSIONS.md">What changed in each version</a>, and <a href="https://github.com/matthewhammer/kids-choice-games/blob/main/dress-up/OBJECTS.md">what stands in each place</a>.</li>
+      </ul>
+    </section>
+
+    <section id="made">
+      <h2>How it's made<a class="anchor" href="#made" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        The game is a single HTML page of plain JavaScript and SVG, with no build step. Its
+        music is synthesized in the page. I make it with Claude, Anthropic's AI model, as a
+        partner for the code, the drawing and the checking. The rules we follow are in the
+        repository's <a href="https://github.com/matthewhammer/kids-choice-games/blob/main/agent-instructions.md">agent instructions</a>,
+        and what we're working on now is on the <a href="../work-dashboard/">work dashboard</a>.
+      </p>
+    </section>
+
+    <footer>
+      &copy; 2026 Matthew Hammer &mdash; Built with plain HTML + CSS on GitHub Pages
+    </footer>
+  </main>
+<!-- theme: begin -->
+<style>
+  .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--rule, #ccc); background: var(--panel, Canvas); color: var(--dim, GrayText);
+    cursor: pointer; opacity: 0.85; }
+  .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+<script>
+/* The theme switch: Auto (the system's choice), Light, Dark; remembered for this site. */
+(() => {
+  const order = ["auto", "light", "dark"], label = { auto: "◐ auto", light: "☀ light", dark: "☾ dark" };
+  const get = () => { try { return localStorage.getItem("theme") || "auto"; } catch (_) { return "auto"; } };
+  const apply = m => m === "auto" ? document.documentElement.removeAttribute("data-theme")
+                                  : document.documentElement.setAttribute("data-theme", m);
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "theme-toggle";
+  const show = () => { const m = get(); b.textContent = label[m] || label.auto;
+    b.title = "Theme: " + m + ". Click for " + order[(order.indexOf(m) + 1) % 3] + "; remembered on this site."; };
+  b.addEventListener("click", () => {
+    const m = order[(order.indexOf(get()) + 1) % 3];
+    try { m === "auto" ? localStorage.removeItem("theme") : localStorage.setItem("theme", m); } catch (_) {}
+    apply(m); show();
+  });
+  window.addEventListener("storage", e => { if (e.key === "theme") { apply(get()); show(); } });
+  show(); document.body.append(b);
+})();
+</script>
+<!-- theme: end -->
+</body>
+</html>
