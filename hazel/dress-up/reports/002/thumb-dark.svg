@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 124" role="img" aria-label="Frames a second swimming in the duck pond, as it is and with the place as still bitmaps: an Ubuntu laptop 27 to 58, an iPad 22 to 60">
+<line x1="158.0" y1="8" x2="158.0" y2="112" stroke="#f87171" stroke-dasharray="3 2" stroke-width="1"/>
+<text x="158.0" y="120" font-family="system-ui, sans-serif" font-size="6.5" fill="#f87171" text-anchor="middle">55</text>
+<text x="65" y="33" font-family="system-ui, sans-serif" font-size="9" fill="#e8e6e3" text-anchor="end">Ubuntu, pond</text>
+<rect x="70" y="22" width="43.2" height="8" fill="#5b4a8a" rx="1"/>
+<rect x="70" y="32" width="92.8" height="11" fill="#c4b5fd" rx="1"/>
+<text x="216" y="29" font-family="system-ui, sans-serif" font-size="7" fill="#a2a9b3" text-anchor="end">27</text>
+<text x="216" y="41" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" fill="#e8e6e3" text-anchor="end">58</text>
+<text x="65" y="79" font-family="system-ui, sans-serif" font-size="9" fill="#e8e6e3" text-anchor="end">iPad, pond</text>
+<rect x="70" y="68" width="35.2" height="8" fill="#5b4a8a" rx="1"/>
+<rect x="70" y="78" width="96.0" height="11" fill="#c4b5fd" rx="1"/>
+<text x="216" y="75" font-family="system-ui, sans-serif" font-size="7" fill="#a2a9b3" text-anchor="end">22</text>
+<text x="216" y="87" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" fill="#e8e6e3" text-anchor="end">60</text>
+</svg>
