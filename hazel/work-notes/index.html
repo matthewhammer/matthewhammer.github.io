@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<!-- theme: head begin -->
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<!-- theme: head end -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Hazel Work Notes</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Matthew Hammer's dated working notes on Hazel, kept with Claude: what each records, at a glance, with a link to the note.">
+  <link rel="icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="../../style.css">
+  <script src="../../outline.js" defer></script>
+  <style>
+    /* The homepage's look, plus a dark palette for the theme switch. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+        --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+      :root:not([data-theme="light"]) a { border-bottom-color: #3b5573; }
+    }
+    :root[data-theme="dark"] { --bg: #15171a; --panel: #1d2024; --rule: #33373d; --fg: #d9d7d2; --dim: #a2a9b3;
+      --blue: #93c5fd; --ink: #f2f0ea; --accent: #f0a48f; --sym: #c4a5d0; }
+    :root[data-theme="dark"] a { border-bottom-color: #3b5573; }
+    /* a gallery uses the window's width beside the outline; the header keeps its reading width */
+    main { max-width: none; margin: 0; padding: 3.5rem clamp(1rem, 2.5vw, 2rem) 4rem; }
+    @media (min-width: 48rem) { main { margin-left: 15rem; } }   /* (beside the outline, at every width: style.css centers a narrow main from 78rem) */
+    header { max-width: 45rem; margin-bottom: 1.6rem; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1.1rem; }
+    .note { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 0.75rem 0.85rem 0.9rem; min-width: 0; }
+    .note .art { display: block; border: 0; margin: -0.1rem 0 0.6rem; }
+    .note .art svg { display: block; width: 100%; height: auto; border-radius: 5px; border: 1px solid var(--rule); }
+    .note .when { margin: 0; font-size: 0.8rem; color: var(--dim); }
+    .note .why { display: inline-block; margin-left: 0.4rem; padding: 0 0.5rem; border-radius: 999px; border: 1px solid var(--rule); font-size: 0.74rem; }
+    .note h2 { font-size: 1.02rem; line-height: 1.35; margin: 0.25rem 0 0.4rem; }
+    .note h2 a { border-bottom: 0; }
+    .note .summary { font-size: 0.9rem; line-height: 1.5; margin: 0 0 0.4rem; overflow-wrap: anywhere; }
+    .note .next-h { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin: 0.5rem 0 0.15rem; }
+    .note ul.next { margin: 0; padding-left: 1.1rem; font-size: 0.84rem; color: var(--dim); }
+    .dim { color: var(--dim); }
+  </style>
+</head>
+<body>
+  <button class="outline-toggle" id="outline-toggle" type="button"
+          aria-controls="outline" aria-expanded="false" aria-label="Open page outline">
+    <svg class="bars" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M2 4h12M2 8h12M2 12h12"/>
+    </svg>
+    <svg class="ex" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>
+    </svg>
+  </button>
+  <nav class="outline" id="outline" aria-label="Page outline">
+    <p class="outline-label">Pages</p>
+    <ul class="outline-pages">
+      <li><a href="../../">Home</a></li>
+      <li><a href="../">Hazel</a></li>
+      <li><a href="../dashboard/">Work dashboard</a></li>
+      <li><span class="here">Work notes</span></li>
+      <li><a href="../performance-analysis/">Performance analysis</a></li>
+      <li><a href="../dress-up/">Dress Up</a></li>
+    </ul>
+  </nav>
+  <main>
+    <header>
+      <h1>Hazel Work Notes</h1>
+      <p class="tagline">What each of our working notes records, at a glance</p>
+      <p>When a session with Claude pauses (a shutdown, a crash, the end of a long stretch), it writes a dated note: what was done, where things are, and what is next. Here are all 8 of them, newest first, each with a picture drawn for it. The notes themselves are in <a href="https://github.com/matthewhammer/hazel-work-notes/tree/main/work-notes">matthewhammer/hazel-work-notes</a>, beside the <a href="../dashboard/">work dashboard</a>'s history. They are written in shorthand, for the two of us; the write-ups for other readers are the <a href="../performance-analysis/">performance analysis</a> series and the <a href="../dress-up/reports/">Dress Up reports</a>.</p>
+    </header>
+    <section class="gallery" aria-label="The notes, newest first">
+<article class="note" id="n-2026-10-16T1810">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T1810-0600.html" aria-label="Evening of 10-16: two freezes, the crash log, Dress Up 0.0.87 to 0.0.90"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a frozen laptop with no battery, a crash log of tally marks, and a castle door open over a pit"><defs><pattern id="ha1810" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xa1810" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="la1810" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><path d="M22 112 H94 L102 124 H14 Z" fill="url(#la1810)"/><rect x="27" y="62" width="62" height="49" rx="2"/><rect x="31" y="66" width="54" height="41" fill="url(#xa1810)"/><path d="M35 66 l3 10 l3 -10 M46 66 l2 6 l2 -6 M60 66 l3 12 l3 -12 M74 66 l2 7 l2 -7" fill="#f3ead6" stroke-width="1"/><rect x="43" y="36" width="27" height="14" rx="2" stroke="#7b2d26" stroke-dasharray="3 2"/><rect x="70" y="40.5" width="3" height="5" fill="#7b2d26" stroke="none"/><text x="56.5" y="47.5" font-family="Georgia, serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#7b2d26" stroke="none">?</text><path d="M108 42 H152 V112 H108 Z" fill="#f3ead6"/><path d="M108 42 q-5 0 -5 5 q0 5 5 5 M152 112 q5 0 5 -5 q0 -5 -5 -5"/><g stroke="#7b2d26" stroke-width="1.1"><path d="M113.0 52 v9"/><path d="M115.2 52 v9"/><path d="M117.4 52 v9"/><path d="M119.6 52 v9"/><path d="M112 60 l9 -7"/><path d="M125.0 52 v9"/><path d="M127.2 52 v9"/><path d="M129.4 52 v9"/><path d="M131.6 52 v9"/><path d="M124 60 l9 -7"/><path d="M137.0 52 v9"/><path d="M139.2 52 v9"/><path d="M141.4 52 v9"/><path d="M143.6 52 v9"/><path d="M136 60 l9 -7"/><path d="M113.0 67 v9"/><path d="M115.2 67 v9"/><path d="M117.4 67 v9"/><path d="M119.6 67 v9"/><path d="M112 75 l9 -7"/><path d="M125.0 67 v9"/><path d="M127.2 67 v9"/><path d="M129.4 67 v9"/><path d="M131.6 67 v9"/><path d="M124 75 l9 -7"/><path d="M137.0 67 v9"/><path d="M139.2 67 v9"/><path d="M141.4 67 v9"/><path d="M143.6 67 v9"/><path d="M136 75 l9 -7"/><path d="M113.0 82 v9"/><path d="M115.2 82 v9"/><path d="M117.4 82 v9"/></g><path d="M113 100 h32 M113 105 h24" stroke-width="0.8"/><path d="M166 128 V72 Q186 50 206 72 V128" stroke-width="1.8"/><path d="M170 128 V73 Q186 56 202 73 V128 Z" fill="url(#xa1810)"/><path d="M176 126 V80 Q186 70 196 80 V126 Z" fill="#c4902f" opacity="0.6" stroke="none"/><path d="M166 128 V72 L152 80 V126 Z" fill="url(#ha1810)"/><circle cx="156" cy="104" r="1.6" fill="#2b2118"/><ellipse cx="186" cy="132" rx="20" ry="4.5" fill="#2b2118"/><path d="M170 134 q16 5 32 0" stroke="#c4902f" stroke-width="1"/><path d="M212 128 V96 M216 128 V104 M220 128 V100" stroke-width="0.8"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-16">2026-10-16 18:10</time> <span class="why">Matthew coming back after an hour away</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T1810-0600.html">Evening of 10-16: two freezes, the crash log, Dress Up 0.0.87 to 0.0.90</a></h2>
+  <p class="summary">The laptop froze at 16:33 and 16:47, both during headless-Chromium runs; a new crash log lists 33 crashes since 08-18 and found the kernel sees no battery. Headless Chrome now runs pinned to 4 of 20 threads, with no crash in about an hour since. Dress Up 0.0.87 to 0.0.90 shipped still pictures on slow computers, opening doors, first collisions and N's pits; the day's 349 pictures were archived.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li><a href="https://matthewhammer.org/hazel/dashboard/#ticket-156"><code class="ref"><b>^ticket(</b>156<b>)</b></code></a>: <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>'s CI, a long run tonight</li><li><a href="https://matthewhammer.org/hazel/dashboard/#ticket-160"><code class="ref"><b>^ticket(</b>160<b>)</b></code></a>'s audit, pinned, in batches</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-149"><code class="ref"><b>^ticket(</b>149<b>)</b></code></a>: tables, beds, trees, rocks solid</li></ul>
+</article>
+<article class="note" id="n-2026-10-16T1035">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T1035-0600.html" aria-label="Late morning of 10-16: Dress Up 0.0.68 to 0.0.73, with Matthew and his controller"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a friend jumping out of deep water with a splash, a witch's crooked hut, and a game controller"><defs><pattern id="hb1035" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xb1035" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="lb1035" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><rect x="10" y="114" width="220" height="27" fill="url(#lb1035)" stroke="none"/><path d="M14 118 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0" stroke-width="0.9"/><path d="M14 126 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0" stroke-width="0.9"/><path d="M14 134 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0 q6 -3 12 0" stroke-width="0.9"/><path d="M52 116 q-8 -16 -16 -10 M60 114 q0 -20 -8 -24 M72 114 q4 -18 14 -16 M80 116 q12 -10 18 -2" stroke="#2b2118" stroke-width="1.1"/><circle cx="38" cy="98" r="1.6" fill="#2b2118"/><circle cx="96" cy="100" r="1.4" fill="#2b2118"/><circle cx="50" cy="86" r="1.2" fill="#2b2118"/><circle cx="66" cy="42.0" r="6.5" fill="#f3ead6"/><path d="M59.5 41.0 q6.5 -7.0 13.0 0" stroke-width="2"/><path d="M59.0 50.0 h14.0 l2.0 16.0 h-18.0 z" fill="#3d6b45"/><path d="M60.0 52.0 L54.0 36.0 M72.0 52.0 L78.0 36.0"/><path d="M62.0 66.0 L61.0 82 M70.0 66.0 L71.0 82"/><path d="M58 88 q8 4 16 0" stroke-width="0.8" stroke-dasharray="2 2"/><path d="M150 112 V100 M186 112 V100 M168 112 V100" stroke-width="1.6"/><path d="M146 100 L148 70 L190 66 L190 100 Z" fill="url(#lb1035)"/><path d="M140 72 L170 34 L196 70 Z" fill="#7b2d26" opacity="0.85"/><path d="M140 72 L170 34 L196 70" stroke-width="1.6"/><path d="M150 70 L172 44 M160 70 L178 50 M170 69 L184 54" stroke-width="0.6"/><rect x="162" y="80" width="11" height="12" fill="#c4902f"/><path d="M167.5 80 v12 M162 86 h11" stroke-width="0.8"/><path d="M182 46 V36 h6 V54" fill="url(#xb1035)"/><path d="M185 32 q-6 -5 0 -9 q6 -4 0 -9 q-5 -4 2 -7" stroke-width="0.9"/><path d="M188 128 q-12 0 -12 -8 q0 -9 12 -9 h26 q12 0 12 9 q0 8 -12 8 z" fill="#f3ead6" stroke-width="1.6"/><path d="M184 119.5 h8 M188 115.5 v8" stroke-width="2.4"/><circle cx="214" cy="116.5" r="2.3" fill="#7b2d26"/><circle cx="220" cy="120" r="2.3" fill="#c4902f"/><circle cx="208" cy="120" r="2.3" fill="#3d6b45"/><circle cx="214" cy="123.5" r="2.3" fill="#2b2118"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-16">2026-10-16 10:35</time> <span class="why">a shutdown to move the laptop</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T1035-0600.html">Late morning of 10-16: Dress Up 0.0.68 to 0.0.73, with Matthew and his controller</a></h2>
+  <p class="summary">Dress Up 0.0.68 to 0.0.73 shipped with Matthew and his controller: two jumps, the controller as a video game's actions, jumping in deep water, walking toward and away from us, and teach-me-your-controller with a SNES layout (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-146"><code class="ref"><b>^ticket(</b>146<b>)</b></code></a>). The witch's places now run at 60 frames a second (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-148"><code class="ref"><b>^ticket(</b>148<b>)</b></code></a>); Chrome's woods went from 13 to 56-59.5. <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-145"><code class="ref"><b>^ticket(</b>145<b>)</b></code></a> is designed, not written; <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-147"><code class="ref"><b>^ticket(</b>147<b>)</b></code></a> and <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-149"><code class="ref"><b>^ticket(</b>149<b>)</b></code></a> were minted.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-145"><code class="ref"><b>^ticket(</b>145<b>)</b></code></a>: floating ladders, designed not written</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-147"><code class="ref"><b>^ticket(</b>147<b>)</b></code></a>: doors that open with X</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-149"><code class="ref"><b>^ticket(</b>149<b>)</b></code></a>: collisions</li></ul>
+</article>
+<article class="note" id="n-2026-10-16T0905">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T0905-0600.html" aria-label="Morning of 10-16: after the 08:01 crash, Dress Up 0.0.62 to 0.0.67 while Matthew was away"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="the friend seen from behind, climbing a ladder, a frog mid-jump, and a heart for a hug"><defs><pattern id="hc0905" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xc0905" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="lc0905" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><path d="M14 128 L40 136 M60 128 L80 138 M150 128 L176 137" stroke-width="0.6"/><path d="M100 132 L106 24 M144 132 L138 24" stroke-width="2.2"/><path d="M104 40 H140"/><path d="M104 52 H140"/><path d="M104 64 H140"/><path d="M104 76 H140"/><path d="M104 88 H140"/><path d="M104 100 H140"/><path d="M104 112 H140"/><path d="M104 124 H140"/><circle cx="122" cy="48.0" r="7.5" fill="#f3ead6"/><path d="M114.5 50.3 q7.5 -10.3 14.9 0 v-1.1 q-7.5 -12.6 -14.9 0 z" fill="#2b2118" stroke="none"/><path d="M114.0 57.2 h16.1 l2.3 18.4 h-20.7 z" fill="url(#hc0905)"/><path d="M115.1 59.5 L110.5 43.4 M128.9 59.5 L133.5 52.6"/><path d="M117.4 75.6 L116.2 94 M126.6 75.6 L127.8 94"/><path d="M30 118 q14 -34 34 -22" stroke-dasharray="2 3" stroke-width="0.9"/><ellipse cx="68" cy="96" rx="11" ry="7" fill="#3d6b45"/><circle cx="64" cy="89" r="3" fill="#f3ead6"/><circle cx="72" cy="89" r="3" fill="#f3ead6"/><circle cx="64" cy="89" r="1" fill="#2b2118"/><circle cx="72" cy="89" r="1" fill="#2b2118"/><path d="M58 100 l-8 8 l-6 -2 M78 100 l8 8 l6 -2" stroke="#3d6b45" stroke-width="1.6"/><path d="M186 84 c-10 -10 -24 2 -12 14 l12 12 l12 -12 c12 -12 -2 -24 -12 -14 z" fill="#7b2d26"/><path d="M172 70 q14 -10 28 0" stroke-width="0.7" stroke-dasharray="1.5 2.5"/><circle cx="174" cy="103.2" r="4.0" fill="#f3ead6"/><path d="M170.0 102.6 q4.0 -4.3 8.1 0" stroke-width="2"/><path d="M169.7 108.2 h8.7 l1.2 9.9 h-11.2 z" fill="#c4902f"/><path d="M170.3 109.4 L166.6 99.5 M177.7 109.4 L181.4 99.5"/><path d="M171.5 118.1 L170.9 128 M176.5 118.1 L177.1 128"/><circle cx="198" cy="103.2" r="4.0" fill="#f3ead6"/><path d="M194.0 102.6 q4.0 -4.3 8.1 0" stroke-width="2"/><path d="M193.7 108.2 h8.7 l1.2 9.9 h-11.2 z" fill="#3d6b45"/><path d="M194.3 109.4 L190.6 99.5 M201.7 109.4 L205.4 99.5"/><path d="M195.5 118.1 L194.9 128 M200.5 118.1 L201.1 128"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-16">2026-10-16 09:05</time> <span class="why">after the 08:01 crash</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/16/2026-10-16T0905-0600.html">Morning of 10-16: after the 08:01 crash, Dress Up 0.0.62 to 0.0.67 while Matthew was away</a></h2>
+  <p class="summary">The laptop crashed at 08:01 while idle; nothing was lost, the five dashboard servers came back, and close_ticket.py was finally committed. While Matthew was away, Dress Up 0.0.62 to 0.0.67 shipped hugging legs, climbing a place's nearest ladder, the friend seen from behind, a one-off jump, and a game controller with a Controls tab (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-136"><code class="ref"><b>^ticket(</b>136<b>)</b></code></a> to <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-138"><code class="ref"><b>^ticket(</b>138<b>)</b></code></a>). The controller has only met a fake one (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-139"><code class="ref"><b>^ticket(</b>139<b>)</b></code></a>).</p>
+  <p class="next-h">Next, then</p><ul class="next"><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-139"><code class="ref"><b>^ticket(</b>139<b>)</b></code></a>: try the real USB controller</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-133"><code class="ref"><b>^ticket(</b>133<b>)</b></code></a>: try the drag fix on his device</li><li>every queued ticket waits on Matthew</li></ul>
+</article>
+<article class="note" id="n-2026-10-15T1700">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/15/2026-10-15T1700-0600.html" aria-label="Afternoon of 10-15: after the crash, Dress Up 0.0.42 to 0.0.45, two queue tags"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a signpost pointing three ways, a hand dragging the friend, music notes, and a crack for a crash"><defs><pattern id="hd1700" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xd1700" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="ld1700" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><path d="M60 130 V30" stroke-width="2.6"/><path d="M62 38 H104 L112 45 L104 52 H62 Z" fill="#f3ead6"/><path d="M68 45 h30" stroke-width="0.9"/><path d="M58 60 H20 L12 67 L20 74 H58 Z" fill="#c4902f"/><path d="M24 67 h28" stroke-width="0.9"/><path d="M62 82 H98 L106 89 L98 96 H62 Z" fill="url(#ld1700)"/><path d="M68 89 h24" stroke-width="0.9"/><path d="M120 112 q20 -30 46 -38" stroke-dasharray="2 3" stroke-width="0.9"/><circle cx="176" cy="80.0" r="6.5" fill="#f3ead6"/><path d="M169.5 79.0 q6.5 -7.0 13.0 0" stroke-width="2"/><path d="M169.0 88.0 h14.0 l2.0 16.0 h-18.0 z" fill="#7b2d26"/><path d="M170.0 90.0 L163.0 104.0 M182.0 90.0 L189.0 104.0"/><path d="M172.0 104.0 L171.0 120 M180.0 104.0 L181.0 120"/><path d="M168 66 q4 -12 10 -6 l2 -10 q4 -3 5 2 l0 -4 q4 -3 5 2 l0 2 q4 -2 5 3 l-2 14 q-2 6 -10 6 h-6 z" fill="#f3ead6" stroke-width="1.2"/><g stroke="#2b2118"><ellipse cx="206" cy="58" rx="4" ry="3" fill="#2b2118"/><path d="M210 58 V38 l8 4"/><ellipse cx="190" cy="44" rx="3.5" ry="2.6" fill="#2b2118"/><ellipse cx="200" cy="40" rx="3.5" ry="2.6" fill="#2b2118"/><path d="M193.5 44 V28 L203.5 24 V40"/></g><path d="M30 14 L20 30 L28 32 L16 50" stroke="#7b2d26" stroke-width="1.8"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-15">2026-10-15 17:00</time> <span class="why">before a context compaction</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/15/2026-10-15T1700-0600.html">Afternoon of 10-15: after the crash, Dress Up 0.0.42 to 0.0.45, two queue tags</a></h2>
+  <p class="summary">The laptop crashed at 15:33 during <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-112"><code class="ref"><b>^ticket(</b>112<b>)</b></code></a>; the game's edits survived, and an empty vibes.mp3 was made again and the music day republished. Dress Up 0.0.42 to 0.0.45 shipped a door behind the viewer, more side doors, readable signs, and a fix for drags that ground down while scenes animated (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-117"><code class="ref"><b>^ticket(</b>117<b>)</b></code></a>): the scene had been rebuilt on every move. The queue gained long-run and blocked-on-Matthew tags.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-99"><code class="ref"><b>^ticket(</b>99<b>)</b></code></a>: modular routines in Dress Up</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-106"><code class="ref"><b>^ticket(</b>106<b>)</b></code></a>: rerun the pictures day on 0.0.45</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-104"><code class="ref"><b>^ticket(</b>104<b>)</b></code></a>: every tune as an MP3</li></ul>
+</article>
+<article class="note" id="n-2026-10-14T2120">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T2120-0600.html" aria-label="Evening of 10-14: the autosave&#x27;s print, B against C again, views in the worker"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a teetering stack of undo pages, a heap chart climbing, a floppy disk saving, and a worker's gear"><defs><pattern id="he2120" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xe2120" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="le2120" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><rect x="20.0" y="118" width="46" height="9" fill="#f3ead6"/><rect x="21.6" y="111" width="46" height="9" fill="#f3ead6"/><rect x="23.2" y="104" width="46" height="9" fill="#f3ead6"/><rect x="24.8" y="97" width="46" height="9" fill="#f3ead6"/><rect x="26.4" y="90" width="46" height="9" fill="#f3ead6"/><rect x="28.0" y="83" width="46" height="9" fill="#f3ead6"/><rect x="29.6" y="76" width="46" height="9" fill="#f3ead6"/><rect x="31.200000000000003" y="69" width="46" height="9" fill="#f3ead6"/><rect x="32.8" y="62" width="46" height="9" fill="#f3ead6"/><rect x="34.4" y="55" width="46" height="9" fill="#f3ead6"/><rect x="36.0" y="48" width="46" height="9" fill="#f3ead6"/><rect x="37.6" y="41" width="46" height="9" fill="#f3ead6"/><path d="M22 126 v-6" stroke-width="0.6"/><path d="M24 38 q10 -8 20 0" stroke="#7b2d26" stroke-width="1.2"/><path d="M44 38 l-3 -5 M44 38 l-5 1" stroke="#7b2d26" stroke-width="1.2"/><path d="M92 34 V124 H174" stroke-width="1.2"/><path d="M96 122 h9 v-6 h9 v-7 h9 v-8 h9 v-9 h9 v-10 h9 v-11 h9 v-12 h9 v-13" stroke="#7b2d26" stroke-width="1.8"/><path d="M96 122 h9 v-6 h9 v-7 h9 v-8 h9 v-9 h9 v-10 h9 v-11 h9 v-12 h9 v-13 V124 H96 Z" fill="url(#he2120)" stroke="none" opacity="0.5"/><path d="M184 96 h30 l6 6 v26 h-36 z" fill="#f3ead6"/><rect x="190" y="96" width="18" height="10" fill="url(#le2120)"/><rect x="189" y="112" width="26" height="14" fill="#c4902f"/><path d="M193 117 h18 M193 121 h12" stroke-width="0.8"/><g transform="translate(200 52)"><circle r="13" fill="#3d6b45"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(0)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(45)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(90)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(135)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(180)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(225)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(270)"/><rect x="-3" y="-19" width="6" height="7" fill="#3d6b45" transform="rotate(315)"/><circle r="5" fill="#f3ead6"/></g></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-14">2026-10-14 21:20</time> <span class="why">work done while Matthew was away</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T2120-0600.html">Evening of 10-14: the autosave&#x27;s print, B against C again, views in the worker</a></h2>
+  <p class="summary">The autosave's print was quadratic on the top-level let chain (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-84"><code class="ref"><b>^ticket(</b>84<b>)</b></code></a>); fixed, a change's save went from about 600 ms to 80, profiled. <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>'s heap grows per edit because its undo stack, capped only when a setting is on, keeps whole page models (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-58"><code class="ref"><b>^ticket(</b>58<b>)</b></code></a>); Andrew's compaction from <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> was ported. Views in the worker (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-18"><code class="ref"><b>^ticket(</b>18<b>)</b></code></a>) cut main-thread work but slowed small slides; the other fixes were pushed 10-15 on Matthew's word.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li>revise <a href="https://matthewhammer.org/hazel/performance-analysis/008/"><code class="ref"><b>^report(</b>8<b>)</b></code></a> (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-29"><code class="ref"><b>^ticket(</b>29<b>)</b></code></a>)</li><li>settle <a href="https://matthewhammer.org/hazel/dashboard/#ticket-18"><code class="ref"><b>^ticket(</b>18<b>)</b></code></a>'s worker protocol</li><li>review <a href="https://matthewhammer.org/hazel/performance-analysis/014/"><code class="ref"><b>^report(</b>14<b>)</b></code></a>'s dated update</li></ul>
+</article>
+<article class="note" id="n-2026-10-14T1903">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T1903-0600.html" aria-label="Deep links (#2583): answers to the review"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a browser's address bar holding a chain link, and two review comments, one checked, one questioned"><defs><pattern id="hf1903" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xf1903" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="lf1903" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><rect x="20" y="20" width="200" height="66" rx="4" fill="#f3ead6"/><path d="M20 32 H220" stroke-width="1"/><circle cx="28" cy="26" r="2" fill="#7b2d26" stroke="none"/><circle cx="35" cy="26" r="2" fill="#c4902f" stroke="none"/><circle cx="42" cy="26" r="2" fill="#3d6b45" stroke="none"/><rect x="30" y="38" width="180" height="13" rx="6.5"/><path d="M62 44.5 h60 M128 44.5 h22 M156 44.5 h40" stroke-width="0.9" stroke-dasharray="4 2"/><g stroke="#c4902f" stroke-width="2"><rect x="36" y="40.5" width="12" height="8" rx="4" transform="rotate(-30 42 44.5)"/><rect x="44" y="40.5" width="12" height="8" rx="4" transform="rotate(-30 50 44.5)"/></g><rect x="30" y="58" width="56" height="22" fill="url(#lf1903)"/><path d="M96 62 h110 M96 68 h96 M96 74 h104" stroke-width="0.8"/><path d="M150 58 v20" stroke="#7b2d26" stroke-width="1.4"/><path d="M24 100 h86 v26 h-60 l-10 8 v-8 h-16 z" fill="#f3ead6"/><path d="M32 108 h52 M32 115 h40" stroke-width="0.8"/><path d="M90 110 l5 6 l10 -12" stroke="#3d6b45" stroke-width="2.4"/><path d="M126 100 h90 v26 h-16 v8 l-10 -8 h-64 z" fill="#f3ead6"/><path d="M134 108 h46 M134 115 h56" stroke-width="0.8"/><text x="203" y="119" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#7b2d26" stroke="none">?</text></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-14">2026-10-14 19:03</time> <span class="why">answering a PR review, at Matthew&#x27;s ask</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T1903-0600.html">Deep links (#2583): answers to the review</a></h2>
+  <p class="summary">Claude's answers, for Matthew to accept, change or drop, to the changes-requested review of <a href="https://github.com/hazelgrove/hazel/pull/2583">#2583</a> (deep links). The review's main point holds: two URL encodings, parsing tangled with applying, and nothing testable without a browser. The plan: one request type parsed apart from applying, startup as an action in Main.re, and panel names in one switch in Sidebar.re; the branch is unchanged so far.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li>a request type with parse, to_params and tests</li><li>startup as an action; CopyDeepLink at the Page level</li><li>the panel-name switch, and the small fixes</li></ul>
+</article>
+<article class="note" id="n-2026-10-14T1209">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T1209-0600.html" aria-label="^ticket(45): what the page keeps, an audit"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a heap growing with every slider edit, and a magnifying glass over a table with four cells flagged"><defs><pattern id="hg1209" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xg1209" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="lg1209" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><rect x="22" y="108" width="10" height="10" fill="url(#hg1209)"/><rect x="35" y="99" width="10" height="19" fill="url(#hg1209)"/><rect x="48" y="90" width="10" height="28" fill="url(#hg1209)"/><rect x="61" y="81" width="10" height="37" fill="url(#hg1209)"/><rect x="74" y="72" width="10" height="46" fill="url(#hg1209)"/><rect x="87" y="63" width="10" height="55" fill="url(#hg1209)"/><rect x="100" y="54" width="10" height="64" fill="url(#hg1209)"/><path d="M24 50 L104 26" stroke="#7b2d26" stroke-width="1.6"/><path d="M104 26 l-7 -1 M104 26 l-5 5" stroke="#7b2d26" stroke-width="1.6"/><path d="M22 136 H118" stroke-width="2"/><circle cx="96" cy="136" r="5" fill="#c4902f"/><rect x="150" y="44" width="16" height="12"/><rect x="166" y="44" width="16" height="12"/><rect x="182" y="44" width="16" height="12" fill="#7b2d26" opacity="0.8"/><rect x="198" y="44" width="16" height="12"/><rect x="150" y="56" width="16" height="12"/><rect x="166" y="56" width="16" height="12"/><rect x="182" y="56" width="16" height="12"/><rect x="198" y="56" width="16" height="12"/><rect x="150" y="68" width="16" height="12"/><rect x="166" y="68" width="16" height="12" fill="#7b2d26" opacity="0.8"/><rect x="182" y="68" width="16" height="12"/><rect x="198" y="68" width="16" height="12"/><rect x="150" y="80" width="16" height="12"/><rect x="166" y="80" width="16" height="12"/><rect x="182" y="80" width="16" height="12"/><rect x="198" y="80" width="16" height="12" fill="#7b2d26" opacity="0.8"/><rect x="150" y="92" width="16" height="12" fill="#7b2d26" opacity="0.8"/><rect x="166" y="92" width="16" height="12"/><rect x="182" y="92" width="16" height="12"/><rect x="198" y="92" width="16" height="12"/><circle cx="196" cy="88" r="20" fill="#f3ead6" fill-opacity="0.35" stroke-width="2.2"/><path d="M210 103 L224 120" stroke-width="5"/><path d="M184 80 q6 -6 14 -4" stroke-width="0.8"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-14">2026-10-14 12:09</time></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T1209-0600.html">^ticket(45): what the page keeps, an audit</a></h2>
+  <p class="summary">On <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, a Full Body tab's live heap grew about 85 MB per shirt-width slider edit, with no plateau. Experiments ruled out the whole-program memos, the undo history capped at 2, the projector view cache and ShareCodec's tables; heap snapshots crashed the tab, so V8's sampling profiler showed whole versions of the editor's state staying alive. An audit of every weak and strong table flagged four id-keyed tables.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li>count each flagged table's size per edit</li><li>give the growing table an owner and a lifetime</li><li>the same check on <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, then <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-53"><code class="ref"><b>^ticket(</b>53<b>)</b></code></a></li></ul>
+</article>
+<article class="note" id="n-2026-10-14T0911">
+  <a class="art" href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T0911-0600.html" aria-label="Work notes, 2026-10-13 evening to 2026-10-14 morning"><svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="a green check for CI, a laptop on a hand truck, and a small dashboard with its rows"><defs><pattern id="hh0911" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3.4" stroke="#2b2118" stroke-width="0.7"/></pattern><pattern id="xh0911" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V3.4M0 0H3.4" stroke="#2b2118" stroke-width="0.6"/></pattern><pattern id="lh0911" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="0.4"/></pattern></defs><rect width="240" height="150" fill="#f3ead6"/><g fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M14 128 H226" stroke-width="1"/><circle cx="52" cy="62" r="30" fill="#3d6b45" fill-opacity="0.25" stroke="#3d6b45" stroke-width="2.4"/><path d="M36 62 l11 12 l22 -26" stroke="#3d6b45" stroke-width="5"/><path d="M100 40 V122 H136" stroke-width="2.4"/><circle cx="108" cy="126" r="6" fill="url(#xh0911)"/><rect x="104" y="98" width="30" height="22" fill="#c4902f"/><path d="M104 104 h30 M119 98 v6" stroke-width="0.8"/><rect x="104" y="88" width="32" height="10" rx="2" fill="url(#lh0911)"/><path d="M104 93 h32" stroke-width="0.6"/><path d="M100 40 l-8 -6" stroke-width="2.4"/><rect x="152" y="30" width="72" height="88" rx="3" fill="#f3ead6"/><path d="M152 42 H224" stroke-width="1"/><rect x="157" y="34" width="22" height="5" fill="#7b2d26" stroke="none"/><path d="M158 52 h30 M200 52 h14" stroke-width="0.9"/><path d="M158 62 h43 M200 62 h14" stroke-width="0.9"/><path d="M158 72 h30 M200 72 h14" stroke-width="0.9"/><path d="M158 82 h43 M200 82 h14" stroke-width="0.9"/><path d="M158 92 h30 M200 92 h14" stroke-width="0.9"/><path d="M158 102 h43 M200 102 h14" stroke-width="0.9"/><circle cx="214" cy="36" r="4" stroke-width="0.9"/><path d="M214 33.5 V36 h2" stroke-width="0.8"/></g><rect x="5" y="5" width="230" height="140" fill="none" stroke="#2b2118" stroke-width="1"/><rect x="8.5" y="8.5" width="223" height="133" fill="none" stroke="#2b2118" stroke-width="0.5"/></svg></a>
+  <p class="when"><time datetime="2026-10-14">2026-10-14 09:11</time> <span class="why">a shutdown to move the laptop</span></p>
+  <h2><a href="https://matthewhammer.org/hazel-work-notes/work-notes/2026/10/14/2026-10-14T0911-0600.html">Work notes, 2026-10-13 evening to 2026-10-14 morning</a></h2>
+  <p class="summary"><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>'s CI, red since 10-11, is green again (<a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-4"><code class="ref"><b>^ticket(</b>4<b>)</b></code></a>): Statics.mk and MakeTerm's memos were bounded so node's heap holds, and big programs' recovering-parser checks moved to the weekly run. <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-7"><code class="ref"><b>^ticket(</b>7<b>)</b></code></a>'s EvalInfo update was pushed to <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, and <a href="https://matthewhammer.org/hazel/performance-analysis/013/"><code class="ref"><b>^report(</b>13<b>)</b></code></a>, Telling the Request What Changed, was published. The dashboard now publishes by cron within a minute of a change.</p>
+  <p class="next-h">Next, then</p><ul class="next"><li>user-defined livelits (<a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>), per Cyrus</li><li><a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-45"><code class="ref"><b>^ticket(</b>45<b>)</b></code></a>, <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-46"><code class="ref"><b>^ticket(</b>46<b>)</b></code></a>, and <a href="https://matthewhammer.org/hazel/dashboard/closed.html#ticket-7"><code class="ref"><b>^ticket(</b>7<b>)</b></code></a>'s redraw</li><li>restart the servers; rebuild 8341's bundle</li></ul>
+</article>
+    </section>
+    <footer>
+      &copy; 2026 Matthew Hammer &mdash; Built with plain HTML + CSS on GitHub Pages. Made by <a href="https://github.com/matthewhammer/hazel-work-notes/blob/main/dashboard/notes_gallery.py">notes_gallery.py</a>.
+    </footer>
+  </main>
+<!-- theme: begin -->
+<style>
+  .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--rule, #ccc); background: var(--panel, Canvas); color: var(--dim, GrayText);
+    cursor: pointer; opacity: 0.85; }
+  .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+<script>
+/* The theme switch: Auto (the system's choice), Light, Dark; remembered for this site. */
+(() => {
+  const order = ["auto", "light", "dark"], label = { auto: "◐ auto", light: "☀ light", dark: "☾ dark" };
+  const get = () => { try { return localStorage.getItem("theme") || "auto"; } catch (_) { return "auto"; } };
+  const apply = m => m === "auto" ? document.documentElement.removeAttribute("data-theme")
+                                  : document.documentElement.setAttribute("data-theme", m);
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "theme-toggle";
+  const show = () => { const m = get(); b.textContent = label[m] || label.auto;
+    b.title = "Theme: " + m + ". Click for " + order[(order.indexOf(m) + 1) % 3] + "; remembered on this site."; };
+  b.addEventListener("click", () => {
+    const m = order[(order.indexOf(get()) + 1) % 3];
+    try { m === "auto" ? localStorage.removeItem("theme") : localStorage.setItem("theme", m); } catch (_) {}
+    apply(m); show();
+  });
+  window.addEventListener("storage", e => { if (e.key === "theme") { apply(get()); show(); } });
+  show(); document.body.append(b);
+})();
+</script>
+<!-- theme: end -->
+<!-- pr-cards: begin -->
+<style>
+  .pr-card { position: absolute; z-index: 40; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
+  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
+  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
+</style>
+<script>
+/* A card for each link to a GitHub PR or issue, on hover or focus: its
+   title, state, author, dates and comments, asked of GitHub live, once per
+   number per page load; if GitHub does not answer, what it said when the
+   page was built (tools/link_prs.py writes this block). */
+(() => {
+  const CACHED = {"hazelgrove/hazel#2583": {"author": "matthewhammer", "comments": 9, "created": "2026-09-17T18:58:02Z", "kind": "pull", "state": "open", "title": "Deep links: the URL can say which slide, which panel, and where the cursor is", "updated": "2026-10-15T17:00:54Z"}, "hazelgrove/hazel#2597": {"author": "matthewhammer", "comments": 3, "created": "2026-09-23T15:18:28Z", "kind": "pull", "state": "open", "title": "User-Defined Livelits, as in PLDI '21, and beyond.", "updated": "2026-10-15T14:33:10Z"}, "hazelgrove/hazel#2635": {"author": "matthewhammer", "comments": 2, "created": "2026-10-01T22:50:14Z", "kind": "pull", "state": "draft", "title": "Livelits × modular editors: merge #2469 into the livelits branch", "updated": "2026-10-17T03:13:13Z"}}, BUILT = "2026-10-17";
+  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(?:pull|issues)\/(\d+)$/;
+  const asked = new Map();
+  const ask = key => {
+    if (!asked.has(key)) {
+      const [repo, n] = key.split("#");
+      asked.set(key, fetch(`https://api.github.com/repos/${repo}/issues/${n}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
+                      comments: j.comments, kind: j.pull_request ? "pull" : "issues",
+                      state: j.pull_request && j.pull_request.merged_at ? "merged" : j.draft ? "draft" : j.state }))
+        .catch(() => null));
+    }
+    return asked.get(key);
+  };
+  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const ago = iso => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
+      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
+    return "just now";
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const fill = (key, d, note) => {
+    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
+    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span></div>` +
+      `<div class="pr-title">${esc(d.title)}</div>` +
+      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
+      (note ? `<div class="pr-note">${note}</div>` : "");
+  };
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
+    const below = r.bottom + 6 + h < innerHeight;
+    card.style.left = (left + scrollX) + "px";
+    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = a => {
+    const m = RX.exec(a.href);
+    if (!m) return;
+    const key = m[1] + "#" + m[2];
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      const cached = CACHED[key];
+      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
+      card.hidden = false; place(a);
+      const d = await ask(key);
+      if (over !== a) return;
+      card.innerHTML = d ? fill(key, d, "")
+        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
+        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
+      place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- pr-cards: end -->
+<!-- ref-cards: begin -->
+<style>
+  .ref-card { position: absolute; z-index: 40; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
+  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    vertical-align: 1px; background: #6e7781; }
+  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
+  .rc-state.done { background: #8250df; }
+</style>
+<script>
+/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
+   ticket from the work dashboard's data (its area, its status, its first
+   line), carried by the dashboard's own pages and read live from the
+   published data anywhere else; a report from its own page, live (its
+   title, date and opening). Once per page load each. */
+(() => {
+  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
+  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
+  /* the dashboard itself carries its tickets (made with the page, changed
+     with it); any other page asks the published data */
+  const EMBED = null;
+  let data = EMBED ? Promise.resolve(EMBED) : null;
+  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
+  const pages = new Map();
+  const loadReport = url => {
+    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
+      let p = h1 && h1.nextElementSibling;
+      while (p && p.tagName !== "P") p = p.nextElementSibling;
+      const label = (doc.querySelector(".series") || {}).textContent || "";
+      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
+               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
+    }).catch(() => null));
+    return pages.get(url);
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
+  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
+  const ticketCard = (n, d) => {
+    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
+    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
+    const q = (d.queue || []).indexOf(n);
+    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
+      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
+      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
+    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
+      `<div class="rc-title">${esc(lead(t.text))}</div>` +
+      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
+      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
+  };
+  const reportCard = (n, r) => r
+    ? `<div class="rc-head">^report(${n}) · Hazel performance analysis${r.date ? " · " + esc(r.date) : ""}</div>` +
+      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
+    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
+    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = (a, ref) => {
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
+      card.hidden = false; place(a);
+      let html;
+      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
+      else html = reportCard(ref.n, await loadReport(a.href));
+      if (over !== a) return;
+      card.innerHTML = html; place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- ref-cards: end -->
+
+</body>
+</html>
