@@ -118,7 +118,7 @@ const ARCHIVE = new URL("../../dress-up-pictures/", location.href).href;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 // (the groups, in the order the game's tabs come; the places first)
-const GROUPS = [["backgrounds-with-friend", "🧍 places, with the friend"], ["backgrounds", "🏞️ places, empty"], ["costume"], ["face"], ["eyes"],
+const GROUPS = [["backgrounds-with-friend", "🧍 places, with the friend"], ["backgrounds", "🏞️ places, empty"], ["moves", "🧗 climbing"], ["costume"], ["face"], ["eyes"],
   ["hair"], ["neck-arms-legs"], ["hands"], ["shirt"], ["pants"], ["swim-undies"], ["feet"], ["background-menus"]];
 let days = [], day = null, all = [], shown = [], only = "all", at = -1;
 const params = () => new URLSearchParams(location.search);
