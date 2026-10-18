@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
-<meta name="dashboard-version" content="7c7dc43f115f">
+<meta name="dashboard-version" content="00cfa8357a8b">
 <!-- theme: head begin -->
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 <!-- theme: head end -->
@@ -125,7 +125,7 @@
 <main>
 <h1>Closed tickets</h1>
 <p class="note">A copy of the Hazel Work Dashboard that Matthew runs on his laptop, published at most ten minutes after each change to its notes, and to the status from GitHub, which it reads every 15 minutes. Its <code>localhost</code> links work only there.</p>
-<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-17 18:53 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
+<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-17 19:00 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
 <div class="scroll"><table>
 <tr><th class="num">Ticket</th><th class="area">Area</th><th>Status, closed</th><th>Outcome</th><th>The ticket, as it last read</th></tr>
 <tr id="ticket-254"><td class="num"><a class="anchor" href="#ticket-254"><code class="ref"><b>^ticket(</b>254<b>)</b></code></a><button class="copy" type="button" data-anchor="ticket-254" title="Copy a link to ^ticket(254)">copy link</button></td><td>dress up, performance, music, dragging</td><td class="status"><span class="good">done</span><br><span class="note">2026-10-17</span></td><td>Released in 0.0.171 (live): a placed thing's drag moves only its own drawing by a transform at each move (thingDragMove, scaled by depthSize), the picture drawn for real every THING_DRAG_DRAW 200 ms and on letting go. Measured on GitHub with his scene rebuilt (the forest, 15 rocks, steppers at 207%): 150 moves drew 22 times, 187 ms, against 145 times, 1557 ms before (the friend's drag 239 ms); no long tasks, the music feeder's longest gap 22 ms. dragthing254.mjs (new) all ok; library185's stale five-groups check (six since ticket 219) fixed with it.<br><span class="note">⏱ opened 2026-10-17 17:39, closed 17:49 (10 min) · 35.0 min of work, timed · 0 messages from Matthew, 0 questions to him · ~0 chars (~0 tokens) · ~0 min together</span></td><td><b>Dress Up: dragging a placed thing stutters the music again.</b> Matthew: "the dragging performance issue we had in prior days is re-surfacing, but now with placed objects in the scene designer. when we drag them, the music pauses and glitches". To do: find what each move of a thing's drag costs (the whole changed(): saving, the world's keeping, every control's sync, the scene built again), make a drag move only as much as the friend's drag does (tickets 117, 133), saving and the rest once at its end; music unbroken while dragging, measured.<br><span class="note">from Matthew, 2026-10-17, in chat (interrupting)</span></td></tr>
