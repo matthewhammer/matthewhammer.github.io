@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dress Up Music</title>
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Every tune in Messed Up Dress Up, recorded from the game, with a player: the newest day's recordings, and every earlier day's.">
+  <meta name="description" content="Every tune in Messed Up Dress Up, recorded from the game, with a player: the newest run's recordings, and every earlier run's.">
   <link rel="icon" href="../../favicon.ico">
   <link rel="stylesheet" href="../../style.css">
   <style>
@@ -71,7 +71,7 @@
       <p class="tagline">Every tune in the game, recorded from the game itself, one loop each</p>
     </header>
 
-    <p class="day"><label for="day">Recorded on</label> <select id="day"></select> <span id="dayinfo"></span></p>
+    <p class="day"><label for="day">Run</label> <select id="day"></select> <span id="dayinfo"></span></p>
 
     <div class="player" id="player">
       <div class="now"><span class="title" id="title">…</span><span class="meta" id="meta"></span></div>
@@ -93,48 +93,53 @@
     <p class="note" id="note"></p>
 
     <footer>
-      &copy; 2026 Matthew Hammer &mdash; The recordings are in the public <a href="https://github.com/matthewhammer/dress-up-music">dress-up-music</a> archive.
+      &copy; 2026 Matthew Hammer &mdash; The recordings are in the public <a href="https://github.com/matthewhammer/dress-up-music">dress-up-music</a> archive, one copy of each tune, each run a tag.
     </footer>
   </main>
 <script>
-// The newest day in the music archive (days.json, written with the archive's
-// front page), its tunes (the day's manifest.json), and a player. A tune
-// unchanged since an earlier day plays that day's recording (its "real" path).
-// The archive is this site's /dress-up-music/, a sibling of /hazel/.
+// The music archive's runs (runs.json), newest first, one run's tunes (its
+// manifest.json), and a player. The archive keeps one copy of each tune,
+// music/<tune>.mp3, rewritten by each run, so only the newest run is on this
+// site (/dress-up-music/, a sibling of /hazel/); an earlier run plays from
+// its git tag, through GitHub's raw files (since 2026-10-18).
 const ARCHIVE = new URL("../../dress-up-music/", location.href).href;
+const RAW = "https://raw.githubusercontent.com/matthewhammer/dress-up-music/";
 const $ = id => document.getElementById(id);
 const audio = $("audio");
-let days = [], day = null, tunes = [], at = -1, mode = "list", order = [];
+let runs = [], run = null, tunes = [], at = -1, mode = "list", order = [];
 const fmt = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-const urlOf = t => ARCHIVE + day.day + "/" + (t.real || t.file);
+const base = () => (run === runs[0] ? ARCHIVE : RAW + encodeURIComponent(run.tag) + "/") + "music/";
+const urlOf = t => base() + t.file;
 const params = () => new URLSearchParams(location.search);
 
 async function start() {
   try {
-    days = await (await fetch(ARCHIVE + "days.json", { cache: "no-cache" })).json();
+    runs = await (await fetch(ARCHIVE + "runs.json", { cache: "no-cache" })).json();
   } catch (e) { return fail(); }
-  if (!days.length) return fail();
+  if (!runs.length) return fail();
   const sel = $("day");
-  sel.innerHTML = days.map((d, i) => `<option value="${esc(d.day)}">${esc(d.day)}${i === 0 ? " (newest)" : ""}</option>`).join("");
-  const want = params().get("day");
-  sel.value = days.some(d => d.day === want) ? want : days[0].day;
-  sel.addEventListener("change", () => { const p = params(); p.set("day", sel.value); history.replaceState(null, "", "?" + p + location.hash); load(sel.value); });
+  sel.innerHTML = runs.map((r, i) => `<option value="${esc(r.run)}">${esc(r.run)}${r.version ? " · " + esc(r.version) : ""}${i === 0 ? " (newest)" : ""}</option>`).join("");
+  // (?run=, and ?day= from links made before 2026-10-18)
+  const want = params().get("run") || params().get("day");
+  sel.value = runs.some(r => r.run === want) ? want : runs[0].run;
+  sel.addEventListener("change", () => { const p = params(); p.delete("day"); p.set("run", sel.value); history.replaceState(null, "", "?" + p + location.hash); load(sel.value); });
   await load(sel.value);
 }
 function fail() {
-  $("tracks").innerHTML = `<li class="error">The music archive couldn't be read just now. Its full list is at <a href="${ARCHIVE}">matthewhammer.org/dress-up-music/</a>.</li>`;
+  $("tracks").innerHTML = `<li class="error">The music archive couldn't be read just now. Its list of runs is at <a href="${ARCHIVE}">matthewhammer.org/dress-up-music/</a>.</li>`;
 }
 async function load(k) {
-  day = days.find(d => d.day === k);
-  try { tunes = await (await fetch(ARCHIVE + k + "/manifest.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
-  $("dayinfo").innerHTML = day.version ? `from Messed Up Dress Up ${esc(day.version)}` +
-    (day.commit ? ` (<a href="https://github.com/matthewhammer/kids-choice-games/commit/${esc(day.commit)}">${esc(day.commit.slice(0, 7))}</a>)` : "") : "";
+  run = runs.find(r => r.run === k);
+  try { tunes = await (await fetch(base() + "manifest.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
+  $("dayinfo").innerHTML = (run.when ? `made ${esc(run.when)}, ` : "") + (run.version ? `from Messed Up Dress Up ${esc(run.version)}` +
+    (run.commit ? ` (<a href="https://github.com/matthewhammer/kids-choice-games/commit/${esc(run.commit)}">${esc(run.commit.slice(0, 7))}</a>)` : "") : "");
   $("tracks").innerHTML = tunes.map((t, i) => `<li><button type="button" data-i="${i}"><span class="n">${i + 1}</span>` +
     `<span class="name">${esc(t.name)}</span><span class="len">${fmt(t.loopSecs)}</span></button></li>`).join("");
   $("note").innerHTML = `${tunes.length} tunes, each at the game's default settings: one loop, plus a short tail for its echoes. ` +
-    `${tunes.filter(t => t.sameAsDay).length ? tunes.filter(t => t.sameAsDay).length + " are unchanged since an earlier day and play that day's recording. " : ""}` +
-    `The day's full list: <a href="${ARCHIVE}${k}/index.html">${k}</a>; <a href="${ARCHIVE}">every day</a>.`;
+    `${tunes.filter(t => t.recordedIn !== k).length ? tunes.filter(t => t.recordedIn !== k).length + " are unchanged since an earlier run and play its recording. " : ""}` +
+    (run === runs[0] ? `The run's own page: <a href="${ARCHIVE}music/index.html">${esc(k)}</a>` : `This run's files: <a href="https://github.com/matthewhammer/dress-up-music/tree/${esc(run.tag)}/music">${esc(run.tag)}</a>`) +
+    `; <a href="${ARCHIVE}">every run</a>.`;
   shuffle();
   const id = decodeURIComponent(location.hash.slice(1));
   pick(Math.max(0, tunes.findIndex(t => t.id === id)), false);
@@ -147,10 +152,10 @@ function pick(i, play = true) {
   at = i; const t = tunes[i];
   audio.src = urlOf(t); audio.loop = mode === "one";
   $("title").textContent = t.name;
-  $("meta").textContent = `${fmt(t.loopSecs)} a loop` + (t.sameAsDay ? ` · recorded ${t.sameAsDay}` : "");
+  $("meta").textContent = `${fmt(t.loopSecs)} a loop` + (t.recordedIn && t.recordedIn !== run.run ? ` · recorded ${t.recordedIn}` : "");
   document.querySelectorAll("#tracks button").forEach(b => b.setAttribute("aria-current", String(+b.dataset.i === i)));
   history.replaceState(null, "", location.search + "#" + encodeURIComponent(t.id));
-  if ("mediaSession" in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: "Messed Up Dress Up", album: `${day.day} · ${day.version || ""}` });
+  if ("mediaSession" in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: "Messed Up Dress Up", album: `${run.run} · ${run.version || ""}` });
   if (play) audio.play().catch(() => {});
 }
 const step = d => {
