@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dress Up Pictures</title>
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Every place, costume and choice in Messed Up Dress Up, as the game drew them: the newest day's pictures, and every earlier day's.">
+  <meta name="description" content="Every place, costume and choice in Messed Up Dress Up, as the game drew them: the newest run's pictures, and every earlier run's.">
   <link rel="icon" href="../../favicon.ico">
   <link rel="stylesheet" href="../../style.css">
   <style>
@@ -84,7 +84,7 @@
       <p class="tagline">Every place, costume and choice in the game, as the game drew them</p>
     </header>
 
-    <p class="day"><label for="day">Drawn on</label> <select id="day"></select> <span id="dayinfo"></span></p>
+    <p class="day"><label for="day">Run</label> <select id="day"></select> <span id="dayinfo"></span></p>
     <p class="raw" id="raw"></p>
 
     <div class="chips" id="chips" role="group" aria-label="Which pictures"></div>
@@ -93,7 +93,7 @@
     <div id="groups"></div>
 
     <footer>
-      &copy; 2026 Matthew Hammer &mdash; The pictures are in the public <a href="https://github.com/matthewhammer/dress-up-pictures">dress-up-pictures</a> archive.
+      &copy; 2026 Matthew Hammer &mdash; The pictures are in the public <a href="https://github.com/matthewhammer/dress-up-pictures">dress-up-pictures</a> archive, each run a tag; the runs up to 2026-10-17, PNGs and all, in <a href="https://github.com/matthewhammer/dress-up-pictures-2026-10-18">dress-up-pictures-2026-10-18</a>.
       Each one's settings file opens in <a href="../../kids-choice-games/dress-up/">the game</a> with Load.
     </footer>
   </main>
@@ -110,46 +110,53 @@
     </div>
   </dialog>
 <script>
-// The newest day in the picture archive (days.json), its pictures (the day's
-// manifest.json), grouped as the game's tabs are, shown as thumbnails (the
-// day's thumbs/, 480 wide) and opened full size (the 1920-wide PNG). The
-// archive is this site's /dress-up-pictures/, a sibling of /hazel/.
+// The picture archive's runs (runs.json), newest first, and one run's
+// pictures (its manifest.json), grouped as the game's tabs are, shown as
+// thumbnails (480 wide) and opened as the drawing itself (the SVG). Every run
+// writes the archive's pictures/ folder, so only the newest is on this site
+// (/dress-up-pictures/, a sibling of /hazel/); an earlier run is read from its
+// git tag, through GitHub's raw files. No PNG is kept: PNG draws one from the
+// SVG here, still, 1920 wide (since 2026-10-18).
 const ARCHIVE = new URL("../../dress-up-pictures/", location.href).href;
+const RAW = "https://raw.githubusercontent.com/matthewhammer/dress-up-pictures/";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 // (the groups, in the order the game's tabs come; the places first)
 const GROUPS = [["backgrounds-with-friend", "🧍 places, with the friend"], ["backgrounds", "🏞️ places, empty"], ["moves", "🧗 climbing"], ["costume"], ["face"], ["eyes"],
   ["hair"], ["neck-arms-legs"], ["hands"], ["shirt"], ["pants"], ["swim-undies"], ["feet"], ["background-menus"]];
-let days = [], day = null, all = [], shown = [], only = "all", at = -1;
+let runs = [], run = null, all = [], shown = [], only = "all", at = -1;
 const params = () => new URLSearchParams(location.search);
-const base = () => ARCHIVE + day.day + "/";
+const base = () => (run === runs[0] ? ARCHIVE : RAW + encodeURIComponent(run.tag) + "/") + "pictures/";
 // (a choice drawn the same as another picture has no file of its own: it
 // shows that one's, sameAsFile; one that shows only with other settings, or
 // looks like the default with none named, has no picture)
-const picOf = e => e.png || e.sameAsFile || null;
-const thumbOf = e => base() + "thumbs/" + picOf(e).replace(/\.png$/, ".webp");
-const looksDefault = e => !e.png;
+const picOf = e => e.svg || e.sameAsFile || null;
+const thumbOf = e => base() + "thumbs/" + picOf(e).replace(/\.svg$/, ".webp");
+const looksDefault = e => !e.svg;
 
 async function start() {
-  try { days = await (await fetch(ARCHIVE + "days.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
-  if (!days.length) return fail();
+  try { runs = await (await fetch(ARCHIVE + "runs.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
+  if (!runs.length) return fail();
   const sel = $("day");
-  sel.innerHTML = days.map((d, i) => `<option value="${esc(d.day)}">${esc(d.day)}${i === 0 ? " (newest)" : ""}</option>`).join("");
-  const want = params().get("day");
-  sel.value = days.some(d => d.day === want) ? want : days[0].day;
-  sel.addEventListener("change", () => { const p = params(); p.set("day", sel.value); history.replaceState(null, "", "?" + p + location.hash); load(sel.value); });
+  sel.innerHTML = runs.map((r, i) => `<option value="${esc(r.run)}">${esc(r.run)}${r.version ? " · " + esc(r.version) : ""}${i === 0 ? " (newest)" : ""}</option>`).join("");
+  // (?run=, and ?day= from links made before 2026-10-18)
+  const want = params().get("run") || params().get("day");
+  sel.value = runs.some(r => r.run === want) ? want : runs[0].run;
+  sel.addEventListener("change", () => { const p = params(); p.delete("day"); p.set("run", sel.value); history.replaceState(null, "", "?" + p + location.hash); load(sel.value); });
   $("repeats").addEventListener("change", render);
   await load(sel.value);
 }
 function fail() {
-  $("groups").innerHTML = `<p class="error">The picture archive couldn't be read just now. Its full list is at <a href="${ARCHIVE}">matthewhammer.org/dress-up-pictures/</a>.</p>`;
+  $("groups").innerHTML = `<p class="error">The picture archive couldn't be read just now. Its list of runs is at <a href="${ARCHIVE}">matthewhammer.org/dress-up-pictures/</a>.</p>`;
 }
 async function load(k) {
-  day = days.find(d => d.day === k);
-  try { all = await (await fetch(ARCHIVE + k + "/manifest.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
-  $("dayinfo").innerHTML = day.version ? `from Messed Up Dress Up ${esc(day.version)}` +
-    (day.commit ? ` (<a href="https://github.com/matthewhammer/kids-choice-games/commit/${esc(day.commit)}">${esc(day.commit.slice(0, 7))}</a>)` : "") : "";
-  $("raw").innerHTML = `The full, raw list, with every picture's PNG, SVG and settings: <a href="${base()}index.html">${esc(k)}</a> · <a href="${ARCHIVE}">every day</a>.`;
+  run = runs.find(r => r.run === k);
+  try { all = await (await fetch(base() + "manifest.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
+  $("dayinfo").innerHTML = (run.when ? `made ${esc(run.when)}, ` : "") + (run.version ? `from Messed Up Dress Up ${esc(run.version)}` +
+    (run.commit ? ` (<a href="https://github.com/matthewhammer/kids-choice-games/commit/${esc(run.commit)}">${esc(run.commit.slice(0, 7))}</a>)` : "") : "");
+  $("raw").innerHTML = (run === runs[0] ? `The run's own page, every picture's SVG and settings: <a href="${ARCHIVE}pictures/index.html">${esc(k)}</a>`
+                                        : `This run's files: <a href="https://github.com/matthewhammer/dress-up-pictures/tree/${esc(run.tag)}/pictures">${esc(run.tag)}</a>, or <a href="https://github.com/matthewhammer/dress-up-pictures/archive/refs/tags/${esc(run.tag)}.zip">as a zip</a>`) +
+    ` · <a href="${ARCHIVE}">every run</a>.`;
   const want = location.hash.slice(1);
   only = GROUPS.some(([f]) => f === want) ? want : "all";
   render();
@@ -174,7 +181,7 @@ function render() {
       html += (pic ? `<figure class="card" tabindex="0" data-i="${i}"><div class="pic"><img loading="lazy" decoding="async" src="${esc(thumbOf(e))}" alt="${esc(e.label)}" onerror="this.onerror=null;this.src='${esc(base() + pic)}'"></div>`
                    : `<figure class="card none"><div class="pic"><span>${e.onlyWithOtherSettings ? "shows only with other settings" : "looks like the default"}</span></div>`) +
         `<figcaption>${set ? `<span class="set">${esc(set)}</span>` : ""}${esc(val)}` +
-        (!e.png && pic ? `<br><span class="tag">looks like the default</span>` : "") + `</figcaption></figure>`;
+        (!e.svg && pic ? `<br><span class="tag">looks like the default</span>` : "") + `</figcaption></figure>`;
     }
     html += `</div></section>`;
   }
@@ -187,14 +194,31 @@ $("chips").addEventListener("click", e => {
   const b = e.target.closest("button[data-g]"); if (!b) return;
   only = b.dataset.g; history.replaceState(null, "", location.search + (only === "all" ? "" : "#" + only)); render();
 });
+// (the PNG the archive kept until 2026-10-18, drawn from the SVG: without its animations, 1920 wide)
+async function png(a) {
+  const old = a.textContent; a.textContent = "making the PNG…";
+  try {
+    const s = new DOMParser().parseFromString(await (await fetch(a.dataset.svg)).text(), "image/svg+xml").documentElement;
+    for (const x of s.querySelectorAll("animate,animateTransform,animateMotion,set")) x.remove();
+    const vb = s.viewBox && s.viewBox.baseVal && s.viewBox.baseVal.width ? s.viewBox.baseVal : { width: +s.getAttribute("width"), height: +s.getAttribute("height") };
+    const w = 1920, h = Math.round(w * vb.height / vb.width);
+    s.setAttribute("width", w); s.setAttribute("height", h);
+    const img = new Image(); img.src = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(s)], { type: "image/svg+xml" })); await img.decode();
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(img, 0, 0);
+    const url = URL.createObjectURL(await new Promise(r => cv.toBlob(r, "image/png")));
+    a.href = url; a.download = a.dataset.svg.split("/").pop().replace(/\.svg$/, ".png"); a.onclick = null; a.textContent = old; a.click();
+  } catch (e) { a.textContent = "PNG failed: " + e.message; }
+  return false;
+}
 const openAt = i => {
   at = (i + shown.length) % shown.length; const e = shown[at], [set, val] = splitLabel(e.label);
   const img = $("vimg"); img.src = thumbOf(e); img.alt = e.label;
   const full = new Image(); full.onload = () => { if (shown[at] === e) img.src = full.src; }; full.src = base() + picOf(e);
   $("vcount").textContent = `${at + 1} of ${shown.length} · ${groupName(e.folder)}`;
+  const svg = base() + picOf(e);
   $("vcap").innerHTML = (set ? `<span class="set">${esc(set)}</span>` : "") + esc(val) + `<br>` +
-    (!e.png ? `<span class="set">looks like the default</span>` : "") +
-    `<a href="${esc(base() + picOf(e))}" target="_blank" rel="noopener">PNG</a><a href="${esc(base() + picOf(e).replace(/\.png$/, ".svg"))}" target="_blank" rel="noopener">SVG</a>` +
+    (!e.svg ? `<span class="set">looks like the default</span>` : "") +
+    `<a href="${esc(svg)}" target="_blank" rel="noopener">SVG</a><a href="#" data-svg="${esc(svg)}" onclick="return png(this)">PNG</a>` +
     (e.settings ? `<a href="${esc(base() + e.settings)}" target="_blank" rel="noopener">settings</a>` : "");
   if (!$("view").open) $("view").showModal();
 };
