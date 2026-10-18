@@ -59,4 +59,5 @@ A script that writes a page must write the include too, or the page loses the ba
 ## Left out on purpose
 
 - The dashboard's dated snapshots (`hazel-work-notes/dashboard-snapshots/`): records of the page as it was. Matthew: "especially not the snapshots".
+- The picture archive up to 2026-10-18 (`matthewhammer/dress-up-pictures-2026-10-18`): archived on GitHub, so read-only. Matthew, 2026-10-18: "leave the archived dress-up-pictures-2026-10-18 repo as it is". Its five pages have no bar; the outline still lists it, under Dress Up pictures.
 - Pages no active page links to, such as the old course pages under `courses/`: "the ones that are not reachable from those active pages need not be updated".
