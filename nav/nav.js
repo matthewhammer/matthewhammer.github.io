@@ -64,7 +64,7 @@
     ["Adapton", A + "/", [["Adapton Lab's results", A + "/lab-results/"]]],
   ];
   // (for trying it out locally: a local server stands for its site)
-  const LOCAL = { "localhost:8136": H, "127.0.0.1:8136": H, "localhost:8137": H, "localhost:8765": A, "localhost:8766": F, "localhost:8767": F, "localhost:8768": F, "localhost:8769": F };
+  const LOCAL = { "localhost:8000": H + "/hazel/dashboard", "localhost:8136": H, "127.0.0.1:8136": H, "localhost:8137": H, "localhost:8765": A, "localhost:8766": F, "localhost:8767": F, "localhost:8768": F, "localhost:8769": F };
   const key = u => { try { const x = new URL(u, location.href), site = LOCAL[x.host] || x.origin.replace("://www.", "://");
     return (site + x.pathname).replace(/\/index\.html$/, "/").replace(/\/$/, "").toLowerCase(); } catch (_) { return ""; } };
 

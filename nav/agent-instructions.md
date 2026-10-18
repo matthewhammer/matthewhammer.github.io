@@ -30,7 +30,7 @@ All of it is in the page's `<head>`, written by `add_nav.py`:
 - **The projection:** each page shows the four sites, and its own branch opened out, its parents, its siblings and its own children. The page itself is marked, with its own headings under it ("on this page"). A page that has an outline of its own (the dashboard, fumola.org, adapton.org: `nav#outline`) has it taken into the bar there, so the page's own script still keeps it current. A page not in the outline (a dated work note) is shown under the entry whose address starts its own.
 - **The connection to related pages:** a dot (•) on each entry this page links to.
 - **Long lists:** past nine entries a branch shows the first nine and "N more…", unless this page is among them.
-- **Matching addresses:** by origin and path, without `index.html` or the trailing slash, ignoring case. While trying it locally, `LOCAL` maps a local server to its site (8136 and 8137 for matthewhammer.org, 8765 for adapton.org, 8766 to 8769 for fumola.org).
+- **Matching addresses:** by origin and path, without `index.html` or the trailing slash, ignoring case. While trying it locally, `LOCAL` maps a local server to its site (8136 and 8137 for matthewhammer.org, 8000 for the dashboard, 8765 for adapton.org, 8766 to 8769 for fumola.org).
 
 ## The controls
 
