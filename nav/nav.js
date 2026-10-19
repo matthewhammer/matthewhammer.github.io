@@ -47,7 +47,9 @@
         "Slider Responsiveness", "Dress Up in Hazel", "Requests from M and N", "The Witch in Hazel", "Worker and Page", "Performance in CI",
         "Five Minutes to a Picture", "One Slider, Three Ways", "Names and Reuse", "What a Slider Touches", "Naming What a Slider Leaves Alone",
         "Moving a Group, Not Its Points", "Telling the Request What Changed", "What the Page Keeps", "Dress Up and Hazel Today", "Two Fixes for a Drag",
-        "Merging the Performance PRs"].map((t, i) => [`${i + 1}. ${t}`, `${H}/hazel/performance-analysis/${String(i + 1).padStart(3, "0")}/`])],
+        "Merging the Performance PRs"].map((t, i) => [`${i + 1}. ${t}`, `${H}/hazel/performance-analysis/${String(i + 1).padStart(3, "0")}/`])
+        // 18 is not published yet: when it is, add 18 and 19 to the list above and drop this entry
+        .concat([["19. Tiles Across the Hazel UI", `${H}/hazel/performance-analysis/019/`]])],
       ["Hazel Work Dashboard", H + "/hazel/dashboard/", [["Closed tickets", H + "/hazel/dashboard/closed.html"]]],
       ["Work notes", H + "/hazel/work-notes/"],
       ["Crash log", H + "/hazel-work-notes/crash-log.html"],
