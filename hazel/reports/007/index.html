@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
+<!-- theme: head begin -->
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<!-- theme: head end -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five Minutes to a Picture</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8;
+    --accent: #6d28d9; --good: #15803d; --warn: #b45309; --bad: #b91c1c; --link: #1d4ed8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d;
+      --accent: #c4b5fd; --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --link: #93c5fd;
+    }
+  }
+  :root[data-theme="dark"] { --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d;
+    --accent: #c4b5fd; --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --link: #93c5fd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2em; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 1.35em; margin: 48px 0 10px; padding-top: 8px; border-top: 2px solid var(--line); }
+  h3 { font-size: 1.05em; margin: 22px 0 6px; }
+  p, li { max-width: 72ch; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .series { color: var(--muted); margin: 0 0 6px; font-size: 0.92em; }
+  .headline { background: var(--paper); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 6px; }
+  a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+  a code { color: var(--link); }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin: 16px 0; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
+  .kpi { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .kpi .v { font-size: 1.7em; font-weight: 700; }
+  .kpi .l { color: var(--muted); font-size: 0.9em; }
+  .good { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  figure { margin: 18px 0; }
+  figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; display: block; background: #ffffff; }
+  figcaption { color: var(--muted); font-size: 0.9em; margin-top: 6px; max-width: 72ch; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  code { font-size: 0.9em; background: color-mix(in srgb, var(--line) 50%, transparent); padding: 0 4px; border-radius: 4px; }
+  .note { color: var(--muted); font-size: 0.9em; }
+  .step { border-left: 3px solid var(--line); padding-left: 14px; }
+  .kicker { margin: 0; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8em; }
+  ol.ranked > li { margin: 10px 0; }
+  .dedicated { margin: 0 0 18px; font-style: italic; color: var(--muted); }
+  .dedication { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; }
+  .dedication p { font-size: 1.05em; }
+</style>
+</head>
+
+<body>
+<main>
+
+<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>7<b>)</b></code> · 2026-10-12</p>
+<h1>Five minutes to the first picture</h1>
+<p class="sub">On <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, the full livelits branch, the Livelit Playground's Scenes slide has taken about five minutes to draw its first picture, and the Witch slide almost three. <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> draws both in about 12 seconds. <a href="../004/"><code class="ref"><b>^report(</b>4<b>)</b></code></a> reported this, and put it down to <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> lacking the speedups of <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a> (modular editors). This report asks whether it is really that long, and why, and tries a fix.</p>
+
+<div class="headline">
+<p><b>Short answers.</b></p>
+<ol>
+  <li><b>Yes, it really is that long.</b> Cold, in a fresh headless Firefox, the Scenes slide's first picture came 287.5 s after the page was opened on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, and the Witch slide's 173.1 s. On <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> they came in 11.4 s and 11.8 s. Earlier measurements agree, and today's three fixes to the picture's view (<a href="../004/#update"><code class="ref"><b>^report(</b>4<b>)</b></code></a>) did not change it.</li>
+  <li><b>Why: the page redraws everything for every message from the worker, and <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>'s worker sends one after every slice of its evaluation.</b> Opening Scenes, the page received 2,520 messages, and each cost it about 140 ms. About three quarters of that time went to rebuilding the code editor's view of the whole program, and most of the rest to statics, from scratch. The worker was idle 98.7% of the time. It had finished, and the page took five minutes catching up.</li>
+  <li><b>The fix already exists, in one commit from <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a>:</b> <a href="https://github.com/hazelgrove/hazel/commit/c07bdacead"><code>c07bdacead</code></a>, by Andrew Blinn. The worker sends at most one partial result every 100 ms, and the page stops re-projecting the whole program for each one. In a copy of <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> with only this commit, Scenes took 16.6–17.6 s instead of 287.5 s, and Witch 18.6–19.4 s instead of 173.1 s (three runs each). The page received 86 messages instead of 2,520.</li>
+  <li><b>What's left, 5–7 s against <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, is <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a>'s other work:</b> a cadence that slows as programs grow, a code view built in cached chunks, and statics per item. Those have not been measured one at a time.</li>
+  <li><b>This is not the slowness <a href="../001/"><code class="ref"><b>^report(</b>1<b>)</b></code></a> found.</b> There, a Kids' Choice slider release took 3.76 s on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> against 0.35 s on <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, because <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> runs statics on the whole program for every release. This commit does not address that.</li>
+</ol>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="v bad">287.5 s</div><div class="l"><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, the Scenes slide's first picture</div></div>
+  <div class="kpi"><div class="v good">17.4 s</div><div class="l">the same, with <code>c07bdacead</code> (median of three)</div></div>
+  <div class="kpi"><div class="v">12.5 s</div><div class="l"><a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, which has all of <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a> (median of three)</div></div>
+  <div class="kpi"><div class="v">2,520 → 86</div><div class="l">worker messages the page handled while opening Scenes</div></div>
+</div>
+
+<h2 id="really">Is it really that long?</h2>
+<p>Each run opened the slide in a fresh headless Firefox at <code>/fresh</code>, so nothing saved was read. A watcher in the page noted the moment a picture with more than 40 shapes appeared, so the time is exact even while the page is too busy to answer the test script. One heavy job ran at a time.</p>
+<div class="scroll"><table>
+<tr><th>Build</th><th>Scenes, first picture</th><th>Witch, first picture</th><th>When</th></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, before the worker's slices ran back to back</td><td class="n">297 s</td><td class="n">172 s</td><td>2026-10-12 morning (finding 25)</td></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, after it</td><td class="n">301 s</td><td class="n"></td><td>finding 25</td></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, after the view's casts were fixed</td><td class="n">286 s</td><td class="n"></td><td>finding 28</td></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, with all three of the day's view fixes</td><td class="n">281 s</td><td class="n"></td><td><a href="../004/#update"><code class="ref"><b>^report(</b>4<b>)</b></code></a></td></tr>
+<tr><td><b><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a></b> at <code>1fa1384445</code>, tonight</td><td class="n"><b>287.5 s</b></td><td class="n"><b>173.1 s</b></td><td>2026-10-12 evening</td></tr>
+<tr><td><b><a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a></b> at <code>57c928cef4</code>, tonight</td><td class="n">11.4, 13.2, 12.5 s</td><td class="n">11.8 s</td><td>2026-10-12 evening</td></tr>
+</table></div>
+<p>So it is about five minutes for Scenes and three for Witch, and has been all day, whatever was fixed in the picture's view.</p>
+
+<h2 id="why">Where the five minutes go</h2>
+<p>Hazel evaluates a program in a web worker, and the page draws it on the main thread (<a href="../005/"><code class="ref"><b>^report(</b>5<b>)</b></code></a>). The worker evaluates in slices of 5,000 steps, and after each slice it can send the page the partial results it has so far, so that probes and livelits fill in while the rest is still running. Every message the page receives is an action: the page updates its model, recalculates, and redraws.</p>
+<p>A profile of the whole load on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, from opening the slide until its first picture, sampled every 4 ms:</p>
+<ul>
+  <li><b>The page's main thread was busy for all of it, 353 s.</b> 97% of that was the app's update loop, one update after another.</li>
+  <li><b>The page handled 2,520 messages from the worker,</b> about 140 ms of work each. Receiving them took only 0.5 s in all. The time went to the update each one set off.</li>
+  <li><b>The worker was idle 98.7% of the time.</b> Its evaluation was over within seconds. The rest of the five minutes was the page working through the messages.</li>
+</ul>
+<p>Within those updates:</p>
+<div class="scroll"><table>
+<tr><th>Part of the page's work</th><th>Share of the main thread</th></tr>
+<tr><td>Rebuilding the code editor's view of the whole program (<code>main_view</code>)</td><td class="n">77%</td></tr>
+<tr><td>— of which, turning every tile of the program into the view (<code>of_segment</code>)</td><td class="n">58%</td></tr>
+<tr><td>Recalculating (<code>calculate</code>)</td><td class="n">19%</td></tr>
+<tr><td>— of which, statics on the whole program, from scratch</td><td class="n">15%</td></tr>
+</table></div>
+<p>The Scenes slide's program is large, so each of these is expensive. Done 2,520 times, it comes to five minutes. That is also why the day's fixes didn't move it: they made the <i>picture's</i> view cheaper, and this is the <i>code editor's</i> view, redrawn for every message.</p>
+
+<h2 id="fix">The fix, from <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a></h2>
+<p>Andrew Blinn found and fixed the same thing on the modular-editors branch on 2026-08-25, in <a href="https://github.com/hazelgrove/hazel/commit/c07bdacead"><code>c07bdacead</code></a>, "eval streaming: kill the post-load main-thread burn". On a generated 1,000-item program, the slide was drawn at about 5 s, and the main thread then worked for 40 s more on 307 stream messages. The commit does two things:</p>
+<ol>
+  <li><b>The worker sends at most one stream message every 100 ms.</b> Partial results it holds back pile up in its outbox and go in the next message. When the evaluation finishes, everything left goes at once.</li>
+  <li><b>The page's projection of the program for the worker is made lazy.</b> It folds over the whole program, and it was computed on every update, including each stream message's, which never used it.</li>
+</ol>
+<p>His measurement: 307 messages down to 28, and the main thread's work after opening the slide down from 45.5 s to 5.4 s. A day later, <a href="https://github.com/hazelgrove/hazel/commit/a05f8e5791"><code>a05f8e5791</code></a> made the interval grow with the program, from 100 ms up to 1 s, because a fixed 100 ms still swamped a 2,000-item program (46.7 → 10.2 s). <a href="../005/"><code class="ref"><b>^report(</b>5<b>)</b></code></a> credited the throttle to that second commit alone; it now has a correction.</p>
+<p><a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> is <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> plus <code>dev</code> plus <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a>, so it has both commits. <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> has neither.</p>
+
+<h2 id="experiment">The fix, tried on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a></h2>
+<p><code>c07bdacead</code> was brought onto a copy of <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> at <code>1fa1384445</code>, on a local branch (<code>perf/2597-stream-throttle</code>, not pushed). It had two small conflicts, both because <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> had changed the same code since:</p>
+<ul>
+  <li><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>'s request to the worker has new fields. They were kept, and the lazy projection is forced only where a request is sent, or where a finished result is checked for reuse.</li>
+  <li><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> now holds the last stream for the result message at completion. That was kept, so only the throttled sending during the evaluation came from the commit.</li>
+</ul>
+<p>The copy built cleanly. Cold, the same way as above:</p>
+<div class="scroll"><table>
+<tr><th>Build</th><th>Scenes, first picture</th><th>Witch, first picture</th></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a></td><td class="n">287.5 s</td><td class="n">173.1 s</td></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> with <code>c07bdacead</code></td><td class="n"><b>17.6, 16.6, 17.4 s</b></td><td class="n"><b>19.4, 18.9, 18.6 s</b></td></tr>
+<tr><td><a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a></td><td class="n">11.4, 13.2, 12.5 s</td><td class="n">11.8 s</td></tr>
+</table></div>
+<p>A profile of the copy's load, the same way but sampled every 1 ms: the page handled <b>86</b> messages from the worker instead of 2,520, and its main thread ran the app's code for about 31 s instead of 353. Both of those are profiled times, which run long: under the profiler the first picture came at 348 s on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> and 29.5 s on the copy, against 287.5 and about 17 s without it. What remains is the same kind of work, about 60% of it the code editor's view.</p>
+
+<h2 id="left">What's left</h2>
+<p>The copy is still 5–7 s behind <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>: Scenes about 17 s against 12.5, Witch about 19 s against 11.8. <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a> has more that bears on a load like this:</p>
+<ul>
+  <li><b>The adaptive cadence</b> (<code>a05f8e5791</code>): fewer messages again for a large program. The Scenes program is large, so it should help here.</li>
+  <li><b>The code view in cached chunks:</b> a message redraws only the chunks whose results changed. On <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> every message rebuilds every tile, which is most of what's left.</li>
+  <li><b>Statics per item,</b> updated rather than redone (<a href="../001/"><code class="ref"><b>^report(</b>1<b>)</b></code></a>).</li>
+</ul>
+<p>These have not been measured one at a time. <code>a05f8e5791</code> also carries several unrelated changes, so its cadence would have to be taken out on its own.</p>
+
+<h2 id="not">Not the other <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> slowness</h2>
+<p><a href="../001/"><code class="ref"><b>^report(</b>1<b>)</b></code></a> found that a Kids' Choice slider release takes about 3.76 s on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> and 0.35 s on <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>. That is a different cost: on every release <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> runs statics on the whole program from scratch (3.5 s profiled), where <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a> runs them per item. This report's fix is about how often the page redraws while a program loads, so it should leave a release's time as it was. That has not been checked.</p>
+
+<h2 id="next">What next</h2>
+<ol class="ranked">
+  <li><b>Bring <code>c07bdacead</code> to <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> itself,</b> as tried here, with the worker tests (<code>WorkerServer encodings</code>, <code>StreamInterests</code>) and the slides' load times as the check. It is one commit with two small conflicts. <i><b>Done later on 2026-10-12:</b> it is on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> as <a href="https://github.com/hazelgrove/hazel/commit/a15c6f0b65"><code>a15c6f0b65</code></a>, with the same resolution measured here. Scenes now takes 16.7 and 16.4 s to its first picture on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>, and Witch 18.8 s. The <code>WorkerServer encodings</code>, <code>IncrSlides</code> and <code>Evaluator</code> groups pass (<code>StreamInterests</code> is not on <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>).</i></li>
+  <li><b>Then the adaptive cadence,</b> taken out of <code>a05f8e5791</code> on its own, measured the same way.</li>
+  <li><b>Check that a Kids' Choice release is unchanged</b> on the copy, as expected.</li>
+</ol>
+
+<h2 id="method">How this was put together</h2>
+<ul>
+  <li><b>Builds:</b> <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> at <code>1fa1384445</code>, <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> at <code>57c928cef4</code>, and the copy of <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a> with <code>c07bdacead</code> (local commit <code>0f64f97a10</code>), all dev builds, served locally.</li>
+  <li><b>Times:</b> headless Firefox over WebDriver, a fresh profile per run, the slide opened at <code>/fresh</code>. A MutationObserver in the page recorded the time (since navigation) when an <code>svg</code> with more than 40 shapes first appeared. One run at a time on one laptop.</li>
+  <li><b>Profiles:</b> the Gecko profiler, started before navigation and saved a few seconds after the first picture. Saving mid-load failed: the busy page could not hand over its samples, the same busyness finding 25 met. <a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>'s six-minute load was sampled every 4 ms, the copy's every 1 ms. Shares are from the page's main thread. The message count is the page's <code>message</code> events from the worker, during the whole load.</li>
+  <li><b>The cause</b> was first suggested by reading: the two branches' stream code differs in exactly this commit. Then the experiment confirmed it.</li>
+  <!-- data-line: begin -->
+  <li><b>The numbers, for programs too:</b> every table in this report, and what its numbers measure, is also in this page as JSON, in its <code>&lt;script type="application/json" id="report-data"&gt;</code> element, so a reader or an agent that fetches the page alone has the dataset. The same, with any raw files that survive, is in <a href="https://github.com/matthewhammer/hazel-performance-analysis/tree/main/007/data"><code>007/data/</code></a>.</li>
+  <!-- data-line: end -->
+</ul>
+
+</main>
+<!-- steps: begin -->
+<style>
+  button.mint { margin-left: 4px; font: inherit; font-size: 0.75em; padding: 0 6px; border: 1px solid var(--line, #ccc);
+    border-radius: 4px; background: transparent; color: var(--muted, #666); cursor: pointer; vertical-align: 1px; }
+  button.mint:hover { color: inherit; }
+  button.mint.done { color: var(--good, #15803d); border-color: var(--good, #15803d); }
+  a.step-link { color: var(--muted, #666); text-decoration: none; font-size: 0.85em; margin-left: 4px; }
+  a.step-link:hover { text-decoration: underline; }
+  li:target { background: color-mix(in srgb, var(--good, #15803d) 12%, transparent); border-radius: 6px; }
+</style>
+<script>
+/* Each "What next" step: a link to it, and a button copying a request to
+   mint a ticket for it (to paste to Claude): the report, the step, its URL. */
+(() => {
+  const h = document.getElementById("next");
+  if (!h) return;
+  let list = h.nextElementSibling;
+  while (list && !/^(OL|UL)$/.test(list.tagName)) {
+    if (list.tagName === "H2") return;
+    list = list.nextElementSibling;
+  }
+  if (!list) return;
+  /* the report's number, from its label: ^report(13) (before 2026-10-14, "Issue 013") */
+  const label = (document.querySelector(".series") || document.body).textContent;
+  const m = label.match(/\^(?:report|issue)\((\d+)\)/) || label.match(/Issue (\d{3})/);
+  const report = m ? String(Number(m[1])) : "?";
+  const base = "http://matthewhammer.org/hazel/reports/" + report.padStart(3, "0") + "/";
+  [...list.children].filter(li => li.tagName === "LI").forEach((li, i) => {
+    const n = i + 1;
+    if (!li.id) li.id = "step-" + n;
+    const b = li.querySelector("b, strong");
+    const title = (b ? b.textContent : li.textContent).replace(/\s+/g, " ").trim().replace(/[:.,;]$/, "").slice(0, 160);
+    const url = base + "#" + li.id;
+    const text = "Mint a ticket for this step: Hazel reports, ^report(" + report +
+      "), What next, step " + n + ': "' + title + '". ' + url;
+    const a = document.createElement("a");
+    a.href = "#" + li.id; a.className = "step-link"; a.textContent = "#" + n; a.title = "A link to this step";
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "mint"; btn.textContent = "copy for a ticket";
+    btn.title = "Copies a request to mint a ticket for this step, to paste to Claude";
+    btn.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(text); }
+      catch (_) {
+        const t = document.createElement("textarea"); t.value = text; document.body.append(t);
+        t.select(); document.execCommand("copy"); t.remove();
+      }
+      btn.textContent = "copied"; btn.classList.add("done");
+      setTimeout(() => { btn.textContent = "copy for a ticket"; btn.classList.remove("done"); }, 1500);
+    });
+    li.append(" ", a, " ", btn);
+  });
+  if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+})();
+</script>
+<!-- steps: end -->
+<!-- theme: begin -->
+<style>
+  .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--line, #ccc); background: var(--paper, Canvas); color: var(--muted, GrayText);
+    cursor: pointer; opacity: 0.85; }
+  .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+<script>
+/* The theme switch: Auto (the system's choice), Light, Dark; remembered for this site. */
+(() => {
+  const order = ["auto", "light", "dark"], label = { auto: "◐ auto", light: "☀ light", dark: "☾ dark" };
+  const get = () => { try { return localStorage.getItem("theme") || "auto"; } catch (_) { return "auto"; } };
+  const apply = m => m === "auto" ? document.documentElement.removeAttribute("data-theme")
+                                  : document.documentElement.setAttribute("data-theme", m);
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "theme-toggle";
+  const show = () => { const m = get(); b.textContent = label[m] || label.auto;
+    b.title = "Theme: " + m + ". Click for " + order[(order.indexOf(m) + 1) % 3] + "; remembered on this site."; };
+  b.addEventListener("click", () => {
+    const m = order[(order.indexOf(get()) + 1) % 3];
+    try { m === "auto" ? localStorage.removeItem("theme") : localStorage.setItem("theme", m); } catch (_) {}
+    apply(m); show();
+  });
+  window.addEventListener("storage", e => { if (e.key === "theme") { apply(get()); show(); } });
+  show(); document.body.append(b);
+})();
+</script>
+<!-- theme: end -->
+
+<!-- refs: begin -->
+<style>
+  code.ref { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; white-space: nowrap; }
+  code.ref b { font-weight: 800; }
+</style>
+<!-- refs: end -->
+<!-- ref-cards: begin -->
+<style>
+  .ref-card { position: absolute; z-index: 40; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
+  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    vertical-align: 1px; background: #6e7781; }
+  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
+  .rc-state.done { background: #8250df; }
+</style>
+<script>
+/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
+   ticket from the work dashboard's data (its area, its status, its first
+   line), carried by the dashboard's own pages and read live from the
+   published data anywhere else; a report from its own page, live (its
+   title, date and opening). Once per page load each. */
+(() => {
+  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
+  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
+  /* the dashboard itself carries its tickets (made with the page, changed
+     with it); any other page asks the published data */
+  const EMBED = null;
+  let data = EMBED ? Promise.resolve(EMBED) : null;
+  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
+  const pages = new Map();
+  const loadReport = url => {
+    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
+      let p = h1 && h1.nextElementSibling;
+      while (p && p.tagName !== "P") p = p.nextElementSibling;
+      const label = (doc.querySelector(".series") || {}).textContent || "";
+      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
+               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
+    }).catch(() => null));
+    return pages.get(url);
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
+  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
+  const ticketCard = (n, d) => {
+    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
+    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
+    const q = (d.queue || []).indexOf(n);
+    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
+      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
+      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
+    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
+      `<div class="rc-title">${esc(lead(t.text))}</div>` +
+      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
+      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
+  };
+  const reportCard = (n, r) => r
+    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
+      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
+    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
+    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = (a, ref) => {
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
+      card.hidden = false; place(a);
+      let html;
+      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
+      else html = reportCard(ref.n, await loadReport(a.href));
+      if (over !== a) return;
+      card.innerHTML = html; place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- ref-cards: end -->
+<!-- pr-cards: begin -->
+<style>
+  .pr-card { position: absolute; z-index: 40; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
+  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
+  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
+</style>
+<script>
+/* A card for each link to a GitHub PR or issue, on hover or focus: its
+   title, state, author, dates and comments, asked of GitHub live, once per
+   number per page load; if GitHub does not answer, what it said when the
+   page was built (tools/link_prs.py writes this block). */
+(() => {
+  const CACHED = {"hazelgrove/hazel#2469": {"author": "disconcision", "comments": 15, "created": "2026-08-27T04:14:59Z", "kind": "pull", "state": "open", "title": "Modular editors", "updated": "2026-10-14T14:42:25Z"}, "hazelgrove/hazel#2597": {"author": "matthewhammer", "comments": 3, "created": "2026-09-23T15:18:28Z", "kind": "pull", "state": "open", "title": "User-Defined Livelits, as in PLDI '21, and beyond.", "updated": "2026-10-14T14:42:33Z"}, "hazelgrove/hazel#2635": {"author": "matthewhammer", "comments": 2, "created": "2026-10-01T22:50:14Z", "kind": "pull", "state": "draft", "title": "Livelits × modular editors: merge #2469 into the livelits branch", "updated": "2026-10-14T14:42:21Z"}}, BUILT = "2026-10-14";
+  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(?:pull|issues)\/(\d+)$/;
+  const asked = new Map();
+  const ask = key => {
+    if (!asked.has(key)) {
+      const [repo, n] = key.split("#");
+      asked.set(key, fetch(`https://api.github.com/repos/${repo}/issues/${n}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
+                      comments: j.comments, kind: j.pull_request ? "pull" : "issues",
+                      state: j.pull_request && j.pull_request.merged_at ? "merged" : j.draft ? "draft" : j.state }))
+        .catch(() => null));
+    }
+    return asked.get(key);
+  };
+  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const ago = iso => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
+      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
+    return "just now";
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const fill = (key, d, note) => {
+    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
+    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span></div>` +
+      `<div class="pr-title">${esc(d.title)}</div>` +
+      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
+      (note ? `<div class="pr-note">${note}</div>` : "");
+  };
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
+    const below = r.bottom + 6 + h < innerHeight;
+    card.style.left = (left + scrollX) + "px";
+    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = a => {
+    const m = RX.exec(a.href);
+    if (!m) return;
+    const key = m[1] + "#" + m[2];
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      const cached = CACHED[key];
+      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
+      card.hidden = false; place(a);
+      const d = await ask(key);
+      if (over !== a) return;
+      card.innerHTML = d ? fill(key, d, "")
+        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
+        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
+      place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- pr-cards: end -->
+<!-- report-data: begin -->
+<script type="application/json" id="report-data">
+{
+ "report": 7,
+ "title": "Five minutes to the first picture",
+ "date": "2026-10-12",
+ "question": "On hazelgrove/hazel#2597, the full livelits branch, the Livelit Playground's Scenes slide has taken about five minutes to draw its first picture, and the Witch slide almost three; #2635 draws both in about 12 seconds. ^report(4) put this down to #2597 lacking the speedups of #2469 (modular editors). Is it really that long, and why? And a fix, tried.",
+ "builds": [
+  {
+   "name": "2597",
+   "pr": "hazelgrove/hazel#2597",
+   "commit": "1fa1384445",
+   "note": "dev build, served locally; measured on the evening of 2026-10-12"
+  },
+  {
+   "name": "2635",
+   "pr": "hazelgrove/hazel#2635",
+   "commit": "57c928cef4",
+   "note": "dev build, served locally; has all of #2469, so both c07bdacead and a05f8e5791"
+  },
+  {
+   "name": "2597 with c07bdacead",
+   "pr": "hazelgrove/hazel#2597",
+   "commit": "1fa1384445 plus c07bdacead (from #2469, by Andrew Blinn), as local commit 0f64f97a10",
+   "note": "local branch perf/2597-stream-throttle, not pushed; two small conflicts, resolved as #experiment describes"
+  },
+  {
+   "name": "2597 with the port (What next, step 1)",
+   "pr": "hazelgrove/hazel#2597",
+   "commit": "a15c6f0b65",
+   "note": "c07bdacead on #2597 itself, later on 2026-10-12, with the same resolution"
+  },
+  {
+   "name": "2597, earlier on 2026-10-12",
+   "pr": "hazelgrove/hazel#2597",
+   "commit": "not stated in the report",
+   "note": "the first four rows of the table under #really, from #2609's findings 25 and 28 and ^report(4): before and after the worker's slices ran back to back, after the view's casts were fixed, and with all three of the day's view fixes"
+  }
+ ],
+ "runtime": "headless Firefox over WebDriver (the report states no version), a fresh profile per run, dev builds served locally; one run at a time, on one laptop",
+ "runs": "Each run cold: the slide opened at /fresh in a fresh profile, so nothing saved was read. Printed per run: #2597 at 1fa1384445, one time per slide; #2635, three times on Scenes and one on Witch; the copy with c07bdacead, three times per slide; #2597 at a15c6f0b65, two on Scenes and one on Witch. Profiles: one load each of #2597 (sampled every 4 ms) and of the copy (every 1 ms), started before navigation and saved a few seconds after the first picture.",
+ "measures": {
+  "first picture": "s: the time since navigation when an svg with more than 40 shapes first appeared, recorded in the page by a MutationObserver, 'so the time is exact even while the page is too busy to answer the test script'",
+  "messages": "count: the page's message events from the worker, during the whole load (2,520 on #2597, 86 on the copy)",
+  "main thread busy": "s, profiled: the page's main thread over the whole load, from opening the slide until its first picture (353 s on #2597, 97% of it the app's update loop; on the copy, the app's code about 31 s)",
+  "per message": "ms, profiled: the page's work per message from the worker, about 140 ms on #2597; receiving all 2,520 took 0.5 s",
+  "worker idle": "%: of the load, the eval worker idle: 98.7% on #2597",
+  "Share of the main thread": "%: of the samples of the page's main thread during #2597's load; an indented ('of which') row is part of the row above it"
+ },
+ "times": "the page's MutationObserver timestamps, since navigation. Profiled times run long: under the profiler the first picture came at 348 s on #2597 and 29.5 s on the copy, against 287.5 and about 17 s without it.",
+ "figures": {
+  "287.5 s": "#2597, the Scenes slide's first picture",
+  "17.4 s": "the same, with c07bdacead (median of three: 17.6, 16.6, 17.4 s)",
+  "12.5 s": "#2635, which has all of #2469 (median of three: 11.4, 13.2, 12.5 s)",
+  "2,520 -> 86": "worker messages the page handled while opening Scenes, #2597 and the copy with c07bdacead"
+ },
+ "readings": {
+  "unit": "s, first picture",
+  "2597 at 1fa1384445": {
+   "Scenes": [
+    287.5
+   ],
+   "Witch": [
+    173.1
+   ]
+  },
+  "2597 at 1fa1384445 plus c07bdacead (0f64f97a10)": {
+   "Scenes": [
+    17.6,
+    16.6,
+    17.4
+   ],
+   "Witch": [
+    19.4,
+    18.9,
+    18.6
+   ]
+  },
+  "2635 at 57c928cef4": {
+   "Scenes": [
+    11.4,
+    13.2,
+    12.5
+   ],
+   "Witch": [
+    11.8
+   ]
+  },
+  "2597 at a15c6f0b65": {
+   "Scenes": [
+    16.7,
+    16.4
+   ],
+   "Witch": [
+    18.8
+   ]
+  },
+  "2597, earlier on 2026-10-12 (commits not stated)": {
+   "before the worker's slices ran back to back (finding 25)": {
+    "Scenes": [
+     297
+    ],
+    "Witch": [
+     172
+    ]
+   },
+   "after it (finding 25)": {
+    "Scenes": [
+     301
+    ]
+   },
+   "after the view's casts were fixed (finding 28)": {
+    "Scenes": [
+     286
+    ]
+   },
+   "with all three of the day's view fixes (^report(4))": {
+    "Scenes": [
+     281
+    ]
+   }
+  }
+ },
+ "cited": [
+  {
+   "number": "307 -> 28 messages; 45.5 s -> 5.4 s",
+   "what": "c07bdacead on a generated 1,000-item program: the stream messages after the slide was drawn, and the main thread's work after opening it",
+   "from": "Andrew Blinn's measurement, c07bdacead (#2469, 2026-08-25)"
+  },
+  {
+   "number": "46.7 s -> 10.2 s",
+   "what": "a05f8e5791's interval growing with the program, 100 ms up to 1 s, on a 2,000-item program",
+   "from": "a05f8e5791 (#2469)"
+  },
+  {
+   "number": "3.76 s against 0.35 s; 3.5 s profiled",
+   "what": "a Kids' Choice slider release on #2597 and #2635, and #2597's whole-program statics in it (the other #2597 slowness, not addressed here)",
+   "from": "^report(1)"
+  },
+  {
+   "number": "5,000 steps",
+   "what": "the size of the worker's evaluation slices, after each of which it can send partial results (a code fact)",
+   "from": "the report's #why"
+  }
+ ],
+ "provenance": "No raw file was kept with this report: the WebDriver driver's output and both Gecko profiles were not saved with it. Every number here exists only as printed in the report.",
+ "raw_files": {},
+ "tables_note": "Every table in the page, cell by cell, as printed (units in the column names or the cells); columns are the header row where the table has one.",
+ "tables": [
+  {
+   "section": "Is it really that long?",
+   "section_id": "really",
+   "columns": [
+    "Build",
+    "Scenes, first picture",
+    "Witch, first picture",
+    "When"
+   ],
+   "rows": [
+    [
+     "#2597, before the worker's slices ran back to back",
+     "297 s",
+     "172 s",
+     "2026-10-12 morning (finding 25)"
+    ],
+    [
+     "#2597, after it",
+     "301 s",
+     "",
+     "finding 25"
+    ],
+    [
+     "#2597, after the view's casts were fixed",
+     "286 s",
+     "",
+     "finding 28"
+    ],
+    [
+     "#2597, with all three of the day's view fixes",
+     "281 s",
+     "",
+     "^report(4)"
+    ],
+    [
+     "#2597 at 1fa1384445, tonight",
+     "287.5 s",
+     "173.1 s",
+     "2026-10-12 evening"
+    ],
+    [
+     "#2635 at 57c928cef4, tonight",
+     "11.4, 13.2, 12.5 s",
+     "11.8 s",
+     "2026-10-12 evening"
+    ]
+   ]
+  },
+  {
+   "section": "Where the five minutes go",
+   "section_id": "why",
+   "columns": [
+    "Part of the page's work",
+    "Share of the main thread"
+   ],
+   "rows": [
+    [
+     "Rebuilding the code editor's view of the whole program (main_view)",
+     "77%"
+    ],
+    [
+     "— of which, turning every tile of the program into the view (of_segment)",
+     "58%"
+    ],
+    [
+     "Recalculating (calculate)",
+     "19%"
+    ],
+    [
+     "— of which, statics on the whole program, from scratch",
+     "15%"
+    ]
+   ]
+  },
+  {
+   "section": "The fix, tried on #2597",
+   "section_id": "experiment",
+   "columns": [
+    "Build",
+    "Scenes, first picture",
+    "Witch, first picture"
+   ],
+   "rows": [
+    [
+     "#2597",
+     "287.5 s",
+     "173.1 s"
+    ],
+    [
+     "#2597 with c07bdacead",
+     "17.6, 16.6, 17.4 s",
+     "19.4, 18.9, 18.6 s"
+    ],
+    [
+     "#2635",
+     "11.4, 13.2, 12.5 s",
+     "11.8 s"
+    ]
+   ]
+  }
+ ],
+ "files": [
+  "data/meta.json",
+  "data/tables.json"
+ ],
+ "files_on_github": "https://github.com/matthewhammer/hazel-performance-analysis/tree/main/007/data"
+}
+</script>
+<!-- report-data: end -->
+</body>
+</html>
