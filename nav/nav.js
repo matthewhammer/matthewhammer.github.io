@@ -54,7 +54,8 @@
       ["Messed Up Dress Up", H + "/hazel/dress-up/", [
         ["▶ Play Messed Up Dress Up", H + "/kids-choice-games/dress-up/"],
         ["Dress Up reports", H + "/hazel/dress-up/reports/", [
-          "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling"
+          "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling",
+          "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose"
         ].map((t, i) => [`${i + 1}. ${t}`, `${K}${String(i + 1).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
           ["Every picture, run by run", H + "/dress-up-pictures/"], ["Every picture, by day (to 2026-10-18)", H + "/dress-up-pictures-2026-10-18/"]]],
