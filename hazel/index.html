@@ -31,6 +31,8 @@
     ol.reports li a { border-bottom: none; }
     ol.reports li a:hover .t { text-decoration: underline; text-underline-offset: 2px; }
     ol.reports .t { color: var(--fg); }
+    ol.press li { padding-bottom: 0.5rem; }
+    ol.press .what { flex-basis: 100%; color: var(--dim); font-size: 0.9em; }
     ol.reports .date { color: var(--dim); font-size: 0.85em; margin-left: auto; font-variant-numeric: tabular-nums; }
     .more { color: var(--dim); }
   </style>
@@ -182,6 +184,23 @@
         computation built in, also runs inside Hazel documents, as described on its
         <a href="https://fumola.org/hazel-integration/">Hazel integration</a> page.
       </p>
+    </section>
+
+    <section id="press">
+      <h2>Press<a class="anchor" href="#press" aria-label="Copy link to this heading">#</a></h2>
+      <p>
+        <a href="https://andrewblinn.com/hazel/weekly/">Week in Hazel</a>, Andrew Blinn's weekly digest of the Hazel
+        project, is written and illustrated by AI from the Hazel repository and its
+        GitHub. These issues cover my work, newest first:
+      </p>
+      <ol class="reports press">
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/006/"><span class="t">Issue 006: Keep the steps.</span></a><span class="date">Oct 9–15, 2026</span><span class="what">The Livelit Playground and its Scenes on my livelits × modular editors branch (<a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>), with the outline's dev and UX modes; an unchanged forest that stopped re-running once recursive helpers no longer looked free (<a href="https://github.com/hazelgrove/hazel/pull/2675">#2675</a>: 5 bindings re-run, not 25); reuse by Merkle hash (<a href="https://github.com/hazelgrove/hazel/pull/2673">#2673</a>); step budgets in CI (<a href="https://github.com/hazelgrove/hazel/pull/2678">#2678</a>); the font no longer scrolling the editor (<a href="https://github.com/hazelgrove/hazel/pull/2672">#2672</a>); long types shown whole in the cursor inspector (<a href="https://github.com/hazelgrove/hazel/pull/2676">#2676</a>).</span></li>
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/005/"><span class="t">Issue 005: Who tests the test?</span></a><span class="date">Oct 2–8, 2026</span><span class="what">The eval worker in Firefox, without false timeouts (<a href="https://github.com/hazelgrove/hazel/pull/2652">#2652</a>); a module definition analyzed once (<a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>); Hazel's state and Fumola instances on an Internet Computer canister (<a href="https://github.com/hazelgrove/hazel/pull/2650">#2650</a>); and my probe-pin fix from <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>, carried into the livelits branch by Andrew Blinn (<a href="https://github.com/hazelgrove/hazel/pull/2640">#2640</a>).</span></li>
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/004/"><span class="t">Issue 004: The controls are code.</span></a><span class="date">Sep 25–Oct 1, 2026</span><span class="what">User-defined livelits running splice commands and expanding quoted code (<a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>); the livelits × modular editors draft (<a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a>); splices that read and write a Fumola instance (<a href="https://github.com/hazelgrove/hazel/pull/2616">#2616</a>); every colour a stylesheet reads being one the theme defines (<a href="https://github.com/hazelgrove/hazel/pull/2613">#2613</a>).</span></li>
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/003/"><span class="t">Issue 003: Mind the gaps.</span></a><span class="date">Sep 18–24, 2026</span><span class="what">Each error reported once, not once per wrapper (<a href="https://github.com/hazelgrove/hazel/pull/2592">#2592</a>); the livelit signature with its Functional and Macro expansions (<a href="https://github.com/hazelgrove/hazel/pull/2597">#2597</a>).</span></li>
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/002/"><span class="t">Issue 002: A place to try.</span></a><span class="date">Sep 11–17, 2026</span><span class="what">The Fumola integration telling which pass of Hazel ran a program; a builtin Livelit signature for user-defined livelits (<a href="https://github.com/hazelgrove/hazel/pull/2576">#2576</a>).</span></li>
+        <li><a href="https://andrewblinn.com/hazel/weekly/issues/001/"><span class="t">Issue 001: The cabinet is open.</span></a><span class="date">Sep 4–10, 2026 (pilot)</span><span class="what">Fumola running inside Hazel documents; the evaluator compiled to WebAssembly, about 3.5× faster on the corrected benchmarks (<a href="https://github.com/hazelgrove/hazel/pull/2490">#2490</a>); a flaky test's real cost, a needless revert (<a href="https://github.com/hazelgrove/hazel/pull/2482">#2482</a>); a Blackboard proof-assistant prototype (<a href="https://github.com/hazelgrove/hazel/pull/2525">#2525</a>).</span></li>
+      </ol>
     </section>
 
     <footer>
