@@ -53,7 +53,7 @@ A script that writes a page must write the include too, or the page loses the ba
 
 - the work dashboard and its closed tickets: `~/hazel-work-notes/dashboard/update.py` (published by `site_publish.py`);
 - the work notes' gallery, `/hazel/work-notes/`: `~/hazel-work-notes/dashboard/notes_gallery.py`;
-- the Hazel performance analysis: `~/hazel-perf-report/tools/add_theme.py`, which every report runs through, puts the nav block in with the theme;
+- the Hazel reports: `~/hazel-perf-report/tools/add_theme.py`, which every report runs through, puts the nav block in with the theme;
 - the Dress Up reports: each report's `drivers/` script in `~/kids-choice-games/dress-up/reports/NNN/`.
 
 ## Left out on purpose
