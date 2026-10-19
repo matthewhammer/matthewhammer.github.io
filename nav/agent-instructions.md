@@ -36,7 +36,7 @@ All of it is in the page's `<head>`, written by `add_nav.py`:
 
 - **The theme:** three buttons at the top, ◐ auto (the system's), ☀ light, ☾ dark. Kept per site in `localStorage["theme"]`: absent for auto, `light` or `dark`. It is the same key and the same `data-theme` attribute as the earlier switch (`~/hazel-perf-report/tools/add_theme.py`), whose ◐ pill the bar hides where both are on a page.
 - **Wider or narrower:** drag the bar's right edge (`--cnav-w`, kept as `localStorage["cnav-w"]`); a double-click puts it back to 15rem.
-- **Hide and show:** « at its top right hides it, » brings it back (`localStorage["cnav-hidden"]`). On an app's page the choice lasts the visit only (`sessionStorage["cnav-app-shown"]`).
+- **Hide and show:** « at its top right hides it, » brings it back, for the visit only (`sessionStorage["cnav-hidden"]`), so every visit starts with the bar shown (ticket 314: kept for the whole site in `localStorage`, one « left every matthewhammer.org page starting hidden, while fumola.org and adapton.org, other origins, showed it; the old key is removed on load). On an app's page it starts hidden and the choice lasts the visit (`sessionStorage["cnav-app-shown"]`). The bar's width is still remembered on the site (`localStorage["cnav-w"]`).
 - **A narrow screen** (under 48rem): the bar is behind ☰, and opens over the page, full width; a link chosen in it closes it.
 - **Print:** the bar is left out.
 

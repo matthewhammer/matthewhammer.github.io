@@ -6,7 +6,9 @@
    page shows its own part of it: the four sites always; the branch the page is in opened out (its parents, its
    siblings, its own children); the page itself marked, with its own headings under it ("on this page"); and a dot on
    each entry this page links to. Beside the page: drag its right edge to make it wider or narrower (double-click: as
-   it was), « to hide it and » to bring it back, each remembered on this site; on a narrow screen it is behind ☰.
+   it was), remembered on this site; « to hide it and » to bring it back, for the visit (ticket 314: a « once on any page
+   of a site, remembered for the site, left every page of it starting hidden: "on matthewhammer.org by default, the LHS nav
+   bar is hidden. on all other pages, it shows up by default"); on a narrow screen it is behind ☰.
    At its top: the theme, ◐ auto (the system's), ☀ light or ☾ dark, remembered on this site as localStorage "theme"
    (the same key and data-theme attribute as the earlier switch, hazel-perf-report/tools/add_theme.py).
 
@@ -209,9 +211,14 @@
     root.classList.toggle("cnav-app", app);
     const visit = { get: () => { try { return sessionStorage.getItem("cnav-app-shown"); } catch (_) { return null; } },
       set: v => { try { v ? sessionStorage.setItem("cnav-app-shown", "1") : sessionStorage.removeItem("cnav-app-shown"); } catch (_) {} } };
+    // (ticket 314) any other page's « lasts the visit too (sessionStorage), so every visit starts with the bar shown; the site-wide
+    // choice it once was is forgotten (it hid every page of matthewhammer.org after one «)
+    const hid = { get: () => { try { return sessionStorage.getItem("cnav-hidden") === "1"; } catch (_) { return false; } },
+      set: v => { try { v ? sessionStorage.setItem("cnav-hidden", "1") : sessionStorage.removeItem("cnav-hidden"); } catch (_) {} } };
+    store.set("cnav-hidden", null);
     const setOff = off => { root.classList.toggle("cnav-off", off); root.classList.toggle("cnav-on", !off);
-      if (app) visit.set(!off); else store.set("cnav-hidden", off ? "1" : null); };
-    setOff(app ? visit.get() !== "1" : store.get("cnav-hidden") === "1");
+      if (app) visit.set(!off); else hid.set(off); };
+    setOff(app ? visit.get() !== "1" : hid.get());
     hide.addEventListener("click", () => setOff(true)); showB.addEventListener("click", () => setOff(false));
     openB.addEventListener("click", () => { const o = !root.classList.contains("cnav-open"); root.classList.toggle("cnav-open", o); openB.setAttribute("aria-expanded", String(o)); openB.textContent = o ? "✕" : "☰"; });
     nav.addEventListener("click", e => { if (e.target.closest("a") && root.classList.contains("cnav-open")) openB.click(); });
