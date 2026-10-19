@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
-<meta name="dashboard-version" content="898482fdb43e">
+<meta name="dashboard-version" content="62e1aa3ec8ae">
 <!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
 <!-- theme: head begin -->
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
@@ -126,7 +126,7 @@
 <main>
 <h1>Closed tickets</h1>
 <p class="note">A copy of the Hazel Work Dashboard that Matthew runs on his laptop, published at most ten minutes after each change to its notes, and to the status from GitHub, which it reads every 15 minutes. Its <code>localhost</code> links work only there.</p>
-<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-18 19:34 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
+<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-18 19:44 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
 <div class="scroll"><table>
 <tr><th class="num">Ticket</th><th class="area">Area</th><th>Status, closed</th><th>Outcome</th><th>The ticket, as it last read</th></tr>
 <tr id="ticket-350"><td class="num"><a class="anchor" href="#ticket-350"><code class="ref"><b>^ticket(</b>350<b>)</b></code></a><button class="copy" type="button" data-anchor="ticket-350" title="Copy a link to ^ticket(350)">copy link</button></td><td>dress up, touch (trap room levers)</td><td class="status"><span class="good">done</span><br><span class="note">2026-10-18</span></td><td>Released in 0.0.253: the picture's touchstart handler kept a press only on a joint, the face, the friend or a placed thing and dropped the trap room's levers' press (pointerdown comes first); it keeps a press on [data-lever] now. Matthew: "ipad touch fix worked" (tested on M's iPad).<br><span class="note">⏱ opened 2026-10-18 18:33, closed 18:58 (26 min) · 3 messages from Matthew, 1 questions to him · ~675 chars (~168 tokens) · ~2.0 min together</span></td><td><b>Dress Up: the trap room's red and blue levers do nothing to a touch (M's iPad).</b> Matthew: "the red and blue levers do not work with touch on M's ipad -- she also has a broken screen, but I tested it, and it seems like some device specific issue, perhaps? touch/tap event?" FOUND: a touch fires pointerdown, then touchstart. pointerdown starts the lever's press (drag.roomLever, pulled on letting go), but the picture's touchstart handler keeps a press only on a joint, the face, the friend or a placed thing (onThing), and otherwise sets drag = null: the room's levers are none of those, so the press is gone before the finger lifts. A mouse sends no touchstart, so it works on a laptop; placed levers work by touch, being things. PLAN: touchstart keeps a room lever's press (and stops the page panning under it).<br><span class="note">from Matthew, 2026-10-18, in chat</span></td></tr>
