@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
-<meta name="dashboard-version" content="01bbe1f6cbf1">
+<meta name="dashboard-version" content="3a752b2f821c">
 <!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
 <!-- theme: head begin -->
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
@@ -126,7 +126,7 @@
 <main>
 <h1>Closed tickets</h1>
 <p class="note">A copy of the Hazel Work Dashboard that Matthew runs on his laptop, published at most ten minutes after each change to its notes, and to the status from GitHub, which it reads every 15 minutes. Its <code>localhost</code> links work only there.</p>
-<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-19 01:45 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
+<p class="note"><a href="./">← the Hazel Work Dashboard</a>. Updated 2026-10-19 02:00 MDT. Our tickets once closed, newest first: done, or closed for another reason (not needed, dropped, superseded), with what came of each. A number is never reused; the open tickets are on the dashboard: <a href="./#queue">the work queue</a> and <a href="./#backlog">the full backlog</a>.</p>
 <div class="scroll"><table>
 <tr><th class="num">Ticket</th><th class="area">Area</th><th>Status, closed</th><th>Outcome</th><th>The ticket, as it last read</th></tr>
 <tr id="ticket-378"><td class="num"><a class="anchor" href="#ticket-378"><code class="ref"><b>^ticket(</b>378<b>)</b></code></a><button class="copy" type="button" data-anchor="ticket-378" title="Copy a link to ^ticket(378)">copy link</button></td><td>dress up, the tree house&#x27;s trap doors</td><td class="status"><span class="good">done</span><br><span class="note">2026-10-19</span></td><td>Fixed in 0.0.316 and 0.0.317, checked with real clicks in Chrome and Firefox on GitHub. Causes: (1) a press on a lever (or the friend) was taken twice: at its letting go, and by the browser's click after it, which went through the passage the pointer was near (the pointer captured, the click's target the picture) - the friend set off out of the room while walking to the lever; (2) the friend stood in front of the lever after pulling it, so the next click took hold of them; (3) a walk into a passage whose plan found no way threw at its first step, leaving entering stuck: every passage dead. Fixes: pressTaken swallows the click after a handled press; the friend steps aside after a pull; a walk with no leg goes through from where it is. Check lever378.mjs (passed on 0.0.317).<br><span class="note">⏱ opened 2026-10-19 01:06, closed 01:23 (17 min) · 2 messages from Matthew, 0 questions to him · ~233 chars (~58 tokens) · ~1.0 min together</span></td><td><b>Dress Up bug: in the tree house, after a trap door is closed and opened again, a click on it no longer walks the friend there and in.</b> Matthew: "mint and enqueue -- bug report -- after closing a tree house trap door and reopening it -- we cannot click to activate walking and entering it."<br><span class="note">from <a href="https://matthewhammer.org/kids-choice-games/dress-up/">Matthew, in chat</a></span></td></tr>
