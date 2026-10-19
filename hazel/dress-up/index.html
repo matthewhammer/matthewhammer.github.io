@@ -26,6 +26,9 @@
 
     /* Three doors into the game: play it, hear it, see it. */
     .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
+    /* (ticket 353) two by two while there are four or fewer; one column on a phone */
+    .doors:not(:has(> a:nth-child(5))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 30rem) { .doors, .doors:not(:has(> a:nth-child(5))) { grid-template-columns: 1fr; } }
     .doors a { display: block; border: 1px solid var(--rule); border-radius: 6px; padding: 0.8rem 0.9rem; background: var(--panel); color: var(--fg); }
     .doors a:hover { border-color: var(--blue); }
     .doors .big { display: block; font-size: 1.6rem; line-height: 1.2; }
@@ -34,6 +37,9 @@
     figure.shot { margin: 0 0 1.4rem; }
     figure.shot img { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--rule); display: block; background: var(--panel); }
     figure.shot figcaption { color: var(--dim); font-size: 0.84rem; margin-top: 0.4rem; }
+    /* (ticket 354) which place the big picture shows */
+    figure.shot .pick { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.5rem; font-size: 0.84rem; color: var(--dim); }
+    figure.shot select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 0.15rem 0.3rem; }
     .loop { list-style: none; padding: 0; counter-reset: step; }
     .loop li { counter-increment: step; position: relative; padding-left: 2rem; margin-bottom: 0.6rem; }
     .loop li::before { content: counter(step); position: absolute; left: 0; top: 0.1rem; width: 1.4rem; height: 1.4rem; border-radius: 50%;
@@ -85,8 +91,24 @@
     </div>
 
     <figure class="shot">
-      <img src="../../dress-up-pictures-2026-10-18/2026/10/15/thumbs/backgrounds-with-friend/castle.webp" alt="The friend standing on the drawbridge of a castle, with towers, flags, a moat, trees and mountains." width="480" height="356" id="hero">
-      <figcaption>The friend at the castle, one of the game's places. N designed most of the rooms inside it.</figcaption>
+      <!-- (ticket 354) the picture archive's own drawing, from its latest run: sharp at any size; a choice of place below -->
+      <img src="../../dress-up-pictures/pictures/backgrounds-with-friend/castle.svg" alt="The friend standing on the drawbridge of a castle, with towers, flags, a moat, trees and mountains." width="812" height="601" id="hero">
+      <figcaption><span id="hero-cap">The friend at the castle, one of the game's places. N designed most of the rooms inside it.</span>
+        <label class="pick">Show <select id="hero-pick" aria-label="Which place the picture shows">
+          <option value="castle" data-alt="The friend standing on the drawbridge of a castle, with towers, flags, a moat, trees and mountains." data-cap="The friend at the castle, one of the game's places. N designed most of the rooms inside it.">🏰 the castle</option>
+          <option value="treehouse" data-alt="The friend under a great tree with little houses in its branches, joined by rope bridges." data-cap="The friend at the tree house: six houses in one tree, each with a room inside.">🌳 the tree house</option>
+          <option value="witch" data-alt="The friend in dark woods at dusk, a hut behind a fence of stakes with skulls on it, a cauldron bubbling." data-cap="The friend in the witch's woods.">🧙 the witch's woods</option>
+          <option value="lake" data-alt="The friend by a pond with ducks, cattails and pines." data-cap="The friend at the duck pond.">🦆 the duck pond</option>
+          <option value="forest" data-alt="The friend in a forest of tall trees." data-cap="The friend in the forest.">🌲 the forest</option>
+          <option value="fairyforest" data-alt="The friend among glowing toadstools in a fairy forest." data-cap="The friend in the fairy forest.">🧚 the fairy forest</option>
+          <option value="waterfall" data-alt="The friend by a waterfall falling into a pool, rocks and trees around it." data-cap="The friend at the waterfall; a cave hides behind it.">💦 the waterfall</option>
+          <option value="house" data-alt="The friend in front of a house with a garden." data-cap="The friend at the house.">🏠 the house</option>
+          <option value="beach" data-alt="The friend on a sandy beach by the sea." data-cap="The friend at the beach.">🏖️ the beach</option>
+          <option value="underwater" data-alt="The friend under the sea among fish and seaweed." data-cap="The friend under the sea.">🐠 under the sea</option>
+          <option value="castleroom--dining" data-alt="The friend in a castle dining room with a long table, candles and chandeliers." data-cap="The castle's dining room, M's idea.">🍽️ the castle's dining room</option>
+          <option value="castleroom--spiral" data-alt="The friend at the foot of a spiral staircase round a stone column." data-cap="The castle's spiral staircase.">🌀 the spiral staircase</option>
+          <option value="treeroom" data-alt="The friend in a room inside the tree house, the tree's trunk coming through it." data-cap="A room inside the tree house.">🪜 a tree house room</option>
+        </select> <a href="pictures.html">every picture</a></label></figcaption>
     </figure>
 
     <section id="what">
@@ -213,5 +235,16 @@
 })();
 </script>
 <!-- theme: end -->
+<script>
+// (ticket 354) the big picture's place: chosen here, remembered in this browser only
+(() => { const img = document.getElementById("hero"), pick = document.getElementById("hero-pick"), cap = document.getElementById("hero-cap");
+  if (!img || !pick) return;
+  const base = "../../dress-up-pictures/pictures/backgrounds-with-friend/";
+  const show = v => { const o = [...pick.options].find(q => q.value === v) || pick.options[0]; pick.value = o.value; img.src = base + o.value + ".svg"; img.alt = o.dataset.alt; cap.textContent = o.dataset.cap; };
+  let saved = null; try { saved = localStorage.getItem("dress-up-page-hero"); } catch (e) {}
+  if (saved && saved !== "castle") show(saved);
+  pick.addEventListener("change", () => { show(pick.value); try { localStorage.setItem("dress-up-page-hero", pick.value); } catch (e) {} });
+})();
+</script>
 </body>
 </html>
