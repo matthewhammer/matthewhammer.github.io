@@ -121,6 +121,32 @@ li::marker { color: var(--sym); }
 
 code { font-family: var(--mono); font-size: 0.9em; }
 
+/* ---- older pages ------------------------------------------------ */
+
+/* The paper pages (pldi09/, icfp11/, ...) wrap their text in .pagecontent,
+   not main: give it main's column, so it keeps clear of the outline. */
+.pagecontent {
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+}
+/* Their BibTeX scrolls in its own box rather than widening the page. */
+.pagecontent pre {
+  overflow-x: auto;
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  font-size: 0.82rem;
+}
+
+/* ---- publication lists (pubs.html) ------------------------------ */
+
+.pubs { list-style: none; padding-left: 0; }
+.pubs > li { margin: 0 0 1.5rem; }
+.pubs .t { font-weight: 600; font-size: 1.02rem; }
+.pubs .who, .pubs .where, .pubs .more { display: block; }
+.pubs .where { color: var(--dim); }
+.pubs .more { font-size: 0.88rem; margin-top: 0.15rem; }
+
 footer {
   border-top: 1px solid var(--rule);
   margin-top: 4rem;
