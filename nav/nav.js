@@ -117,7 +117,8 @@
   #cnav #outline > ul { border-left: 0 !important; margin: 0 0 0.4rem 0 !important; padding-left: 0.5rem !important; }
   #cnav #outline .outline-pages, #cnav #outline .outline-label { display: none !important; }
   #cnav #outline a { font-size: 12px !important; padding: 1px 4px !important; }
-  html.cnav-on main { margin-left: auto !important; }
+  html.cnav-on main, html.cnav-off main { margin-left: auto !important; }   /* (ticket 348: folded too, the page's own outline margin is not kept for a bar that is gone) */
+  html.cnav-off.cnav-widen main { max-width: 54rem !important; }   /* (ticket 348, Matthew: "use that margin": a narrow column widens into the room the folded bar leaves) */
   html.cnav-on .theme-toggle, html.cnav-off .theme-toggle { display: none !important; }   /* (add_theme.py's pill: the bar's choice replaces it) */
   html.cnav-off #cnav, html.cnav-off #cnav-grip, html.cnav-off #cnav-hide { display: none; }
   html.cnav-off #cnav-show { display: flex; }
@@ -198,6 +199,9 @@
     const showB = el("button", { type: "button", id: "cnav-show", class: "cn-btn", title: "Show the pages", "aria-label": "Show the pages" }, "»");
     const openB = el("button", { type: "button", id: "cnav-open", class: "cn-btn", title: "Pages", "aria-label": "Pages", "aria-expanded": "false" }, "☰");
     document.body.prepend(nav, grip, hide, showB, openB);
+    // (ticket 348) a page whose column is narrower than 54rem widens to it while the bar is folded; a wider one keeps its own
+    { const mainEl = document.querySelector("main"), rem = parseFloat(getComputedStyle(root).fontSize) || 16, mw = mainEl && parseFloat(getComputedStyle(mainEl).maxWidth);
+      if (mw && mw < 54 * rem) root.classList.add("cnav-widen"); }
     // ---- the drag controls, remembered on this site ----
     const W = store.get("cnav-w"); if (W) root.style.setProperty("--cnav-w", W);
     // (an app's page starts hidden, and its choice lasts the visit (sessionStorage), never the site's)
