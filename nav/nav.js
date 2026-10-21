@@ -57,7 +57,10 @@
         ["Dress Up reports", H + "/hazel/dress-up/reports/", [
           "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling",
           "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose"
-        ].map((t, i) => [`${i + 1}. ${t}`, `${K}${String(i + 1).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
+        ].map((t, i) => [i + 1, t])
+          // (a report's number is its own, not its place: 11 to 14 are drafts, not published)
+          .concat([[15, "Seen Before It Was Built"]])
+          .map(([n, t]) => [`${n}. ${t}`, `${K}${String(n).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
           ["Every picture, run by run", H + "/dress-up-pictures/"], ["Every picture, by day (to 2026-10-18)", H + "/dress-up-pictures-2026-10-18/"]]],
         ["Dress Up music", H + "/hazel/dress-up/music.html", [["Every tune, run by run", H + "/dress-up-music/"]]]]]]],
