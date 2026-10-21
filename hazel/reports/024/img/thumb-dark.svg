@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A module's definition walked twice before #2651 (two arrows into the box), once after (one arrow).">
+<style>.good{fill:#15803d}.warn{fill:#b45309}.muted{fill:#5b6470}.ink{fill:#1f2328}.box{fill:none;stroke:#5b6470;stroke-width:2}.sg{fill:none;stroke:#15803d;stroke-width:4;stroke-linecap:round}.sw{fill:none;stroke:#b45309;stroke-width:4;stroke-linecap:round}.t{font:700 15px system-ui,sans-serif}.b{font:700 34px system-ui,sans-serif}.c{font:600 13px ui-monospace,monospace}.good{fill:#4ade80}.warn{fill:#fbbf24}.muted{fill:#a2a9b3}.ink{fill:#e8e6e3}.box{fill:none;stroke:#a2a9b3;stroke-width:2}.sg{fill:none;stroke:#4ade80;stroke-width:4;stroke-linecap:round}.sw{fill:none;stroke:#fbbf24;stroke-width:4;stroke-linecap:round}
+</style>
+<text x="80" y="28" text-anchor="middle" class="t muted">before</text>
+<path d="M30 52 C 50 52, 52 84, 66 96" class="sw"/><path d="M58 90 L66 96 L60 86" class="sw"/>
+<path d="M130 52 C 110 52, 108 84, 94 96" class="sw"/><path d="M102 90 L94 96 L100 86" class="sw"/>
+<rect x="44" y="100" width="72" height="40" rx="8" class="box"/><text x="80" y="125" text-anchor="middle" class="c ink">def</text>
+<text x="80" y="172" text-anchor="middle" class="b warn">×2</text>
+<text x="240" y="28" text-anchor="middle" class="t muted">after</text>
+<path d="M240 48 L240 94" class="sg"/><path d="M233 86 L240 95 L247 86" class="sg"/>
+<rect x="204" y="100" width="72" height="40" rx="8" class="box"/><text x="240" y="125" text-anchor="middle" class="c ink">def</text>
+<text x="240" y="172" text-anchor="middle" class="b good">×1</text>
+</svg>
