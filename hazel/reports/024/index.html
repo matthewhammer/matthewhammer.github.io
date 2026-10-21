@@ -132,8 +132,9 @@
 </div>
 
 <div class="q" id="q-recursive-modules">
-<h3>2. Are modules meant to be recursive? <span class="tag block">before merging</span> <button class="copylink" data-id="q-recursive-modules">copy link</button></h3>
+<h3>2. Are modules meant to be recursive? <span class="tag ok">answered for now</span> <span class="tag">for Cyrus</span> <button class="copylink" data-id="q-recursive-modules">copy link</button></h3>
 <p>At expression level, <code>module F = fun x -&gt; F(x) in 1</code> is an error (<code>F</code> is unbound inside its own definition), and <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s second commit keeps it one, with a test whose comment says "modules are not recursive". By reading (not yet checked), a module item inside a module body, <code>{ module F = fun x -&gt; F(x) }</code>, is lowered to a plain <code>let</code> in ModuleHelpers, which would analyze it recursively with no error. Which behaviour is intended, so the test pins the right one?</p>
+<p><b>Answered for now, Alexander, 2026-10-21:</b> not settled; for now it is fine for modules not to be recursive by default, since recursion has a number of known correctness problems. Whether they should be is a question for Cyrus. So #2651's test, which pins the expression form as not recursive, matches the current intent; the module-item form inside a module body stays as it is until then.</p>
 </div>
 
 <div class="q" id="q-self-naming-signal">
@@ -154,7 +155,7 @@
 <h2 id="next">What next</h2>
 <ol>
 <li>The full report replaces this page: the subsystems, shared representations and protocols drawn, the PR's change drawn in their terms, every claim fact-checked, and these questions checked against the code.</li>
-<li>Alexander's answer decides the question still marked "before merging" (question 2); question 1 is answered.</li>
+<li>Questions 1 and 2 are answered: neither holds up the merge. Whether modules should be recursive (the expression form is not; a module item inside a module body, lowered to a plain <code>let</code>, appears to be) goes to Cyrus.</li>
 </ol>
 
 <h2 id="method">How this was put together</h2>
