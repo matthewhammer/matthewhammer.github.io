@@ -94,7 +94,7 @@
 </head>
 <body>
 <main>
-<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 11:57 MDT</p>
+<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 12:08 MDT</p>
 <h1>Hazel's Architecture Around <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a></h1>
 <p class="sub">Matthew and Alexander Bandukwala are reviewing <a href="https://github.com/hazelgrove/hazel/pull/2651">hazelgrove/hazel#2651</a> (Statics: a module binding analyzes its definition once, not twice) together on 2026-10-21, aiming to merge it that day. Matthew had tested its behaviour and asked how Hazel is built around it: the major subsystems, the representations they share, the protocols between them, and the PR's change drawn in those terms.</p>
 
@@ -138,8 +138,10 @@
 </div>
 
 <div class="q" id="q-self-naming-signal">
-<h3>3. Which signal should say "this definition names its own module"? <button class="copylink" data-id="q-self-naming-signal">copy link</button></h3>
+<h3>3. Which signal should say "this definition names its own module"? <span class="tag ok">answered</span> <span class="tag">for Cyrus</span> <button class="copylink" data-id="q-self-naming-signal">copy link</button></h3>
 <p><a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> detects it by the shape of the let's elaboration, <code>Let(_, FixF(...), _)</code>. That ties the ModuleExp case to where the let case puts its fixpoint. Would you rather it read the module's name from the let's co-context, or is there a signal in Modules II that is meant for this?</p>
+<p><b>Answered, Alexander, 2026-10-21:</b> Modules II has no signal for this, and he did not write the original <code>module</code> keyword. As things stand, <code>module</code> is a non-recursive <code>let</code>. His suggestion: give the let analysis an argument saying whether to check the recursive case, so that a module binding is never analyzed recursively. With it, the let would report a self-reference as unbound by itself, the <code>FixF</code> shape check and its fallback would not be needed, and a module binding would skip the let's recursion probe too.</p>
+<p>He also raised two design questions, for Cyrus: whether a module binding of something that is not a module (<code>module F = fun x -&gt; 1 in F(3)</code>, accepted today) should be a static error, as he expects; and the <code>module</code> keyword itself, where he had favoured plain <code>let</code> for module definitions and Cyrus wanted the keyword to do more.</p>
 </div>
 
 <div class="q" id="q-moduleexp-elab">
@@ -155,7 +157,8 @@
 <h2 id="next">What next</h2>
 <ol>
 <li>The full report replaces this page: the subsystems, shared representations and protocols drawn, the PR's change drawn in their terms, every claim fact-checked, and these questions checked against the code.</li>
-<li>Questions 1 and 2 are answered: neither holds up the merge. Whether modules should be recursive (the expression form is not; a module item inside a module body, lowered to a plain <code>let</code>, appears to be) goes to Cyrus.</li>
+<li>An option for #2651 or a follow-up, from Alexander's answer to question 3: an argument on the let analysis so a module binding is never analyzed recursively, replacing the <code>FixF</code> shape check.</li>
+<li>Questions 1 to 3 are answered: none holds up the merge. Whether modules should be recursive (the expression form is not; a module item inside a module body, lowered to a plain <code>let</code>, appears to be) goes to Cyrus, with two more from Alexander: whether a module binding of a non-module should be a static error, and what the <code>module</code> keyword should add over <code>let</code>.</li>
 </ol>
 
 <h2 id="method">How this was put together</h2>
