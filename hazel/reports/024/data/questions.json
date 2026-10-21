@@ -1,5 +1,5 @@
 {
- "note": "The five questions for Alexander as handed to the writer, each with its checks (premise: does the code say what it assumes; need: does anything on record already answer it), unchanged; plus 'status' and 'answer' from the review of 2026-10-21 (Alexander's answers relayed by Matthew, paraphrased). The page tightens the wording. 'corrections_2026_10_21' lists what changed after the review moved to the PR's own comments; the question, context, evidence and options above it are still as handed to the writer. 'answers_since' lists what Alexander and Matthew said after the review moved on (in conversation, relayed by Matthew, or on #2651, linked), paraphrased; 'answer_source' says where the review-day answer came from.",
+ "note": "The five questions for Alexander as handed to the writer, each with its checks (premise: does the code say what it assumes; need: does anything on record already answer it), unchanged; plus 'status' and 'answer' from the review of 2026-10-21 (Alexander's answers relayed by Matthew, paraphrased). The page tightens the wording. 'corrections_2026_10_21' lists what changed after the review moved to the PR's own comments; the question, context, evidence and options above it are still as handed to the writer. 'answers_since' lists what Alexander and Matthew said after the review moved on (in conversation, relayed by Matthew, or on #2651, linked), and the follow-up PR, hazelgrove/hazel#2717, paraphrased; 'answer_source' says where the review-day answer came from.",
  "questions": [
   {
    "slug": "one-member-signature-lift",
@@ -284,8 +284,9 @@
    "blocks_merge_now": false,
    "corrections_2026_10_21": [
     "The expanded_info.co_ctx signal works only without #2675 (incremental evaluation reuses expressions around a recursive let), open, which changes the let's co_ctx at that add to 'requires_fixf ? CoCtx.mk(ctx, p_ana.ctx, def.co_ctx) : def.co_ctx' (Statics.re:2244 at 1e5207494a), dropping the bound name under a fixpoint.",
-    "Alexander, on #2651 (18:52Z): names_itself also matches a fixpoint the user wrote (module m = fix f -> ...), which then takes the old second pass, with dev's results; the signal belongs in the let analysis. Matthew (19:00Z): a prototype of that argument is in progress.",
-    "Alexander's answer on the module keyword (non-recursive, capitalized name, otherwise a let) and his finding that names_itself matches a user-written fix (https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340695087) are on the page, in the answer block, #guard, #review and What next; a prototype of the let-analysis argument is in progress (https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340772054)."
+    "Alexander, on #2651 (18:52Z): names_itself also matches a fixpoint the user wrote (module m = fix f -> ...), which then takes the old second pass, with dev's results; the signal belongs in the let analysis. Matthew (19:00Z): a prototype of that argument was in progress; it is now the draft follow-up hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let), opened 20:31Z.",
+    "Alexander's answer on the module keyword (non-recursive, capitalized name, otherwise a let) and his finding that names_itself matches a user-written fix (https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340695087) are on the page, in the answer block, #guard, #review and What next; the let-analysis argument, a prototype then (https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340772054), is now the draft follow-up hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let) (https://github.com/hazelgrove/hazel/pull/2717).",
+    "Alexander's second fix program, module m = fix g -> fun x -> ... m(x - 1): building #2717 found that on #2651 the let's own analysis already reports m unbound. Exp.get_num_of_functions returns None for a FixF, so is_recursive is false and the let is not recursive there; the fallback then reports the same mark again, at the same id. With names_itself made to skip a fix, the pinned Free(\"m\") test still passes; what the skip keeps is the recursion probe, two analyses per module instead of one."
    ],
    "answers_since": [
     {
@@ -301,12 +302,17 @@
     {
      "by": "Alexander",
      "where": "https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340695087",
-     "paraphrase": "names_itself also matches a fixpoint the user wrote: module m = fix f -> fun x -> ... f(x - 1) in m(3) elaborates to Let(_, FixF(...), _), because fix elaborates to a FixF, so the read-back is skipped and the definition analyzed twice (a temporary print on Modules II part 1 with #2651 fired for all four module ... = fix ... programs he tried, not for a fix inside a module body). Results match dev; only the speed-up is lost, but the check does not test what names_itself claims to. Shape cannot easily tell the cases apart: skipping any fix would also skip module m = fix g -> fun x -> ... m(x - 1), which gets its unbound-m error from the fallback today. So the signal belongs in the let analysis: an argument that makes a module binding non-recursive; no shape check, no fallback, fix still how a module binds a recursive function. Can be a follow-up to keep #2651 small. Depends on the answer to https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340431274: if binding a module to a function becomes a static error, names_itself could go."
+     "paraphrase": "names_itself also matches a fixpoint the user wrote: module m = fix f -> fun x -> ... f(x - 1) in m(3) elaborates to Let(_, FixF(...), _), because fix elaborates to a FixF, so the read-back is skipped and the definition analyzed twice (a temporary print on Modules II part 1 with #2651 fired for all four module ... = fix ... programs he tried, not for a fix inside a module body). Results match dev; only the speed-up is lost, but the check does not test what names_itself claims to. Shape cannot easily tell the cases apart: skipping any fix would also skip module m = fix g -> fun x -> ... m(x - 1), which, he wrote, currently gets its unbound-m error from the fallback (on #2651 the let's own analysis reports it as well, as building #2717 found: see corrections_2026_10_21). So the signal belongs in the let analysis: an argument that makes a module binding non-recursive; no shape check, no fallback, fix still how a module binds a recursive function. Can be a follow-up to keep #2651 small. Depends on the answer to https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340431274: if binding a module to a function becomes a static error, names_itself could go."
     },
     {
      "by": "Matthew",
      "where": "https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340772054",
-     "paraphrase": "Agreed: the signal belongs in the let analysis. A prototype is in progress on a local branch (a module binding is never analyzed recursively; names_itself and its fallback are gone; the self-naming test is pinned to its mark), its tests to include both fix programs. Whether it goes into #2651 or a follow-up is to be decided. No results yet."
+     "paraphrase": "Agreed: the signal belongs in the let analysis. A prototype was in progress on a local branch (a module binding is never analyzed recursively; names_itself and its fallback are gone; the self-naming test is pinned to its mark), its tests to include both fix programs; whether it would go into #2651 or a follow-up was to be decided when it was done."
+    },
+    {
+     "by": "Matthew",
+     "where": "https://github.com/hazelgrove/hazel/pull/2717",
+     "paraphrase": "The prototype as a draft follow-up, hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let), opened 2026-10-21 20:31Z against dev on #2651's head b5a3e1d90a: a module binding is a non-recursive let, by an argument to the let; names_itself and its fallback are gone; a module's definition is analyzed once; Alexander's two fix programs are tests (the first runs to 6 with no errors, the second reports m unbound at the inner m)."
     }
    ],
    "answer_source": "in the review, relayed by Matthew; later answers on #2651 (answers_since)"
@@ -467,12 +473,12 @@
    "status": [
     "answered"
    ],
-   "answer_2026_10_21": "Answered on #2651, 2026-10-21. The third, the bare value: Alexander offered to pin it as stuck here, with a note that the static error comes with Modules II part 1, or to leave it out of #2651 and add it on part 1, where it can assert both the stuck term and the error (his comment); Matthew chose part 1 (his reply). The first, the self-naming error: the let-analysis prototype pins the test to its mark, and its tests are to include Alexander's two fix programs (Matthew's reply).",
+   "answer_2026_10_21": "Answered on #2651, 2026-10-21. The third, the bare value: Alexander offered to pin it as stuck here, with a note that the static error comes with Modules II part 1, or to leave it out of #2651 and add it on part 1, where it can assert both the stuck term and the error (his comment); Matthew chose part 1 (his reply). The first, the self-naming error: Matthew answered that the let-analysis prototype pins the test to its mark and that its tests would include Alexander's two fix programs (Matthew's reply). The prototype is now the draft follow-up #2717 (Statics: a module binding is a non-recursive let), and it does both: the self-naming test and its form under a signature each pin one FreeConstructor mark at the inner F; the first fix program runs to 6 with no errors, and the second has one mark, Free(\"m\"), at the inner m. It also has the second, module F = fun x -> x + 1 in F(2), as an evaluator test (3).",
    "blocks_merge_now": false,
    "corrections_2026_10_21": [
     "The bare-value program's stuck '5 .x' was run with the CLI, not only read (Matthew's comment on #2651, https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340596357).",
     "Alexander, on #2651 (18:48Z, https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340660934), gave two choices for the bare-value test: pin the program as stuck in #2651, with a note that the static error comes with Modules II part 1, or leave it out of #2651 and add it on part 1, where it can assert both the stuck term and the static error. Matthew chose part 1 (19:00Z, https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340771544).",
-    "Status: answered on #2651. (1) the self-naming error at its mark: in the let-analysis prototype; (2) module F = fun x -> x + 1 in F(2), 3 at both when run: still a test to add; (3) the bare value: on Modules II part 1, not in #2651."
+    "Status: answered on #2651. (1) the self-naming error at its mark: in the draft follow-up hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let), for the plain and the ascribed form; (2) module F = fun x -> x + 1 in F(2), 3 at both when run: in #2717, as an evaluator test; (3) the bare value: on Modules II part 1, not in #2651."
    ],
    "answers_since": [
     {
@@ -488,7 +494,12 @@
     {
      "by": "Matthew",
      "where": "https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340772054",
-     "paraphrase": "The let-analysis prototype pins the self-naming test to its mark; its tests include Alexander's two fix programs."
+     "paraphrase": "The let-analysis prototype pins the self-naming test to its mark; its tests will include Alexander's two fix programs."
+    },
+    {
+     "by": "Matthew",
+     "where": "https://github.com/hazelgrove/hazel/pull/2717",
+     "paraphrase": "In the draft follow-up hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let): the self-naming test and its ascribed form each pin one FreeConstructor(\"F\") mark at the inner F; module F = fun x -> x + 1 in F(2) is an evaluator test (3); the first fix program runs to 6 with no errors, and the second has exactly one mark, Free(\"m\"), at the inner m."
     }
    ],
    "answer_source": "on #2651"
@@ -512,5 +523,5 @@
    "context": "Alexander had favoured plain let for module definitions; Cyrus wanted the keyword to do more. Today a module binding is checked as a let that is not recursive (Modules). By Alexander's reading (his agent's, in conversation, relayed by Matthew), which matches ours, the keyword makes the binding non-recursive and allows a capitalized name, and is otherwise a let; #2651 keeps both."
   }
  ],
- "status_as_of": "2026-10-21 13:34 MDT: every question for Alexander answered (question 3 for now); none holds up the merge."
+ "status_as_of": "2026-10-21 14:41 MDT: every question for Alexander answered (question 3 for now); none holds up the merge. The let-analysis argument is the draft follow-up hazelgrove/hazel#2717 (Statics: a module binding is a non-recursive let), opened 20:31Z (14:31 MDT) against dev, on #2651's head b5a3e1d90a."
 }
