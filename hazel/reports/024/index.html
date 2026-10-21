@@ -94,7 +94,7 @@
 </head>
 <body>
 <main>
-<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 12:08 MDT</p>
+<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 12:22 MDT</p>
 <h1>Hazel's Architecture Around <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a></h1>
 <p class="sub">Matthew and Alexander Bandukwala are reviewing <a href="https://github.com/hazelgrove/hazel/pull/2651">hazelgrove/hazel#2651</a> (Statics: a module binding analyzes its definition once, not twice) together on 2026-10-21, aiming to merge it that day. Matthew had tested its behaviour and asked how Hazel is built around it: the major subsystems, the representations they share, the protocols between them, and the PR's change drawn in those terms.</p>
 
@@ -145,20 +145,22 @@
 </div>
 
 <div class="q" id="q-moduleexp-elab">
-<h3>4. What is <code>ModuleHelpers.moduleexp_elab</code> meant to drop from the let's elaboration? <button class="copylink" data-id="q-moduleexp-elab">copy link</button></h3>
+<h3>4. What is <code>ModuleHelpers.moduleexp_elab</code> meant to drop from the let's elaboration? <span class="tag ok">answered</span> <button class="copylink" data-id="q-moduleexp-elab">copy link</button></h3>
 <p>It rebuilds the module's elaboration from the definition's own elaboration (<code>def_elab_direct</code>), without what the let wraps around it: label alignment, a function name and, for a definition that refers to itself, the <code>FixF</code>. <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> takes that elaboration from the let's recorded info rather than a second walk. Is "the definition's elaboration before the let wraps it" exactly the contract, so that the read-back meets it?</p>
+<p><b>Answered, Alexander, 2026-10-21:</b> yes, as he understands it, and it comes from the old elaborator. Reading the definition back from the stored info is closer to the original design than dev's second pass, because the old elaborator also read the definition from the statics map.</p>
 </div>
 
 <div class="q" id="q-merge-order">
-<h3>5. Any order you need with your Modules II parts 2 and 3, and with <a href="https://github.com/hazelgrove/hazel/pull/2603">#2603</a>? <button class="copylink" data-id="q-merge-order">copy link</button></h3>
+<h3>5. Any order you need with your Modules II parts 2 and 3, and with <a href="https://github.com/hazelgrove/hazel/pull/2603">#2603</a>? <span class="tag ok">answered</span> <button class="copylink" data-id="q-merge-order">copy link</button></h3>
 <p><a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> touches only the ModuleExp case of Statics.re and adds two tests. It merges cleanly with dev today and with <a href="https://github.com/hazelgrove/hazel/pull/2603">hazelgrove/hazel#2603</a> (a let analyzed once unless it refers to itself), which together bring a module binding to one walk of its definition. Does anything in flight in Modules II change this case?</p>
+<p><b>Answered, Alexander, 2026-10-21:</b> #2651 does not conflict with Modules II in substance (he has not yet looked at #2603). Checked with <code>git merge-tree</code>: #2651 merges cleanly with part 1, and with each of parts 2 to 9 conflicts on one line, the fallback's direct pass, where part 2 added <code>~coercible=true</code>. On part 2 the let analyzes the definition with <code>~coercible=true</code> as well, so the read-back reads the same analysis, and the resolution is to add <code>~coercible=true</code> to the fallback.</p>
 </div>
 
 <h2 id="next">What next</h2>
 <ol>
 <li>The full report replaces this page: the subsystems, shared representations and protocols drawn, the PR's change drawn in their terms, every claim fact-checked, and these questions checked against the code.</li>
 <li>An option for #2651 or a follow-up, from Alexander's answer to question 3: an argument on the let analysis so a module binding is never analyzed recursively, replacing the <code>FixF</code> shape check.</li>
-<li>Questions 1 to 3 are answered: none holds up the merge. Whether modules should be recursive (the expression form is not; a module item inside a module body, lowered to a plain <code>let</code>, appears to be) goes to Cyrus, with two more from Alexander: whether a module binding of a non-module should be a static error, and what the <code>module</code> keyword should add over <code>let</code>.</li>
+<li>All five questions are answered, and none holds up the merge. Whether modules should be recursive (the expression form is not; a module item inside a module body, lowered to a plain <code>let</code>, appears to be) goes to Cyrus, with two more from Alexander: whether a module binding of a non-module should be a static error, and what the <code>module</code> keyword should add over <code>let</code>.</li>
 </ol>
 
 <h2 id="method">How this was put together</h2>
