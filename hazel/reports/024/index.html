@@ -94,7 +94,7 @@
 </head>
 <body>
 <main>
-<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 11:48 MDT</p>
+<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>24<b>)</b></code> · architecture · work in progress · started 2026-10-21, updated 2026-10-21 11:57 MDT</p>
 <h1>Hazel's Architecture Around <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a></h1>
 <p class="sub">Matthew and Alexander Bandukwala are reviewing <a href="https://github.com/hazelgrove/hazel/pull/2651">hazelgrove/hazel#2651</a> (Statics: a module binding analyzes its definition once, not twice) together on 2026-10-21, aiming to merge it that day. Matthew had tested its behaviour and asked how Hazel is built around it: the major subsystems, the representations they share, the protocols between them, and the PR's change drawn in those terms.</p>
 
@@ -112,7 +112,7 @@
 <h2 id="review">Review points from reading the code</h2>
 <p class="note">From reading the code at the two commits above. The first is confirmed by the PR's own tests; the others are <b>not yet fact-checked</b>, and the full report checks each one.</p>
 <ol>
-<li><b>One behaviour change, pinned by the PR's new evaluator test</b> (<a href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/test/evaluator/Test_Evaluator_Modules.re">Test_Evaluator_Modules.re</a>): <code>module M : { let x : Int } = { let x = 1; let y = 2 } in M.x</code> evaluated to the whole unelaborated module before; with the PR it evaluates to <code>1</code>. The cause, by reading: the singleton-label lift in statics records one elaboration in the info map and returns another, the only path where the read-back differs from the direct walk.</li>
+<li><b>One behaviour change, pinned by the PR's new evaluator test, and a fix</b> (Alexander confirms dev's result is a bug from the auto-labelling; see <a href="#q-one-member-signature">question 1</a>) (<a href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/test/evaluator/Test_Evaluator_Modules.re">Test_Evaluator_Modules.re</a>): <code>module M : { let x : Int } = { let x = 1; let y = 2 } in M.x</code> evaluated to the whole unelaborated module before; with the PR it evaluates to <code>1</code>. The cause, by reading: the singleton-label lift in statics records one elaboration in the info map and returns another, the only path where the read-back differs from the direct walk.</li>
 <li><b>Why the read-back is the same elsewhere:</b> in the let's non-recursive branch, the let's walk of <code>def</code> and the old direct walk get the same context, the same expected type (the ascription's type, or <code>syn</code>), the same term and the same filters; only the ancestors list differs (the module's id appears twice, as it already does for the body). So the PR description's "add records exactly the elab_term it returns" holds on every path that ends in <code>add</code>.</li>
 <li><b>The self-naming check reads the shape <code>Let(_, FixF, _)</code></b> of the let's elaboration. If the let case ever wraps the fixpoint differently, the check turns false silently, and the error disappears again; the let's info co-context names the module when <code>def</code> mentions it, a more explicit signal.</li>
 <li><b>The "no info recorded" fallback looks unreachable:</b> every walk of a node records an <code>InfoExp</code> at its ids. It is a defensive branch.</li>
@@ -126,8 +126,9 @@
 <p>Alexander: this section stands on its own. <a href="https://github.com/hazelgrove/hazel/pull/2651">hazelgrove/hazel#2651</a> stops the ModuleExp case in statics from analyzing a module's definition a second time: it reads the definition's elaboration back from the info the expanded <code>let</code> recorded (<a href="#change">what changes</a>). These questions need your knowledge of Modules II (<a href="https://github.com/hazelgrove/hazel/pull/2493">hazelgrove/hazel#2493</a>, <a href="https://github.com/hazelgrove/hazel/pull/2494">#2494</a>, <a href="https://github.com/hazelgrove/hazel/pull/2495">#2495</a>). <b>Drafts:</b> each is being checked against the code, and the full report's version replaces these.</p>
 
 <div class="q" id="q-one-member-signature">
-<h3>1. Is <code>M.x</code> = <code>1</code> the intended runtime meaning of a module under a signature it does not satisfy? <span class="tag block">before merging</span> <button class="copylink" data-id="q-one-member-signature">copy link</button></h3>
+<h3>1. Is <code>M.x</code> = <code>1</code> the intended runtime meaning of a module under a signature it does not satisfy? <span class="tag ok">answered</span> <button class="copylink" data-id="q-one-member-signature">copy link</button></h3>
 <p><code>module M : { let x : Int } = { let x = 1; let y = 2 } in M.x</code> is a static error (the signature does not admit <code>y</code>), but it still runs. Before <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> it evaluated to the whole unelaborated module; with <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> it evaluates to <code>1</code>, and the PR's new evaluator test pins that. Is <code>1</code> what Modules II means, or should this run differently (or not at all)?</p>
+<p><b>Answered, Alexander, 2026-10-21:</b> dev's result is a bug, from the auto-labelling of single-member tuples; the program should evaluate to <code>1</code> or be stuck. So #2651's <code>1</code> is a correct result, and its test pins it.</p>
 </div>
 
 <div class="q" id="q-recursive-modules">
@@ -153,7 +154,7 @@
 <h2 id="next">What next</h2>
 <ol>
 <li>The full report replaces this page: the subsystems, shared representations and protocols drawn, the PR's change drawn in their terms, every claim fact-checked, and these questions checked against the code.</li>
-<li>Alexander's answers decide the two questions marked "before merging".</li>
+<li>Alexander's answer decides the question still marked "before merging" (question 2); question 1 is answered.</li>
 </ol>
 
 <h2 id="method">How this was put together</h2>
