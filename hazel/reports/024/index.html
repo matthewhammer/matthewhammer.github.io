@@ -1022,7 +1022,7 @@ let (def_elab_direct, m) =
 <path d="M560 174 L680 220" class="ar g" marker-end="url(#m-g)"/>
 <text x="20" y="330" class="tm" style="font-size:11px">the error is a FreeConstructor mark (ConstructorStaticsHelpers.re:61-64) on the F inside the definition, as on dev</text>
 </svg></div><figcaption><b>Figure 12.</b> How module F = fun x -> F(x) in 1 is handled: the let analyzes it recursively and records no error; the first commit read that back and lost dev's error; the second sees the let's fixpoint and runs the direct pass, which reports F, as dev did. Right: Alexander's suggested follow-up, now the draft <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a>.</figcaption></figure>
-<p>The first commit lost an error. <code>module F = fun x -&gt; F(x) in 1</code> is one variable bound to one function, so the let takes its recursive path and analyzes the definition with F in scope: no error. On dev the direct pass then analyzed it again in the outer context, where F is not a variable, and marked it a free constructor (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L1598-L1606" title="src/language/statics/Statics.re, lines 1598-1606, at 962a7cb009"><code>Statics.re:1598-1606</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/ConstructorStaticsHelpers.re#L61-L64" title="src/language/statics/ConstructorStaticsHelpers.re, lines 61-64, at 962a7cb009"><code>ConstructorStaticsHelpers.re:61-64</code></a>), overwriting the let's records. With the read-back, nothing overwrote them, so the error was gone; the correctness review in <code class="ref"><b>^report(</b>21<b>)</b></code> found it by running both commits.</p>
+<p>The first commit lost an error. <code>module F = fun x -&gt; F(x) in 1</code> is one variable bound to one function, so the let takes its recursive path and analyzes the definition with F in scope: no error. On dev the direct pass then analyzed it again in the outer context, where F is not a variable, and marked it a free constructor (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L1598-L1606" title="src/language/statics/Statics.re, lines 1598-1606, at 962a7cb009"><code>Statics.re:1598-1606</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/ConstructorStaticsHelpers.re#L61-L64" title="src/language/statics/ConstructorStaticsHelpers.re, lines 61-64, at 962a7cb009"><code>ConstructorStaticsHelpers.re:61-64</code></a>), overwriting the let's records. With the read-back, nothing overwrote them, so the error was gone; the correctness review in <a href="../021/"><code class="ref"><b>^report(</b>21<b>)</b></code></a> found it by running both commits.</p>
 <p><a href="https://github.com/hazelgrove/hazel/commit/29c08fd8fa6126a6507ab47f4e56e8613276bf0c"><code>29c08fd8fa</code></a> adds <code>names_itself</code>: if the let's elaboration is <code>Let(_, FixF(_), _)</code>, the let saw the definition use its own name, and the direct pass runs as before (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/src/language/statics/Statics.re#L2764-L2774" title="src/language/statics/Statics.re, lines 2764-2774, at 29c08fd8fa"><code>Statics.re:2764-2774</code></a><sup class="at">PR</sup>). The fixpoint is the signal because the let removes the name from the co-context of the definition's record (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2216-L2228" title="src/language/statics/Statics.re, lines 2216-2228, at 962a7cb009"><code>Statics.re:2216-2228</code></a>), so the record itself cannot show the self-reference. A test pins the error (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/test/statics/Test_Statics_Modules.re#L406-L413" title="test/statics/Test_Statics_Modules.re, lines 406-413, at 29c08fd8fa"><code>Test_Statics_Modules.re:406-413</code></a><sup class="at">PR</sup>).</p>
 <p>Run with the command-line tool, the program reports "Constructor is not defined" at the inner <code>F</code> (1:21) and runs to 1, at dev and at 29c08fd8fa alike; so does the same definition under a signature, <code>module F : Int -&gt; Int = fun x -&gt; F(x) in 1</code> (at 1:34), which takes the fallback's other arm (<a href="#runs">the runs</a>).</p>
 <p><b>Found in review: the guard also matches a fixpoint the user wrote.</b> Alexander found on <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> (<a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340695087">his comment</a>) that <code>module m = fix f -&gt; fun x -&gt; … f(x - 1) in m(3)</code> elaborates to <code>Let(_, FixF(…), _)</code> too, because <code>fix</code> itself elaborates to a <code>FixF</code>. So the read-back is skipped and the definition is analyzed a third time, after the let's recursion probe and its own pass. On Modules II part 1 with <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> merged, a temporary print in that match fired for every <code>module … = fix …</code> he tried (four programs), and not for a <code>fix</code> inside a module body. The results match dev, and only the speed-up is lost, but the check does not test what <code>names_itself</code> claims to. Telling the two apart by shape is hard: skipping whenever the definition is a <code>fix</code> would also skip <code>module m = fix g -&gt; fun x -&gt; … m(x - 1)</code>, which, as he read it, gets its unbound-<code>m</code> error from the fallback. (Building the follow-up found that on <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> the let's own analysis already reports that <code>m</code> as unbound: a <code>FixF</code> has no function count, since <code>Exp.get_num_of_functions</code> returns <code>None</code> for it, so the let is not recursive there, and the fallback then reports the same mark again, at the same id. With <code>names_itself</code> made to skip a <code>fix</code>, the error is still reported; what the skip keeps is the recursion probe, two analyses per module instead of one.) So, he concludes, the signal belongs in the let analysis itself: an argument that makes a module binding non-recursive (his suggestion in <a href="#q-are-module-bindings-recursive">question 3</a>), with no shape check and no fallback, and <code>fix</code> still the way a module binds a recursive function. It can be a follow-up, to keep <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> small. It also depends on the answer to the question he asked on the PR (<a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340431274">his comment</a>; <a href="#cyrus-non-module">For Cyrus</a>): if binding a module to a function becomes a static error, neither a self-naming function nor a <code>module … = fix …</code> can reach this code, and <code>names_itself</code> could go. Matthew agreed (<a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340772054">his reply</a>) and chose a follow-up: the draft <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a> (Statics: a module binding is a non-recursive let), opened on 2026-10-21 at 20:31Z against dev, on <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s head <a href="https://github.com/hazelgrove/hazel/commit/b5a3e1d90aff91f5d7b37dbf1387dd7e6a7ae733"><code>b5a3e1d90a</code></a>. It does not wait on that question: with it a module's definition is analyzed once whatever the definition is, apart from the one exception below.</p>
@@ -1178,11 +1178,11 @@ let (def_elab_direct, m) =
 <p><b>Measured, by the PR (not in this report).</b> On dev the effect is within the noise: on an 800-function module made up for timing, statics was about 0.13 s of 6 s, and whole-command times overlapped (6.06 and 6.74 s before, 5.26 and 6.05 s after, two runs each). On the livelits branch <a href="https://github.com/hazelgrove/hazel/pull/2635">#2635</a> (livelits × modular editors), where a module holds the livelit definitions, a profile of the <i>Shirt and Pants</i> slide put 1.79 s of its 4.2 s of statics in the second pass, and the command line's statics went from 6.7 s to 4.3 s, against 4.1 s for the same slide with the module flattened into top-level lets (two runs each, within 0.3 s; <a href="https://github.com/hazelgrove/hazel/issues/2609">#2609</a>, finding 7). That branch also carries <a href="https://github.com/hazelgrove/hazel/pull/2603">#2603</a>'s change (as <a href="https://github.com/hazelgrove/hazel/commit/b9e756132324ef60d51499976debd9a4c54696de"><code>b9e7561323</code></a>) and per-definition statics, so these are not dev's numbers. <a href="../017/#pr2651"><code class="ref"><b>^report(</b>17<b>)</b></code></a> and <a href="../001/#issues"><code class="ref"><b>^report(</b>1<b>)</b></code></a> list these numbers too.</p>
 
 <h2 id="review">What a reviewer checks</h2>
-<p>Matthew has tested <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s behaviour; what a review adds is the argument for why the result is the same, and where it is not. The table gives each check, what reading the code found, and where. The earlier reviews of this PR are <a href="../017/#pr2651"><code class="ref"><b>^report(</b>17<b>)</b></code></a> (merge plan: wave 1, small and independent) and <code class="ref"><b>^report(</b>21<b>)</b></code> (a draft, not yet published; correctness, which found and confirmed by running both corners the second commit settles).</p>
+<p>Matthew has tested <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s behaviour; what a review adds is the argument for why the result is the same, and where it is not. The table gives each check, what reading the code found, and where. The earlier reviews of this PR are <a href="../017/#pr2651"><code class="ref"><b>^report(</b>17<b>)</b></code></a> (merge plan: wave 1, small and independent) and <a href="../021/"><code class="ref"><b>^report(</b>21<b>)</b></code></a> (a draft, not yet published; correctness, which found and confirmed by running both corners the second commit settles).</p>
 <div class="scroll"><table id="checks">
 <tr><th>What a reviewer checks</th><th>What the reading found</th><th>Where</th></tr>
 <tr><td><b>Is the read-back the same as the direct pass?</b></td><td>Yes, in the let's non-recursive branch, with one exception. There the let's real pass and dev's direct pass get the same context (the ModuleExp's), the same expected type (<code>p_syn.ty</code> is the signature already desugared by <code>mpat_to_pat</code>, met with <code>syn</code>; <code>desugar_sig</code> ignores its context and changes nothing the second time), the same term and the same flags; only the ancestors list differs. And the elaboration recorded is the one returned on every path that ends in <code>add</code>. The exception is the lift (next row).</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2079" title="src/language/statics/Statics.re, lines 2079-2079, at 962a7cb009"><code>Statics.re:2079</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2757-L2762" title="src/language/statics/Statics.re, lines 2757-2762, at 962a7cb009"><code>Statics.re:2757-2762</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/ModuleHelpers.re#L51-L60" title="src/language/statics/ModuleHelpers.re, lines 51-60, at 962a7cb009"><code>ModuleHelpers.re:51-60</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/term/Typ.re#L615-L657" title="src/language/term/Typ.re, lines 615-657, at 962a7cb009"><code>Typ.re:615-657</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/StaticsBase.re#L268-L277" title="src/language/statics/StaticsBase.re, lines 268-277, at 962a7cb009"><code>StaticsBase.re:268-277</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L268" title="src/language/statics/Statics.re, lines 268-268, at 962a7cb009"><code>Statics.re:268</code></a></td></tr>
-<tr><td><b>Where does it not hold?</b></td><td>Under a one-member signature the definition is lifted: <code>autolabel_singleton_tuple</code> records the bare analysis but returns <code>(x = raw source)</code>. The extra-member module now gives <code>M.x = 1</code> (dev: its raw source; confirmed by running in <code class="ref"><b>^report(</b>21<b>)</b></code>); Alexander confirmed 1 is right. A plain value under that signature gives 5 on dev and gets stuck with <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> (<a href="#runs">the runs</a>); Alexander accepts that too, since Modules II part 1 makes it stuck and a static error (<a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340660934">his comment</a>; <a href="#lift">below</a>).</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L310-L358" title="src/language/statics/Statics.re, lines 310-358, at 962a7cb009"><code>Statics.re:310-358</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2778-L2791" title="src/language/statics/Statics.re, lines 2778-2791, at 962a7cb009"><code>Statics.re:2778-2791</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/test/evaluator/Test_Evaluator_Modules.re#L86-L96" title="test/evaluator/Test_Evaluator_Modules.re, lines 86-96, at 29c08fd8fa"><code>Test_Evaluator_Modules.re:86-96</code></a><sup class="at">PR</sup></td></tr>
+<tr><td><b>Where does it not hold?</b></td><td>Under a one-member signature the definition is lifted: <code>autolabel_singleton_tuple</code> records the bare analysis but returns <code>(x = raw source)</code>. The extra-member module now gives <code>M.x = 1</code> (dev: its raw source; confirmed by running in <a href="../021/"><code class="ref"><b>^report(</b>21<b>)</b></code></a>); Alexander confirmed 1 is right. A plain value under that signature gives 5 on dev and gets stuck with <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> (<a href="#runs">the runs</a>); Alexander accepts that too, since Modules II part 1 makes it stuck and a static error (<a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340660934">his comment</a>; <a href="#lift">below</a>).</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L310-L358" title="src/language/statics/Statics.re, lines 310-358, at 962a7cb009"><code>Statics.re:310-358</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2778-L2791" title="src/language/statics/Statics.re, lines 2778-2791, at 962a7cb009"><code>Statics.re:2778-2791</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/test/evaluator/Test_Evaluator_Modules.re#L86-L96" title="test/evaluator/Test_Evaluator_Modules.re, lines 86-96, at 29c08fd8fa"><code>Test_Evaluator_Modules.re:86-96</code></a><sup class="at">PR</sup></td></tr>
 <tr><td><b>A tuple literal under a product signature</b></td><td>The let rearranges a tuple definition to the pattern's labels before analyzing it, so the read-back is the rearranged tuple's elaboration where dev's direct pass analyzed the original. The tuple case rearranges its own elaboration the same way, so the result should match; a test would settle it.</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2054-L2069" title="src/language/statics/Statics.re, lines 2054-2069, at 962a7cb009"><code>Statics.re:2054-2069</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L1117-L1132" title="src/language/statics/Statics.re, lines 1117-1132, at 962a7cb009"><code>Statics.re:1117-1132</code></a></td></tr>
 <tr><td><b>What does the editor see inside the definition now?</b></td><td>The let's records, not the direct pass's. Two differences, neither in the elaboration: the ancestors list has the ModuleExp's id twice, as the body's already did (auto-probes drop adjacent repeats); and inside a function-valued module that does not name itself, the recorded context contains the module's own name, so completion can offer F inside F, where using it is an error. Dev never showed F there. Alexander's flag (question 3) would remove it.</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L270" title="src/language/statics/Statics.re, lines 270-270, at 962a7cb009"><code>Statics.re:270</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2737-L2741" title="src/language/statics/Statics.re, lines 2737-2741, at 962a7cb009"><code>Statics.re:2737-2741</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/haz3lcore/AutoProbePerform.re#L81-L93" title="src/haz3lcore/AutoProbePerform.re, lines 81-93, at 962a7cb009"><code>AutoProbePerform.re:81-93</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2090-L2122" title="src/language/statics/Statics.re, lines 2090-2122, at 962a7cb009"><code>Statics.re:2090-2122</code></a>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/haz3lcore/TyDi/TyDiCtx.re#L28-L39" title="src/haz3lcore/TyDi/TyDiCtx.re, lines 28-39, at 962a7cb009"><code>TyDiCtx.re:28-39</code></a></td></tr>
 <tr><td><b>Can the fallback be reached?</b></td><td>The self-naming arm, yes: that is the second commit's case. The 'no record found' arm looks unreachable: every analysis ends in <code>add</code> at the term's ids, and the map starts empty each run. It is defensive. Codecov's one missed patch line is the fallback's signature arm, <code>Asc(_, typ) =&gt; typ</code>, reached by a module with a signature whose definition names the module, or is a <code>fix</code> the user wrote; <code>module F : Int -&gt; Int = fun x -&gt; F(x) in 1</code> reaches it when run, and reports its error as dev does (<a href="#runs">the runs</a>). The self-naming arm is also reached by a definition the user wrote with <code>fix</code> (Alexander's finding, next row).</td><td><a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/src/language/statics/Statics.re#L2781-L2788" title="src/language/statics/Statics.re, lines 2781-2788, at 29c08fd8fa"><code>Statics.re:2781-2788</code></a><sup class="at">PR</sup>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/29c08fd8fa6126a6507ab47f4e56e8613276bf0c/src/language/statics/Statics.re#L2784" title="src/language/statics/Statics.re, lines 2784-2784, at 29c08fd8fa"><code>Statics.re:2784</code></a><sup class="at">PR</sup>, <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L4354-L4362" title="src/language/statics/Statics.re, lines 4354-4362, at 962a7cb009"><code>Statics.re:4354-4362</code></a></td></tr>
@@ -1244,7 +1244,7 @@ let (def_elab_direct, m) =
 <text x="29" y="425.32" class="t">so #2651's 1 is a fix</text>
 <text x="30" y="380" class="ta tb" style="font-size:11px">Alexander, 2026-10-21</text>
 </svg></div><figcaption><b>Figure 15.</b> The one-member signature corner, traced at dev and <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>. The lift records one thing and returns another; dev used what it returns, <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> uses what it records. Alexander's answer of 2026-10-21 is at the bottom.</figcaption></figure>
-<p>A one-member signature desugars to a one-field labeled product. When a definition's own type is something else, the walk lifts it into that product: <code>autolabel_singleton_tuple</code> analyzes a fresh copy against the field's type, records that bare analysis at the definition's ids, and returns <code>(x = …)</code> around the raw, unelaborated source (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L310-L358" title="src/language/statics/Statics.re, lines 310-358, at 962a7cb009"><code>Statics.re:310-358</code></a>; it runs from <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2778-L2791" title="src/language/statics/Statics.re, lines 2778-2791, at 962a7cb009"><code>Statics.re:2778-2791</code></a>). Dev's direct pass handed what it returns to <code>moduleexp_elab</code>; <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> reads what it records. For the extra-member module that turns <code>M.x</code> from the module's raw source into 1, which <code class="ref"><b>^report(</b>21<b>)</b></code> confirmed by running both commits. Alexander's answer: dev's result is a bug from the auto-labelling of one-member tuples, and 1 (or stuck) is right; the PR's test pins the fix.</p>
+<p>A one-member signature desugars to a one-field labeled product. When a definition's own type is something else, the walk lifts it into that product: <code>autolabel_singleton_tuple</code> analyzes a fresh copy against the field's type, records that bare analysis at the definition's ids, and returns <code>(x = …)</code> around the raw, unelaborated source (<a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L310-L358" title="src/language/statics/Statics.re, lines 310-358, at 962a7cb009"><code>Statics.re:310-358</code></a>; it runs from <a class="cl" href="https://github.com/hazelgrove/hazel/blob/962a7cb0091cad9a115f82f92433c4d6499f7135/src/language/statics/Statics.re#L2778-L2791" title="src/language/statics/Statics.re, lines 2778-2791, at 962a7cb009"><code>Statics.re:2778-2791</code></a>). Dev's direct pass handed what it returns to <code>moduleexp_elab</code>; <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> reads what it records. For the extra-member module that turns <code>M.x</code> from the module's raw source into 1, which <a href="../021/"><code class="ref"><b>^report(</b>21<b>)</b></code></a> confirmed by running both commits. Alexander's answer: dev's result is a bug from the auto-labelling of one-member tuples, and 1 (or stuck) is right; the PR's test pins the fix.</p>
 <figure class="fig" id="fig-lift-bare"><div class="figscroll"><svg class="fg" viewBox="0 0 1000 214" style="min-width:780px" role="img" aria-label="The same corner with a plain value: module M : { let x : Int } = 5 in M.x. On dev the direct pass returns (x = 5), so M.x is 5 with no static error; with #2651 M is bound to 5 and M.x is stuck, run with the command-line tool (Matthew&#x27;s comment on #2651)."><title>The same corner with a plain value: module M : { let x : Int } = 5 in M.x. On dev the direct pass returns (x = 5), so M.x is 5 with no static error; with #2651 M is bound to 5 and M.x is stuck, run with the command-line tool (Matthew's comment on #2651).</title>
 <rect x="300" y="12" width="400" height="38" rx="7" class="bx k"/>
 <text x="500" y="35.32" class="t mono" text-anchor="middle">module M : { let x : Int } = 5 in M.x</text>
@@ -1489,7 +1489,7 @@ let (def_elab_direct, m) =
 <li><b>The follow-up, <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a>:</b> what it does, its tests and their results, and its timings are from its description and from the notes of the run that built it, at <a href="https://github.com/hazelgrove/hazel/commit/ea23dd493093dc7977c950b994f97a82ed870e20"><code>ea23dd4930</code></a>. Its new test files were read; its code was not read for this report, and its tests were not run again here.</li>
 <li><b>Finished</b> on 2026-10-21 at 14:41 MDT, once the follow-up <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a> was open. Later changes come as dated updates.</li>
 <li><b>A fact-check</b> re-derived each line number at the commit its link names; dev had moved since some notes were written. The figures were rendered to images with ffmpeg's SVG reader, in the light and dark colours, and looked at; the page was not opened in a browser.</li>
-<li><b>Not confirmed:</b> the editor's context inside a function-valued module and the tuple-literal case were traced in the code, not run. The six programs in <a href="#runs">the runs</a> are confirmed by running them at dev 962a7cb009 and at 29c08fd8fa, the bare-value program's stuck <code>5 .x</code> among them (also in <a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340596357">Matthew's comment on #2651</a>). The analysis counts were counted from the code, not measured. The timings quoted are <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s own and <a href="https://github.com/hazelgrove/hazel/issues/2609">#2609</a>'s finding 7 (two runs each), and <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a>'s: the command-line tool's times on nested chains, two runs per depth, and its tests' own time bounds, timed with <code>Sys.time</code> at its head and in throwaway builds; this report timed nothing. The two corners <code class="ref"><b>^report(</b>21<b>)</b></code> found, the extra-member module and the self-naming definition, were confirmed there by running the command-line tool at <a href="https://github.com/hazelgrove/hazel/commit/e3013b036053fbef28211eef476cb8090ee2bbda"><code>e3013b0360</code></a> and at dev's <a href="https://github.com/hazelgrove/hazel/commit/34f9605ddfda9aa9e629586b31d285f98221bcc3"><code>34f9605ddf</code></a>.</li>
+<li><b>Not confirmed:</b> the editor's context inside a function-valued module and the tuple-literal case were traced in the code, not run. The six programs in <a href="#runs">the runs</a> are confirmed by running them at dev 962a7cb009 and at 29c08fd8fa, the bare-value program's stuck <code>5 .x</code> among them (also in <a href="https://github.com/hazelgrove/hazel/pull/2651#discussion_r4340596357">Matthew's comment on #2651</a>). The analysis counts were counted from the code, not measured. The timings quoted are <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a>'s own and <a href="https://github.com/hazelgrove/hazel/issues/2609">#2609</a>'s finding 7 (two runs each), and <a href="https://github.com/hazelgrove/hazel/pull/2717">#2717</a>'s: the command-line tool's times on nested chains, two runs per depth, and its tests' own time bounds, timed with <code>Sys.time</code> at its head and in throwaway builds; this report timed nothing. The two corners <a href="../021/"><code class="ref"><b>^report(</b>21<b>)</b></code></a> found, the extra-member module and the self-naming definition, were confirmed there by running the command-line tool at <a href="https://github.com/hazelgrove/hazel/commit/e3013b036053fbef28211eef476cb8090ee2bbda"><code>e3013b0360</code></a> and at dev's <a href="https://github.com/hazelgrove/hazel/commit/34f9605ddfda9aa9e629586b31d285f98221bcc3"><code>34f9605ddf</code></a>.</li>
 <li><b>Credit:</b> <a href="https://github.com/hazelgrove/hazel/pull/2651">#2651</a> and <a href="https://github.com/hazelgrove/hazel/pull/2603">#2603</a> are Matthew Hammer's, made with Claude. Dev's module system and the <code>module</code> keyword are Andrew Blinn's; Modules II is Alexander Bandukwala's; the statics without a separate elaborator, Mode or Self is Matt Keenan's; DefStatics is Andrew Blinn's, in <a href="https://github.com/hazelgrove/hazel/pull/2469">#2469</a>.</li>
 <li><b>The page</b> was first made by <code>024/drivers/gen024.py</code> (figures in <code>figs.py</code>, questions in <code>questions.py</code>); since then it has been edited directly as the review went on, so rerunning the generator would undo those edits.</li>
   <!-- data-line: begin -->
@@ -1616,192 +1616,6 @@ let (def_elab_direct, m) =
 })();
 </script>
 <!-- theme: end -->
-<!-- ref-cards: begin -->
-<style>
-  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
-  .ref-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
-    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
-    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
-  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
-  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
-  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
-  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
-  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
-    vertical-align: 1px; background: #6e7781; }
-  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
-  .rc-state.done { background: #8250df; }
-</style>
-<script>
-/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
-   ticket from the work dashboard's data (its area, its status, its first
-   line), carried by the dashboard's own pages and read live from the
-   published data anywhere else; a report from its own page, live (its
-   title, date and opening). Once per page load each. */
-(() => {
-  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
-  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
-  /* the dashboard itself carries its tickets (made with the page, changed
-     with it); any other page asks the published data */
-  const EMBED = null;
-  let data = EMBED ? Promise.resolve(EMBED) : null;
-  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
-  const pages = new Map();
-  const loadReport = url => {
-    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
-      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
-      let p = h1 && h1.nextElementSibling;
-      while (p && p.tagName !== "P") p = p.nextElementSibling;
-      const label = (doc.querySelector(".series") || {}).textContent || "";
-      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
-               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
-    }).catch(() => null));
-    return pages.get(url);
-  };
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
-  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
-  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
-  const ticketCard = (n, d) => {
-    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
-    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
-    const q = (d.queue || []).indexOf(n);
-    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
-      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
-      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
-    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
-      `<div class="rc-title">${esc(lead(t.text))}</div>` +
-      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
-      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
-  };
-  const reportCard = (n, r) => r
-    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
-      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
-    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
-  let card = null, over = null, timer = null;
-  const place = a => {
-    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
-    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
-    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
-  };
-  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
-  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
-  const show = (a, ref) => {
-    over = a; clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
-      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
-      card.hidden = false; place(a);
-      let html;
-      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
-      else html = reportCard(ref.n, await loadReport(a.href));
-      if (over !== a) return;
-      card.innerHTML = html; place(a);
-    }, 250);
-  };
-  const linkOf = t => t && t.closest && t.closest("a[href]");
-  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
-  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
-  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
-  document.addEventListener("focusout", hide);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
-  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
-})();
-</script>
-<!-- ref-cards: end -->
-<!-- pr-cards: begin -->
-<style>
-  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
-  .pr-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
-    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
-    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
-  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
-  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
-  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
-  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
-  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
-  .pr-base { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 6px; vertical-align: 1px; }
-  .pr-base.dev { background: #dafbe1; color: #116329; } .pr-base.other { background: #fff1c2; color: #7a4b00; }
-  @media (prefers-color-scheme: dark) { .pr-base.dev { background: #12361f; color: #6fdd8b; } .pr-base.other { background: #3d2e00; color: #f2cc60; } }
-  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
-</style>
-<script>
-/* A card for each link to a GitHub PR or issue, on hover or focus: its
-   title, state, the branch a PR targets (dev or not: the distinction that
-   matters, ^ticket(478)), author, dates and comments, asked of GitHub live, once per
-   number per page load; if GitHub does not answer, what it said when the
-   page was built (tools/link_prs.py writes this block). */
-(() => {
-  const CACHED = {"hazelgrove/hazel#2469": {"author": "disconcision", "comments": 17, "created": "2026-08-27T04:14:59Z", "kind": "pull", "state": "open", "title": "Modular editors", "updated": "2026-10-21T10:40:31Z", "base": "dev"}, "hazelgrove/hazel#2493": {"author": "7h3kk1d", "comments": 5, "created": "2026-09-05T00:27:34Z", "kind": "pull", "state": "open", "title": "Modules II, part 1: first-class signature types and module values", "updated": "2026-10-21T15:16:36Z", "base": "dev"}, "hazelgrove/hazel#2494": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T00:27:36Z", "kind": "pull", "state": "draft", "title": "Modules II, part 2: sealing at explicit coercion sites", "updated": "2026-10-21T15:57:12Z", "base": "modules-ii/1-sig-types"}, "hazelgrove/hazel#2495": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T00:27:38Z", "kind": "pull", "state": "draft", "title": "Modules II, part 3: abstract type members, sealing, path types", "updated": "2026-10-21T15:50:47Z", "base": "modules-ii/2-width-subtyping"}, "hazelgrove/hazel#2498": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T01:35:16Z", "kind": "pull", "state": "draft", "title": "Modules II, part 4: module-typed functions and generative escape", "updated": "2026-10-21T15:52:40Z", "base": "modules-ii/3-abstract-types"}, "hazelgrove/hazel#2500": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T15:01:54Z", "kind": "pull", "state": "draft", "title": "Modules II, part 5: tuple label errors like modules, named missing members, CLI spans", "updated": "2026-10-21T15:56:47Z", "base": "modules-ii/4-module-typed-functions"}, "hazelgrove/hazel#2501": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T17:15:00Z", "kind": "pull", "state": "draft", "title": "Modules II, part 6: a sub-module's wider annotation is kept and sealed", "updated": "2026-10-21T15:59:49Z", "base": "modules-ii/5-projection-improvements"}, "hazelgrove/hazel#2503": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T19:31:57Z", "kind": "pull", "state": "draft", "title": "Modules II, part 7: a signature member declared twice is an error", "updated": "2026-10-21T15:46:45Z", "base": "modules-ii/6-nested-expectations"}, "hazelgrove/hazel#2508": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-07T15:09:28Z", "kind": "pull", "state": "draft", "title": "Modules II, part 8: modular implicits (proof of concept, not close to done)", "updated": "2026-10-21T15:48:53Z", "base": "modules-ii/7-duplicate-signature-members"}, "hazelgrove/hazel#2510": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-07T21:23:36Z", "kind": "pull", "state": "draft", "title": "Modules II, part 9: the standard library as modules (proof of concept)", "updated": "2026-10-21T15:53:57Z", "base": "modules-ii/8-modular-implicits"}, "hazelgrove/hazel#2597": {"author": "matthewhammer", "comments": 3, "created": "2026-09-23T15:18:28Z", "kind": "pull", "state": "open", "title": "User-Defined Livelits, as in PLDI '21, and beyond.", "updated": "2026-10-20T19:29:04Z", "base": "integration/livelits-splicerefs"}, "hazelgrove/hazel#2603": {"author": "matthewhammer", "comments": 1, "created": "2026-09-26T21:10:09Z", "kind": "pull", "state": "open", "title": "Statics: a let is analyzed once unless it refers to itself, plus three smaller speedups", "updated": "2026-09-26T21:30:11Z", "base": "dev"}, "hazelgrove/hazel#2609": {"author": "matthewhammer", "comments": 24, "created": "2026-09-28T13:34:18Z", "kind": "issues", "state": "open", "title": "Performance Challenges (Fall 2026)", "updated": "2026-10-14T19:50:20Z"}, "hazelgrove/hazel#2635": {"author": "matthewhammer", "comments": 3, "created": "2026-10-01T22:50:14Z", "kind": "pull", "state": "draft", "title": "Livelits × modular editors: merge #2469 into the livelits branch", "updated": "2026-10-21T20:18:06Z", "base": "integration/livelits-splicerefs-full"}, "hazelgrove/hazel#2651": {"author": "matthewhammer", "comments": 3, "created": "2026-10-05T22:34:31Z", "kind": "pull", "state": "open", "title": "Statics: a module binding analyzes its definition once, not twice", "updated": "2026-10-21T19:27:13Z", "base": "dev"}, "hazelgrove/hazel#2661": {"author": "matthewhammer", "comments": 1, "created": "2026-10-10T01:18:55Z", "kind": "pull", "state": "open", "title": "Types get a Merkle hash; the evaluator asks is_consistent once per pair", "updated": "2026-10-20T20:31:49Z", "base": "dev"}, "hazelgrove/hazel#2675": {"author": "matthewhammer", "comments": 1, "created": "2026-10-12T13:05:13Z", "kind": "pull", "state": "open", "title": "Incremental evaluation reuses expressions around a recursive let", "updated": "2026-10-19T21:05:38Z", "base": "dev"}, "hazelgrove/hazel#2679": {"author": "matthewhammer", "comments": 1, "created": "2026-10-12T20:45:04Z", "kind": "pull", "state": "merged", "title": "An ascription pushed through a value gives the value back when it already has the type", "updated": "2026-10-19T19:48:48Z", "base": "dev"}, "hazelgrove/hazel#2681": {"author": "matthewhammer", "comments": 2, "created": "2026-10-13T13:04:35Z", "kind": "pull", "state": "open", "title": "A value known to have a type is not walked again for it", "updated": "2026-10-20T22:01:42Z", "base": "dev"}, "hazelgrove/hazel#2689": {"author": "matthewhammer", "comments": 1, "created": "2026-10-17T03:12:20Z", "kind": "pull", "state": "draft", "title": "Test: statics analyzes each expression within a budget", "updated": "2026-10-17T03:28:12Z", "base": "dev"}, "hazelgrove/hazel#2717": {"author": "matthewhammer", "comments": 1, "created": "2026-10-21T20:31:11Z", "kind": "pull", "state": "draft", "title": "Statics: a module binding is a non-recursive let", "updated": "2026-10-21T20:49:37Z", "base": "dev"}}, BUILT = "2026-10-21";
-  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(pull|issues)\/(\d+)$/;
-  const asked = new Map();
-  /* a PR from the pulls endpoint, which has its base branch; an issue from the issues one */
-  const ask = (key, kind) => {
-    if (!asked.has(key)) {
-      const [repo, n] = key.split("#"), pull = kind === "pull";
-      asked.set(key, fetch(`https://api.github.com/repos/${repo}/${pull ? "pulls" : "issues"}/${n}`)
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
-                      comments: j.comments, kind: pull || j.pull_request ? "pull" : "issues", base: j.base && j.base.ref,
-                      state: j.merged_at || (j.pull_request && j.pull_request.merged_at) ? "merged" : j.draft ? "draft" : j.state }))
-        .catch(() => null));
-    }
-    return asked.get(key);
-  };
-  const baseChip = d => !d.base ? "" : d.base === "dev"
-    ? `<span class="pr-base dev" title="this PR merges into dev">into dev</span>`
-    : `<span class="pr-base other" title="this PR merges into ${esc(d.base)}, not dev">into ${esc(d.base)}, not dev</span>`;
-  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const ago = iso => {
-    const s = (Date.now() - new Date(iso)) / 1000;
-    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
-      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
-    return "just now";
-  };
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const fill = (key, d, note) => {
-    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
-    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span>${baseChip(d)}</div>` +
-      `<div class="pr-title">${esc(d.title)}</div>` +
-      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
-      (note ? `<div class="pr-note">${note}</div>` : "");
-  };
-  let card = null, over = null, timer = null;
-  const place = a => {
-    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
-    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
-    const below = r.bottom + 6 + h < innerHeight;
-    card.style.left = (left + scrollX) + "px";
-    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
-  };
-  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
-  const show = a => {
-    const m = RX.exec(a.href);
-    if (!m) return;
-    const key = m[1] + "#" + m[3];
-    over = a; clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
-      const cached = CACHED[key];
-      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
-      card.hidden = false; place(a);
-      const d = await ask(key, m[2]);
-      if (over !== a) return;
-      card.innerHTML = d ? fill(key, d, "")
-        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
-        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
-      place(a);
-    }, 250);
-  };
-  const linkOf = t => t && t.closest && t.closest("a[href]");
-  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
-  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
-  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
-  document.addEventListener("focusout", hide);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
-  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
-})();
-</script>
-<!-- pr-cards: end -->
 <!-- report-data: begin -->
 <script type="application/json" id="report-data">
 {
@@ -2633,5 +2447,192 @@ let (def_elab_direct, m) =
 }
 </script>
 <!-- report-data: end -->
+<!-- pr-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .pr-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
+  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
+  .pr-base { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 6px; vertical-align: 1px; }
+  .pr-base.dev { background: #dafbe1; color: #116329; } .pr-base.other { background: #fff1c2; color: #7a4b00; }
+  @media (prefers-color-scheme: dark) { .pr-base.dev { background: #12361f; color: #6fdd8b; } .pr-base.other { background: #3d2e00; color: #f2cc60; } }
+  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
+</style>
+<script>
+/* A card for each link to a GitHub PR or issue, on hover or focus: its
+   title, state, the branch a PR targets (dev or not: the distinction that
+   matters, ^ticket(478)), author, dates and comments, asked of GitHub live, once per
+   number per page load; if GitHub does not answer, what it said when the
+   page was built (tools/link_prs.py writes this block). */
+(() => {
+  const CACHED = {"hazelgrove/hazel#2469": {"author": "disconcision", "comments": 17, "created": "2026-08-27T04:14:59Z", "kind": "pull", "state": "open", "title": "Modular editors", "updated": "2026-10-21T10:40:31Z", "base": "dev"}, "hazelgrove/hazel#2493": {"author": "7h3kk1d", "comments": 5, "created": "2026-09-05T00:27:34Z", "kind": "pull", "state": "open", "title": "Modules II, part 1: first-class signature types and module values", "updated": "2026-10-21T15:16:36Z", "base": "dev"}, "hazelgrove/hazel#2494": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T00:27:36Z", "kind": "pull", "state": "draft", "title": "Modules II, part 2: sealing at explicit coercion sites", "updated": "2026-10-21T15:57:12Z", "base": "modules-ii/1-sig-types"}, "hazelgrove/hazel#2495": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T00:27:38Z", "kind": "pull", "state": "draft", "title": "Modules II, part 3: abstract type members, sealing, path types", "updated": "2026-10-21T15:50:47Z", "base": "modules-ii/2-width-subtyping"}, "hazelgrove/hazel#2498": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T01:35:16Z", "kind": "pull", "state": "draft", "title": "Modules II, part 4: module-typed functions and generative escape", "updated": "2026-10-21T15:52:40Z", "base": "modules-ii/3-abstract-types"}, "hazelgrove/hazel#2500": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T15:01:54Z", "kind": "pull", "state": "draft", "title": "Modules II, part 5: tuple label errors like modules, named missing members, CLI spans", "updated": "2026-10-21T15:56:47Z", "base": "modules-ii/4-module-typed-functions"}, "hazelgrove/hazel#2501": {"author": "7h3kk1d", "comments": 2, "created": "2026-09-05T17:15:00Z", "kind": "pull", "state": "draft", "title": "Modules II, part 6: a sub-module's wider annotation is kept and sealed", "updated": "2026-10-21T15:59:49Z", "base": "modules-ii/5-projection-improvements"}, "hazelgrove/hazel#2503": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-05T19:31:57Z", "kind": "pull", "state": "draft", "title": "Modules II, part 7: a signature member declared twice is an error", "updated": "2026-10-21T15:46:45Z", "base": "modules-ii/6-nested-expectations"}, "hazelgrove/hazel#2508": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-07T15:09:28Z", "kind": "pull", "state": "draft", "title": "Modules II, part 8: modular implicits (proof of concept, not close to done)", "updated": "2026-10-21T15:48:53Z", "base": "modules-ii/7-duplicate-signature-members"}, "hazelgrove/hazel#2510": {"author": "7h3kk1d", "comments": 1, "created": "2026-09-07T21:23:36Z", "kind": "pull", "state": "draft", "title": "Modules II, part 9: the standard library as modules (proof of concept)", "updated": "2026-10-21T15:53:57Z", "base": "modules-ii/8-modular-implicits"}, "hazelgrove/hazel#2597": {"author": "matthewhammer", "comments": 3, "created": "2026-09-23T15:18:28Z", "kind": "pull", "state": "open", "title": "User-Defined Livelits, as in PLDI '21, and beyond.", "updated": "2026-10-20T19:29:04Z", "base": "integration/livelits-splicerefs"}, "hazelgrove/hazel#2603": {"author": "matthewhammer", "comments": 1, "created": "2026-09-26T21:10:09Z", "kind": "pull", "state": "open", "title": "Statics: a let is analyzed once unless it refers to itself, plus three smaller speedups", "updated": "2026-09-26T21:30:11Z", "base": "dev"}, "hazelgrove/hazel#2609": {"author": "matthewhammer", "comments": 24, "created": "2026-09-28T13:34:18Z", "kind": "issues", "state": "open", "title": "Performance Challenges (Fall 2026)", "updated": "2026-10-14T19:50:20Z"}, "hazelgrove/hazel#2635": {"author": "matthewhammer", "comments": 3, "created": "2026-10-01T22:50:14Z", "kind": "pull", "state": "draft", "title": "Livelits × modular editors: merge #2469 into the livelits branch", "updated": "2026-10-21T20:18:06Z", "base": "integration/livelits-splicerefs-full"}, "hazelgrove/hazel#2651": {"author": "matthewhammer", "comments": 3, "created": "2026-10-05T22:34:31Z", "kind": "pull", "state": "open", "title": "Statics: a module binding analyzes its definition once, not twice", "updated": "2026-10-21T19:27:13Z", "base": "dev"}, "hazelgrove/hazel#2661": {"author": "matthewhammer", "comments": 1, "created": "2026-10-10T01:18:55Z", "kind": "pull", "state": "open", "title": "Types get a Merkle hash; the evaluator asks is_consistent once per pair", "updated": "2026-10-20T20:31:49Z", "base": "dev"}, "hazelgrove/hazel#2675": {"author": "matthewhammer", "comments": 1, "created": "2026-10-12T13:05:13Z", "kind": "pull", "state": "open", "title": "Incremental evaluation reuses expressions around a recursive let", "updated": "2026-10-19T21:05:38Z", "base": "dev"}, "hazelgrove/hazel#2679": {"author": "matthewhammer", "comments": 1, "created": "2026-10-12T20:45:04Z", "kind": "pull", "state": "merged", "title": "An ascription pushed through a value gives the value back when it already has the type", "updated": "2026-10-19T19:48:48Z", "base": "dev"}, "hazelgrove/hazel#2681": {"author": "matthewhammer", "comments": 3, "created": "2026-10-13T13:04:35Z", "kind": "pull", "state": "open", "title": "A value known to have a type is not walked again for it", "updated": "2026-10-22T15:31:32Z", "base": "dev"}, "hazelgrove/hazel#2689": {"author": "matthewhammer", "comments": 1, "created": "2026-10-17T03:12:20Z", "kind": "pull", "state": "draft", "title": "Test: statics analyzes each expression within a budget", "updated": "2026-10-17T03:28:12Z", "base": "dev"}, "hazelgrove/hazel#2717": {"author": "matthewhammer", "comments": 1, "created": "2026-10-21T20:31:11Z", "kind": "pull", "state": "draft", "title": "Statics: a module binding is a non-recursive let", "updated": "2026-10-21T20:49:37Z", "base": "dev"}}, BUILT = "2026-10-22";
+  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(pull|issues)\/(\d+)$/;
+  const asked = new Map();
+  /* a PR from the pulls endpoint, which has its base branch; an issue from the issues one */
+  const ask = (key, kind) => {
+    if (!asked.has(key)) {
+      const [repo, n] = key.split("#"), pull = kind === "pull";
+      asked.set(key, fetch(`https://api.github.com/repos/${repo}/${pull ? "pulls" : "issues"}/${n}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
+                      comments: j.comments, kind: pull || j.pull_request ? "pull" : "issues", base: j.base && j.base.ref,
+                      state: j.merged_at || (j.pull_request && j.pull_request.merged_at) ? "merged" : j.draft ? "draft" : j.state }))
+        .catch(() => null));
+    }
+    return asked.get(key);
+  };
+  const baseChip = d => !d.base ? "" : d.base === "dev"
+    ? `<span class="pr-base dev" title="this PR merges into dev">into dev</span>`
+    : `<span class="pr-base other" title="this PR merges into ${esc(d.base)}, not dev">into ${esc(d.base)}, not dev</span>`;
+  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const ago = iso => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
+      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
+    return "just now";
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const fill = (key, d, note) => {
+    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
+    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span>${baseChip(d)}</div>` +
+      `<div class="pr-title">${esc(d.title)}</div>` +
+      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
+      (note ? `<div class="pr-note">${note}</div>` : "");
+  };
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
+    const below = r.bottom + 6 + h < innerHeight;
+    card.style.left = (left + scrollX) + "px";
+    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = a => {
+    const m = RX.exec(a.href);
+    if (!m) return;
+    const key = m[1] + "#" + m[3];
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      const cached = CACHED[key];
+      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
+      card.hidden = false; place(a);
+      const d = await ask(key, m[2]);
+      if (over !== a) return;
+      card.innerHTML = d ? fill(key, d, "")
+        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
+        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
+      place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- pr-cards: end -->
+<!-- ref-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .ref-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
+  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    vertical-align: 1px; background: #6e7781; }
+  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
+  .rc-state.done { background: #8250df; }
+</style>
+<script>
+/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
+   ticket from the work dashboard's data (its area, its status, its first
+   line), carried by the dashboard's own pages and read live from the
+   published data anywhere else; a report from its own page, live (its
+   title, date and opening). Once per page load each. */
+(() => {
+  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
+  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
+  /* the dashboard itself carries its tickets (made with the page, changed
+     with it); any other page asks the published data */
+  const EMBED = null;
+  let data = EMBED ? Promise.resolve(EMBED) : null;
+  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
+  const pages = new Map();
+  const loadReport = url => {
+    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
+      let p = h1 && h1.nextElementSibling;
+      while (p && p.tagName !== "P") p = p.nextElementSibling;
+      const label = (doc.querySelector(".series") || {}).textContent || "";
+      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
+               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
+    }).catch(() => null));
+    return pages.get(url);
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
+  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
+  const ticketCard = (n, d) => {
+    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
+    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
+    const q = (d.queue || []).indexOf(n);
+    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
+      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
+      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
+    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
+      `<div class="rc-title">${esc(lead(t.text))}</div>` +
+      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
+      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
+  };
+  const reportCard = (n, r) => r
+    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
+      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
+    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
+    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = (a, ref) => {
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
+      card.hidden = false; place(a);
+      let html;
+      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
+      else html = reportCard(ref.n, await loadReport(a.href));
+      if (over !== a) return;
+      card.innerHTML = html; place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- ref-cards: end -->
+
 </body>
 </html>

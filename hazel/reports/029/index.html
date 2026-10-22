@@ -112,7 +112,7 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
 <body><main>
 <p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>29<b>)</b></code> · performance · started 2026-10-22 · <span class="wip">work in progress</span> · about 10 minutes to read</p>
 <h1>Where the Gap Comes From</h1>
-<p class="sub">Matthew, on <a href="../027/#fig-sizes">^report(27)'s Figure 1</a>: <q>seems to say that Hazel and Fumola are less than 3x apart in this situation. How would you attribute the difference in performance? Is it Wasm vs JS -- or more than that? Both use a small-step evaluation system, for a language with purely-functional, higher order data. Let's draft a report WIP --- looking more into the contrast and how it shows up with actual analysis of each system, while running the same programs.</q> Eight small programs, written the same way in both languages, timed, step-counted and profiled (<code class="ref"><b>^ticket(</b>545<b>)</b></code>).</p>
+<p class="sub">Matthew, on <a href="../027/#fig-sizes"><code class="ref"><b>^report(</b>27<b>)</b></code>'s Figure 1</a>: <q>seems to say that Hazel and Fumola are less than 3x apart in this situation. How would you attribute the difference in performance? Is it Wasm vs JS -- or more than that? Both use a small-step evaluation system, for a language with purely-functional, higher order data. Let's draft a report WIP --- looking more into the contrast and how it shows up with actual analysis of each system, while running the same programs.</q> Eight small programs, written the same way in both languages, timed, step-counted and profiled (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-545"><code class="ref"><b>^ticket(</b>545<b>)</b></code></a>).</p>
 
 <div class="headline">
 <p><b>Short answers.</b> More than wasm against js. The first three are the causes, each measured below; the last two are where the target and the boundary come in.</p>
@@ -121,11 +121,11 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
 <li><b>A Hazel step pays for the editor around it.</b> Every term the evaluator visits, values included, goes through five stages: state merging, a reuse check, probe sampling, recording effects, then the rule itself. On the loop, the rule is 7% of the time; garbage collection is 36%, and the stages and their trampolines 37%. Fumola's machine keeps values apart from syntax and steps a continuation: one match, no stages.</li>
 <li><b>On lists, Hazel's costs grow with the list, so the gap does too.</b> Two causes, both found here:
  <ul>
- <li><b>A function handed to JS carries its captured values as text.</b> When Hazel's JS library returns a function, it writes the function's environment into its body (<code>finish</code>: <code>Substitution.in_exp</code>), so a list the function holds becomes a list literal inside it, evaluated again, element by element, at every call: 0.234, 1.14 and 3.94 ms for lists of 100, 1,000 and 3,000, where Fumola's stays at about 0.291 ms. Called from inside Hazel, the same function costs 27 passes at every size: <b>Hazel's evaluator holds values in O(1); its library does not.</b> This is what holding the world cost in <a href="../027/">^report(27)</a>, and what <code class="ref"><b>^ticket(</b>540<b>)</b></code> was chasing.</li>
+ <li><b>A function handed to JS carries its captured values as text.</b> When Hazel's JS library returns a function, it writes the function's environment into its body (<code>finish</code>: <code>Substitution.in_exp</code>), so a list the function holds becomes a list literal inside it, evaluated again, element by element, at every call: 0.234, 1.14 and 3.94 ms for lists of 100, 1,000 and 3,000, where Fumola's stays at about 0.291 ms. Called from inside Hazel, the same function costs 27 passes at every size: <b>Hazel's evaluator holds values in O(1); its library does not.</b> This is what holding the world cost in <a href="../027/"><code class="ref"><b>^report(</b>27<b>)</b></code></a>, and what <a href="https://matthewhammer.org/hazel/dashboard/#ticket-540"><code class="ref"><b>^ticket(</b>540<b>)</b></code></a> was chasing.</li>
  <li><b>A list loop is quadratic.</b> Each iteration that passes the growing list on pushes its type, <code>[Int]</code>, over every element again, minting a fresh id for each part and then keeping none of them. Building and summing 3,000 numbers: 4,591 ms in Hazel, 24.7 ms in Fumola, 186x.</li>
  </ul></li>
 <li><b>Where js does show, it is in Hazel's ids.</b> A fresh id is a UUID written into 16 bytes, and js_of_ocaml turns bytes into a JS string by hand: about three quarters of minting an id, and 46% of the list loop's time. A native build would copy 16 bytes. Wasm costs Fumola 1.2x to 1.5x against its native build on the same runner.</li>
-<li><b>Hazel's boundary is the cheaper one.</b> Passing in 3,000 numbers from JS costs Hazel 0.931 ms; Fumola, which takes only source text, parses them in 5.65 ms. For ^report(27)'s map of 4,096 cells: 80.3 ms in Hazel, most of Fumola's 148.</li>
+<li><b>Hazel's boundary is the cheaper one.</b> Passing in 3,000 numbers from JS costs Hazel 0.931 ms; Fumola, which takes only source text, parses them in 5.65 ms. For <a href="../027/"><code class="ref"><b>^report(</b>27<b>)</b></code></a>'s map of 4,096 cells: 80.3 ms in Hazel, most of Fumola's 148.</li>
 </ol>
 </div>
 
@@ -199,7 +199,7 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
   &gt; Closure(Var(k))  &lt; Final</pre>
 <p>The literal is written in by the library, not the evaluator. <code>Evaluator.evaluate</code> finishes every result with <code>finish = e =&gt; e |&gt; Substitution.in_exp(env) |&gt; Exp.replace_all_ids</code>, which turns a closure (a function and its environment) into a closed term by substituting the environment's values into the body. <code>HazelLibCore.to_js</code> then wraps that closed term as a JS function. Inside Hazel nothing is substituted: a closure keeps its environment, and a variable's lookup is one step (<code>Transition.re</code> marks a looked-up list final and returns it as it is). Measured with the counter build, the same held function called 100 times by a Hazel loop against called once from JS:</p>
 <div class="scroll"><table><tr><th>list held (n)</th><th>passes a call, from Hazel</th><th>passes a call, from JS</th><th>ms a call, from JS</th></tr><tr><td class=n>100</td><td class=n>27</td><td class=n>108</td><td class=n>0.178</td></tr><tr><td class=n>1,000</td><td class=n>27</td><td class=n>1,008</td><td class=n>1.27</td></tr><tr><td class=n>3,000</td><td class=n>27</td><td class=n>3,008</td><td class=n>4.86</td></tr></table></div>
-<p>So this cost is the library's, and the fix is the library's: hand JS the closure as the evaluator left it, environment and all, rather than its finished form; the call then applies the closure as Hazel would. That is the same move as <code class="ref"><b>^ticket(</b>539<b>)</b></code>'s change for a call's argument (bind it in the environment, do not write it in), made for what comes back. Fumola never has this problem: its values are not syntax, so there is nothing to write back into a body.</p>
+<p>So this cost is the library's, and the fix is the library's: hand JS the closure as the evaluator left it, environment and all, rather than its finished form; the call then applies the closure as Hazel would. That is the same move as <a href="https://matthewhammer.org/hazel/dashboard/#ticket-539"><code class="ref"><b>^ticket(</b>539<b>)</b></code></a>'s change for a call's argument (bind it in the environment, do not write it in), made for what comes back. Fumola never has this problem: its values are not syntax, so there is nothing to write back into a body.</p>
 <h3 id="re-type">A loop re-types its list<a class="anchor" href="#re-type" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="re-type" title="copy this section's address">copy link</button></h3>
 <p>Hazel is gradually typed: it inserts type ascriptions where it infers types, and pushes them through values as it runs. In <code>build(n - 1, n :: acc)</code> the accumulator meets <code>[Int]</code> once an iteration (the counter build shows one <code>Ascription</code> step per iteration), and the push walks the whole list, with a fresh term and a fresh id for each element (<code>src/language/dynamics/transition/Ascriptions.re</code>):</p>
 <pre class="code">| (ListLit(ds), List(ty)) =&gt;
@@ -207,7 +207,7 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
   unchanged(ds, ds')
     ? Some(e)
     : Some(IdTagged.fast_copy(DHExp.rep_id(e), ListLit(ds') |&gt; DHExp.fresh));</pre>
-<p>In the profile of <code>sumbuild(1000)</code>, 60% of the time is spent inside <code>Ascriptions.re</code>, the ids it mints included. When every element already has the type, <code>unchanged</code> gives back the list as it was, so the result is right and small; but the n wrappers and their n ids were made first and are thrown away. Over a loop of n iterations that is about n²/2 ids. <a href="https://github.com/hazelgrove/hazel/pull/2681">#2681</a>'s memo (<a href="../026/">^report(26)</a>) skips this push for a value it has seen at the top of an annotated call; an accumulator is new at every iteration, so it is never seen.</p>
+<p>In the profile of <code>sumbuild(1000)</code>, 60% of the time is spent inside <code>Ascriptions.re</code>, the ids it mints included. When every element already has the type, <code>unchanged</code> gives back the list as it was, so the result is right and small; but the n wrappers and their n ids were made first and are thrown away. Over a loop of n iterations that is about n²/2 ids. <a href="https://github.com/hazelgrove/hazel/pull/2681">#2681</a>'s memo (<a href="../026/"><code class="ref"><b>^report(</b>26<b>)</b></code></a>) skips this push for a value it has seen at the top of an annotated call; an accumulator is new at every iteration, so it is never seen.</p>
 <p>Two changes would help, neither tried yet: check whether a part needs the push before wrapping it (an element of type <code>Int</code> that is an <code>Int</code> needs nothing), and mint ids only for parts that change.</p>
 <h3 id="ids">And a fresh id is dear under js<a class="anchor" href="#ids" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="ids" title="copy this section's address">copy link</button></h3>
 <p>Hazel's ids are UUIDs (<code>src/util/Id.re</code>). Minting one is already cheap in OCaml terms (a counter written into 16 bytes, not a random draw), but <code>Uuidm.v4</code> copies the bytes into a string, and under js_of_ocaml bytes are an array and a string is a JS string, so the copy is a loop over 16 characters building a JS string. In the list loop's profile, 46% of the time is under <code>Id.mk</code>, and three quarters of that is js_of_ocaml's <code>caml_subarray_to_jsbytes</code> and <code>caml_convert_bytes_to_array</code>. This is the one place where the target clearly costs Hazel: natively it would be a 16-byte copy.</p>
@@ -222,10 +222,10 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
 <p><b>Wasm costs Fumola 1.2x to 1.5x on the programs that run many steps</b> (the median of each program's ratio at its largest size: 1.4x). That is all the compilation target does to Fumola, and it is small beside the gap: against native Fumola, Hazel is 12x slower on the loop and 8.1x on calls; against Fumola in wasm, 8.4x and 5.4x. Hazel's own js penalty cannot be measured the same way: its core does not build natively (its utility library depends on a browser UI library, <code>bonsai.web</code>), so what js costs it shows only where a profile names a js-only cost, as with ids above.</p>
 <p>One more difference this table shows: <b>a call's floor</b>. A Fumola call that does nothing (<code>h_id</code>) costs 0.325 ms natively and 0.425 ms in wasm, the price of parsing the call's text and writing its answer as JSON, natively too. Hazel's is 0.029 ms: a JS function called with a JS value. For a game that asks a rule once a frame, Fumola's floor is about 2% of a 60 fps frame; Hazel's is nothing.</p>
 
-<h2 id="report-27">Report 27's Figure 1, read again<a class="anchor" href="#report-27" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="report-27" title="copy this section's address">copy link</button></h2>
+<h2 id="report-27"><a href="../027/"><code class="ref"><b>^report(</b>27<b>)</b></code></a>'s Figure 1, read again<a class="anchor" href="#report-27" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="report-27" title="copy this section's address">copy link</button></h2>
 <p>At 64x64 (4,096 cells), the World rule:</p>
 <ul>
-<li><b>Passed in: Hazel 341 ms, Fumola 148 ms (2.3x).</b> Close, for different reasons. Fumola spends most of its time parsing the map, written out as 281,427 characters of source text, every call (195,144 steps). Hazel spends 80.3 ms bringing the map over from JS (a rule that ignores it, given the same map: <a href="../025/">^report(25)</a>'s <code>idU</code>), records and lists of text being dearer to convert than the numbers of <code>skip</code>, and the rest, 261 ms, walking the list, about 64 µs a cell, a few dozen passes each. The finder's annotation costs one look-up a call, not a walk: <a href="https://github.com/hazelgrove/hazel/pull/2681">#2681</a>'s memo knows every tail of a list it has checked.</li>
+<li><b>Passed in: Hazel 341 ms, Fumola 148 ms (2.3x).</b> Close, for different reasons. Fumola spends most of its time parsing the map, written out as 281,427 characters of source text, every call (195,144 steps). Hazel spends 80.3 ms bringing the map over from JS (a rule that ignores it, given the same map: <a href="../025/"><code class="ref"><b>^report(</b>25<b>)</b></code></a>'s <code>idU</code>), records and lists of text being dearer to convert than the numbers of <code>skip</code>, and the rest, 261 ms, walking the list, about 64 µs a cell, a few dozen passes each. The finder's annotation costs one look-up a call, not a walk: <a href="https://github.com/hazelgrove/hazel/pull/2681">#2681</a>'s memo knows every tail of a list it has checked.</li>
 <li><b>Held as a list and walked: Hazel 256 ms, Fumola 28.7 ms (8.9x).</b> Steps times their cost, as in <code>h_walk</code>, plus, in Hazel, the held world re-evaluated as a literal at every call, since the rule is a function the library returned to JS.</li>
 <li><b>Neighbours only: about 1 ms each.</b> The boundary is all there is, and the two boundaries cost about the same for a handful of cells.</li>
 </ul>
@@ -234,15 +234,15 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
 
 <h2 id="next">What next<a class="anchor" href="#next" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="next" title="copy this section's address">copy link</button></h2>
 <ol>
-<li><b>Keep closures whole across the library</b> (<code class="ref"><b>^ticket(</b>547<b>)</b></code>): functions returned to JS as the evaluator left them, not finished, on a trial branch stacked with <code class="ref"><b>^ticket(</b>539<b>)</b></code>'s, and these programs measured again: <code>h_ref</code> should be flat. Then <code class="ref"><b>^ticket(</b>540<b>)</b></code>'s balanced tree for the World rule can pay off: a held world, O(log N) a move.</li>
-<li><b>Push types without copying</b> (<code class="ref"><b>^ticket(</b>548<b>)</b></code>): check before wrapping in <code>Ascriptions.re</code>, and measure <code>sumbuild</code> again: it should become linear.</li>
+<li><b>Keep closures whole across the library</b> (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-547"><code class="ref"><b>^ticket(</b>547<b>)</b></code></a>): functions returned to JS as the evaluator left them, not finished, on a trial branch stacked with <a href="https://matthewhammer.org/hazel/dashboard/#ticket-539"><code class="ref"><b>^ticket(</b>539<b>)</b></code></a>'s, and these programs measured again: <code>h_ref</code> should be flat. Then <a href="https://matthewhammer.org/hazel/dashboard/#ticket-540"><code class="ref"><b>^ticket(</b>540<b>)</b></code></a>'s balanced tree for the World rule can pay off: a held world, O(log N) a move.</li>
+<li><b>Push types without copying</b> (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-548"><code class="ref"><b>^ticket(</b>548<b>)</b></code></a>): check before wrapping in <code>Ascriptions.re</code>, and measure <code>sumbuild</code> again: it should become linear.</li>
 <li><b>Cheaper ids under js</b>: an id that is a JS string from the start, or an integer, and what that does to the loop's 4%, the list loop's 46%.</li>
-<li><b>Fumola's deep answers</b> (<code class="ref"><b>^ticket(</b>549<b>)</b></code>): turn answers into JSON without recursion (an issue for Adapton/fumola, not filed yet).</li>
+<li><b>Fumola's deep answers</b> (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-549"><code class="ref"><b>^ticket(</b>549<b>)</b></code></a>): turn answers into JSON without recursion (an issue for Adapton/fumola, not filed yet).</li>
 <li>The per-pass cost of the stages when nothing is probed and nothing reused: a fast path for terms that are already values would skip all five.</li>
 </ol>
 
 <h2 id="method">How this was put together<a class="anchor" href="#method" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="method" title="copy this section's address">copy link</button></h2>
-<p>Node v22 on the Ubuntu laptop (Intel i7), one process at a time, pinned to two threads and niced. <code>drivers/kernels.mjs</code> runs the programs: Hazel through its JS library (<code>Hazel.run</code> once, then each program a JS function, called with n), Fumola through its wasm build (<code>fumola_eval_top</code> of the call's text, pinned build <code>2ec634b5df</code>). Three warm-up calls, then up to 60 timed (stopping after 2.5 s and at least 5), the median. Hazel's library: <code>trial/r25-best</code> (all the performance PRs, <a href="../025/#prs">^report(25)</a>) for times, <code>trial/r25-stats</code> (the same with a counter, <code>Hazel.stepCounts()</code>) for passes. Profiles: <code>drivers/prof_ref.mjs</code> records only the calls, through node's inspector, on a dev build with OCaml's names and source positions; <code>drivers/profiles.py</code> splits them by source file. GitHub: Adapton/fumola branch <code>bench/545-contrast</code> builds Fumola natively (<code>crates/fumola_wasm/examples/kernels.rs</code>, calling the same <code>fumola_eval_top</code>) and as wasm, and runs both and Hazel's best build, three rounds interleaved. One round on the laptop so far: read single differences under about 10% as noise.</p>
+<p>Node v22 on the Ubuntu laptop (Intel i7), one process at a time, pinned to two threads and niced. <code>drivers/kernels.mjs</code> runs the programs: Hazel through its JS library (<code>Hazel.run</code> once, then each program a JS function, called with n), Fumola through its wasm build (<code>fumola_eval_top</code> of the call's text, pinned build <code>2ec634b5df</code>). Three warm-up calls, then up to 60 timed (stopping after 2.5 s and at least 5), the median. Hazel's library: <code>trial/r25-best</code> (all the performance PRs, <a href="../025/#prs"><code class="ref"><b>^report(</b>25<b>)</b></code></a>) for times, <code>trial/r25-stats</code> (the same with a counter, <code>Hazel.stepCounts()</code>) for passes. Profiles: <code>drivers/prof_ref.mjs</code> records only the calls, through node's inspector, on a dev build with OCaml's names and source positions; <code>drivers/profiles.py</code> splits them by source file. GitHub: Adapton/fumola branch <code>bench/545-contrast</code> builds Fumola natively (<code>crates/fumola_wasm/examples/kernels.rs</code>, calling the same <code>fumola_eval_top</code>) and as wasm, and runs both and Hazel's best build, three rounds interleaved. One round on the laptop so far: read single differences under about 10% as noise.</p>
 
 <!-- data-line: begin -->
 <h2 id="data">The data<a class="anchor" href="#data" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="data" title="copy this section's address">copy link</button></h2>
@@ -257,192 +257,6 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
   code.ref b { font-weight: 800; }
 </style>
 <!-- refs: end -->
-<!-- ref-cards: begin -->
-<style>
-  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
-  .ref-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
-    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
-    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
-  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
-  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
-  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
-  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
-  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
-    vertical-align: 1px; background: #6e7781; }
-  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
-  .rc-state.done { background: #8250df; }
-</style>
-<script>
-/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
-   ticket from the work dashboard's data (its area, its status, its first
-   line), carried by the dashboard's own pages and read live from the
-   published data anywhere else; a report from its own page, live (its
-   title, date and opening). Once per page load each. */
-(() => {
-  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
-  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
-  /* the dashboard itself carries its tickets (made with the page, changed
-     with it); any other page asks the published data */
-  const EMBED = null;
-  let data = EMBED ? Promise.resolve(EMBED) : null;
-  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
-  const pages = new Map();
-  const loadReport = url => {
-    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
-      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
-      let p = h1 && h1.nextElementSibling;
-      while (p && p.tagName !== "P") p = p.nextElementSibling;
-      const label = (doc.querySelector(".series") || {}).textContent || "";
-      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
-               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
-    }).catch(() => null));
-    return pages.get(url);
-  };
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
-  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
-  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
-  const ticketCard = (n, d) => {
-    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
-    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
-    const q = (d.queue || []).indexOf(n);
-    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
-      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
-      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
-    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
-      `<div class="rc-title">${esc(lead(t.text))}</div>` +
-      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
-      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
-  };
-  const reportCard = (n, r) => r
-    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
-      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
-    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
-  let card = null, over = null, timer = null;
-  const place = a => {
-    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
-    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
-    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
-  };
-  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
-  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
-  const show = (a, ref) => {
-    over = a; clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
-      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
-      card.hidden = false; place(a);
-      let html;
-      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
-      else html = reportCard(ref.n, await loadReport(a.href));
-      if (over !== a) return;
-      card.innerHTML = html; place(a);
-    }, 250);
-  };
-  const linkOf = t => t && t.closest && t.closest("a[href]");
-  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
-  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
-  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
-  document.addEventListener("focusout", hide);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
-  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
-})();
-</script>
-<!-- ref-cards: end -->
-<!-- pr-cards: begin -->
-<style>
-  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
-  .pr-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
-    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
-    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
-  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
-  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
-  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
-  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
-  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
-  .pr-base { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 6px; vertical-align: 1px; }
-  .pr-base.dev { background: #dafbe1; color: #116329; } .pr-base.other { background: #fff1c2; color: #7a4b00; }
-  @media (prefers-color-scheme: dark) { .pr-base.dev { background: #12361f; color: #6fdd8b; } .pr-base.other { background: #3d2e00; color: #f2cc60; } }
-  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
-</style>
-<script>
-/* A card for each link to a GitHub PR or issue, on hover or focus: its
-   title, state, the branch a PR targets (dev or not: the distinction that
-   matters, ^ticket(478)), author, dates and comments, asked of GitHub live, once per
-   number per page load; if GitHub does not answer, what it said when the
-   page was built (tools/link_prs.py writes this block). */
-(() => {
-  const CACHED = {"Adapton/fumola#128": {"author": "matthewhammer", "comments": 2, "created": "2026-09-12T22:19:44Z", "kind": "pull", "state": "merged", "title": "do big { .. }: a region evaluated on the Rust stack", "updated": "2026-09-13T00:56:40Z", "base": "main"}, "hazelgrove/hazel#2681": {"author": "matthewhammer", "comments": 3, "created": "2026-10-13T13:04:35Z", "kind": "pull", "state": "open", "title": "A value known to have a type is not walked again for it", "updated": "2026-10-22T15:31:32Z", "base": "dev"}}, BUILT = "2026-10-22";
-  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(pull|issues)\/(\d+)$/;
-  const asked = new Map();
-  /* a PR from the pulls endpoint, which has its base branch; an issue from the issues one */
-  const ask = (key, kind) => {
-    if (!asked.has(key)) {
-      const [repo, n] = key.split("#"), pull = kind === "pull";
-      asked.set(key, fetch(`https://api.github.com/repos/${repo}/${pull ? "pulls" : "issues"}/${n}`)
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
-                      comments: j.comments, kind: pull || j.pull_request ? "pull" : "issues", base: j.base && j.base.ref,
-                      state: j.merged_at || (j.pull_request && j.pull_request.merged_at) ? "merged" : j.draft ? "draft" : j.state }))
-        .catch(() => null));
-    }
-    return asked.get(key);
-  };
-  const baseChip = d => !d.base ? "" : d.base === "dev"
-    ? `<span class="pr-base dev" title="this PR merges into dev">into dev</span>`
-    : `<span class="pr-base other" title="this PR merges into ${esc(d.base)}, not dev">into ${esc(d.base)}, not dev</span>`;
-  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const ago = iso => {
-    const s = (Date.now() - new Date(iso)) / 1000;
-    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
-      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
-    return "just now";
-  };
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const fill = (key, d, note) => {
-    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
-    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span>${baseChip(d)}</div>` +
-      `<div class="pr-title">${esc(d.title)}</div>` +
-      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
-      (note ? `<div class="pr-note">${note}</div>` : "");
-  };
-  let card = null, over = null, timer = null;
-  const place = a => {
-    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
-    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
-    const below = r.bottom + 6 + h < innerHeight;
-    card.style.left = (left + scrollX) + "px";
-    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
-  };
-  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
-  const show = a => {
-    const m = RX.exec(a.href);
-    if (!m) return;
-    const key = m[1] + "#" + m[3];
-    over = a; clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
-      const cached = CACHED[key];
-      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
-      card.hidden = false; place(a);
-      const d = await ask(key, m[2]);
-      if (over !== a) return;
-      card.innerHTML = d ? fill(key, d, "")
-        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
-        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
-      place(a);
-    }, 250);
-  };
-  const linkOf = t => t && t.closest && t.closest("a[href]");
-  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
-  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
-  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
-  document.addEventListener("focusout", hide);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
-  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
-})();
-</script>
-<!-- pr-cards: end -->
 
 <!-- steps: begin -->
 <style>
@@ -1039,4 +853,191 @@ h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:f
   }));
 })();
 </script>
+<!-- pr-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .pr-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
+  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
+  .pr-base { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 6px; vertical-align: 1px; }
+  .pr-base.dev { background: #dafbe1; color: #116329; } .pr-base.other { background: #fff1c2; color: #7a4b00; }
+  @media (prefers-color-scheme: dark) { .pr-base.dev { background: #12361f; color: #6fdd8b; } .pr-base.other { background: #3d2e00; color: #f2cc60; } }
+  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
+</style>
+<script>
+/* A card for each link to a GitHub PR or issue, on hover or focus: its
+   title, state, the branch a PR targets (dev or not: the distinction that
+   matters, ^ticket(478)), author, dates and comments, asked of GitHub live, once per
+   number per page load; if GitHub does not answer, what it said when the
+   page was built (tools/link_prs.py writes this block). */
+(() => {
+  const CACHED = {"Adapton/fumola#128": {"author": "matthewhammer", "comments": 2, "created": "2026-09-12T22:19:44Z", "kind": "pull", "state": "merged", "title": "do big { .. }: a region evaluated on the Rust stack", "updated": "2026-09-13T00:56:40Z", "base": "main"}, "hazelgrove/hazel#2681": {"author": "matthewhammer", "comments": 3, "created": "2026-10-13T13:04:35Z", "kind": "pull", "state": "open", "title": "A value known to have a type is not walked again for it", "updated": "2026-10-22T15:31:32Z", "base": "dev"}}, BUILT = "2026-10-22";
+  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(pull|issues)\/(\d+)$/;
+  const asked = new Map();
+  /* a PR from the pulls endpoint, which has its base branch; an issue from the issues one */
+  const ask = (key, kind) => {
+    if (!asked.has(key)) {
+      const [repo, n] = key.split("#"), pull = kind === "pull";
+      asked.set(key, fetch(`https://api.github.com/repos/${repo}/${pull ? "pulls" : "issues"}/${n}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
+                      comments: j.comments, kind: pull || j.pull_request ? "pull" : "issues", base: j.base && j.base.ref,
+                      state: j.merged_at || (j.pull_request && j.pull_request.merged_at) ? "merged" : j.draft ? "draft" : j.state }))
+        .catch(() => null));
+    }
+    return asked.get(key);
+  };
+  const baseChip = d => !d.base ? "" : d.base === "dev"
+    ? `<span class="pr-base dev" title="this PR merges into dev">into dev</span>`
+    : `<span class="pr-base other" title="this PR merges into ${esc(d.base)}, not dev">into ${esc(d.base)}, not dev</span>`;
+  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const ago = iso => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
+      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
+    return "just now";
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const fill = (key, d, note) => {
+    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
+    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span>${baseChip(d)}</div>` +
+      `<div class="pr-title">${esc(d.title)}</div>` +
+      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
+      (note ? `<div class="pr-note">${note}</div>` : "");
+  };
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
+    const below = r.bottom + 6 + h < innerHeight;
+    card.style.left = (left + scrollX) + "px";
+    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = a => {
+    const m = RX.exec(a.href);
+    if (!m) return;
+    const key = m[1] + "#" + m[3];
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      const cached = CACHED[key];
+      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
+      card.hidden = false; place(a);
+      const d = await ask(key, m[2]);
+      if (over !== a) return;
+      card.innerHTML = d ? fill(key, d, "")
+        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
+        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
+      place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- pr-cards: end -->
+<!-- ref-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .ref-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
+  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    vertical-align: 1px; background: #6e7781; }
+  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
+  .rc-state.done { background: #8250df; }
+</style>
+<script>
+/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
+   ticket from the work dashboard's data (its area, its status, its first
+   line), carried by the dashboard's own pages and read live from the
+   published data anywhere else; a report from its own page, live (its
+   title, date and opening). Once per page load each. */
+(() => {
+  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
+  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
+  /* the dashboard itself carries its tickets (made with the page, changed
+     with it); any other page asks the published data */
+  const EMBED = null;
+  let data = EMBED ? Promise.resolve(EMBED) : null;
+  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
+  const pages = new Map();
+  const loadReport = url => {
+    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
+      let p = h1 && h1.nextElementSibling;
+      while (p && p.tagName !== "P") p = p.nextElementSibling;
+      const label = (doc.querySelector(".series") || {}).textContent || "";
+      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
+               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
+    }).catch(() => null));
+    return pages.get(url);
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
+  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
+  const ticketCard = (n, d) => {
+    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
+    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
+    const q = (d.queue || []).indexOf(n);
+    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
+      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
+      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
+    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
+      `<div class="rc-title">${esc(lead(t.text))}</div>` +
+      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
+      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
+  };
+  const reportCard = (n, r) => r
+    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
+      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
+    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
+    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = (a, ref) => {
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
+      card.hidden = false; place(a);
+      let html;
+      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
+      else html = reportCard(ref.n, await loadReport(a.href));
+      if (over !== a) return;
+      card.innerHTML = html; place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- ref-cards: end -->
+
 </body></html>
