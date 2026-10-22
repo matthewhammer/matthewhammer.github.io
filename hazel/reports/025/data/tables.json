@@ -295,6 +295,90 @@
   ]
  },
  {
+  "section": "The woods, re-measured on #2635",
+  "section_id": "woods",
+  "columns": [
+   "runner",
+   "off",
+   "depth 1",
+   "depth 2",
+   "depth 3",
+   "whole",
+   "depth 1 keeps"
+  ],
+  "rows": [
+   [
+    "1: EPYC 7763 64-Core",
+    "2,823",
+    "2,434",
+    "2,402",
+    "2,390",
+    "2,416",
+    "96%"
+   ],
+   [
+    "2: EPYC 7763 64-Core",
+    "2,601",
+    "2,283",
+    "2,264",
+    "2,236",
+    "2,214",
+    "82%"
+   ],
+   [
+    "3: EPYC 9V74 80-Core",
+    "2,061",
+    "1,786",
+    "1,764",
+    "1,756",
+    "1,749",
+    "88%"
+   ]
+  ]
+ },
+ {
+  "section": "The woods, re-measured on #2635",
+  "section_id": "woods",
+  "columns": [
+   "has_type asked and told to",
+   "library floor, 16x16 (ms)",
+   "against before",
+   "woods gain kept"
+  ],
+  "rows": [
+   [
+    "no memo (before)",
+    "8.54",
+    "+0%",
+    "0%"
+   ],
+   [
+    "depth 1",
+    "8.53",
+    "+0%",
+    "82-96%"
+   ],
+   [
+    "depth 2",
+    "9.55",
+    "+12%",
+    "87-103%"
+   ],
+   [
+    "depth 3",
+    "10.5",
+    "+23%",
+    "94-106%"
+   ],
+   [
+    "whole (#2681)",
+    "10.1",
+    "+18%",
+    "100%"
+   ]
+  ]
+ },
+ {
   "section": "Before and after the PRs, by map size (ms, p50, the mean of two rounds)",
   "section_id": "t-prs",
   "columns": [
@@ -739,6 +823,47 @@
    [
     "browser: heap, Hazel vs JS",
     "67 vs 51 MB"
+   ]
+  ]
+ },
+ {
+  "section": "Hazel's JS library, as this report uses it",
+  "section_id": "library",
+  "columns": [
+   "use",
+   "how",
+   "what worked",
+   "what was rough",
+   "ticket"
+  ],
+  "rows": [
+   [
+    "timing every rule (node)",
+    "Hazel.run(text) on hazel-lib.js, then the function it gives back called from JS (drivers/r25.mjs)",
+    "One script, no build: GitHub's Deploy build of any branch is a library to time (the four trial builds here). A Hazel function comes back as a JS function; records, lists, strings and constructors convert both ways.",
+    "Every call converts its argument to syntax with fresh ids and re-steps it (the floor, 31 µs a cell). No way to keep a Hazel value across calls except a closure (held). No step count, so per-step costs are inferred from times.",
+    "^ticket(539)"
+   ],
+   [
+    "the game's rules",
+    "Hazel.runProgram({preamble, modules, tail}), a function per room (25-scripting.js)",
+    "Named modules with their own errors; the game plays the same with 🧩 on (^ticket(531)'s checks).",
+    "Compiling the rules costs 0.8 s before the PRs (0.4 s after, above), first event or load. Handlers pay the boundary on all of Globals.",
+    "^ticket(540)"
+   ],
+   [
+    "the tiles under each listing",
+    "the embed frame, index.html#embed, protocol 1: set a program, get ready, size, status",
+    "The protocol is small and did what it says: ready, then the program drawn with statics and Hazel's marks, its height and its verdict back.",
+    "The cell is a static view: no caret, no selection, so the tile shapes never show (Matthew: They don't show up during selection). A whole Hazel app per frame. It draws, sizes and reports only while it can render: a hidden or background page gets height 0 and no status. It takes programs only from origins compiled into it (matthewhammer.org, localhost).",
+    "^ticket(538)"
+   ],
+   [
+    "the run boxes",
+    "hazel-lib.js as a plain script from hazel.org, Hazel.run on the first click",
+    "A page runs a listing in the reader's browser in a few lines: the value back, in Hazel's notation, and its time (neighbours only, 8x8: GoSquare(4, 4, \"W\", Done), about 3 ms after a 0.1 s compile).",
+    "2.8 MB to load; the build to load is a branch's folder on hazel.org, which moves when the branch is pushed; nothing in the library says which version or protocol it is.",
+    "^ticket(537)"
    ]
   ]
  }
