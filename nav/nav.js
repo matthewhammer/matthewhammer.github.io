@@ -47,7 +47,8 @@
         "Slider Responsiveness", "Dress Up in Hazel", "Requests from M and N", "The Witch in Hazel", "Worker and Page", "Performance in CI",
         "Five Minutes to a Picture", "One Slider, Three Ways", "Names and Reuse", "What a Slider Touches", "Naming What a Slider Leaves Alone",
         "Moving a Group, Not Its Points", "Telling the Request What Changed", "What the Page Keeps", "Dress Up and Hazel Today", "Two Fixes for a Drag",
-        "Merging the Performance PRs", "Why #2635 Fails CI", "Tiles Across the Hazel UI", "Agenda for October 21"
+        "Merging the Performance PRs", "Why #2635 Fails CI", "Tiles Across the Hazel UI", "Agenda for October 21",
+        "Correctness of the Performance PRs", "Week in Hazel's Credits", "#2635 Is Green", "Architecture Around #2651", "What a Call into Hazel Costs"
       ].map((t, i) => [`${i + 1}. ${t}`, `${H}/hazel/reports/${String(i + 1).padStart(3, "0")}/`])],
       ["Hazel Work Dashboard", H + "/hazel/dashboard/", [["Closed tickets", H + "/hazel/dashboard/closed.html"]]],
       ["Work notes", H + "/hazel/work-notes/"],
@@ -56,10 +57,10 @@
         ["▶ Play Messed Up Dress Up", H + "/kids-choice-games/dress-up/"],
         ["Dress Up reports", H + "/hazel/dress-up/reports/", [
           "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling",
-          "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose"
+          "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose",
+          "A Cast of Friends", "The Foam, Not the Makers", "Dress Up's Hardest Parts for Hazel", "Posing the Body", "Seen Before It Was Built",
+          "The Space Between the Boxes"
         ].map((t, i) => [i + 1, t])
-          // (a report's number is its own, not its place: 11 to 14 are drafts, not published)
-          .concat([[15, "Seen Before It Was Built"]])
           .map(([n, t]) => [`${n}. ${t}`, `${K}${String(n).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
           ["Every picture, run by run", H + "/dress-up-pictures/"], ["Every picture, by day (to 2026-10-18)", H + "/dress-up-pictures-2026-10-18/"]]],
