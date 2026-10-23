@@ -1,0 +1,595 @@
+{
+ "0.0.411": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "538a69f89eb8988d563262ab989744e75e730a97",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39871104129",
+  "checked": "2026-10-23T01:57Z",
+  "inspect": true
+ },
+ "0.0.410": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "41daa51c3eab39135938261261f790edc49e7d01",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39865592943",
+  "checked": "2026-10-23T00:35Z",
+  "inspect": true
+ },
+ "0.0.409": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "b7167a654f01b0cd30f95e08123d89709a4f6340",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39860571545",
+  "checked": "2026-10-22T23:12Z",
+  "inspect": true
+ },
+ "0.0.408": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "e76e1760fe2fb2e1a1b98beef93eb6c36f7ba4a7",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39725971668",
+  "checked": "2026-10-22T06:26Z",
+  "inspect": true
+ },
+ "0.0.407": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "4de41a3794b911178d71fb0c417047aeb03c8dc6",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39717663414",
+  "checked": "2026-10-22T04:59Z",
+  "inspect": true
+ },
+ "0.0.405": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "0d58f236014fd05a9d6a3298e32e66a7975e12f0",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39707161323",
+  "checked": "2026-10-22T03:37Z",
+  "inspect": true
+ },
+ "0.0.399": {
+  "result": "ok",
+  "failed": [],
+  "commit": "df1e5db611775e73354f1b30a0c0b6e2a0a2979e",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39702893515",
+  "checked": "2026-10-22T02:17Z",
+  "inspect": true
+ },
+ "0.0.398": {
+  "result": "ok",
+  "failed": [],
+  "commit": "64cd5f94bb30ad4198e3e4b96e036dafcce4f8a9",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39680541527",
+  "checked": "2026-10-21T22:57Z",
+  "inspect": true
+ },
+ "0.0.397": {
+  "result": "ok",
+  "failed": [],
+  "commit": "f9a461b162a3000b4c7ef9d97798d016172bfba8",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39579220956",
+  "checked": "2026-10-21T11:00Z",
+  "inspect": true
+ },
+ "0.0.396": {
+  "result": "ok",
+  "failed": [],
+  "commit": "96576ffe6e0a3e880706d9effafbef8db4b8ab12",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39567630790",
+  "checked": "2026-10-21T09:30Z",
+  "inspect": true
+ },
+ "0.0.395": {
+  "result": "ok",
+  "failed": [],
+  "commit": "a834636c5d371af40dc9d8a00f9f7ddb212d2a86",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39555614044",
+  "checked": "2026-10-21T07:46Z",
+  "inspect": true
+ },
+ "0.0.394": {
+  "result": "ok",
+  "failed": [],
+  "commit": "12ac471e0cb2b38f5962344da280b5dd2a2f4652",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39541468171",
+  "checked": "2026-10-21T05:47Z",
+  "inspect": true
+ },
+ "0.0.393": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "9b891f6aaba6339c44e8f69e45cf2af6b30e7fbf",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39534246743",
+  "checked": "2026-10-21T04:29Z",
+  "inspect": true
+ },
+ "0.0.392": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "b1900d5e227fa04867aab1086a3700f3cbd00e2f",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39526121922",
+  "checked": "2026-10-21T03:13Z",
+  "inspect": true
+ },
+ "0.0.390": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "0b9fda0c767b71f702874122f0138fd8d049104a",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39520834546",
+  "checked": "2026-10-21T01:57Z",
+  "inspect": true
+ },
+ "0.0.385": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "b220a2b4b9ef0dcd7ecfd6e91cb21bf309d6d786",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39511433790",
+  "checked": "2026-10-21T00:44Z",
+  "inspect": true
+ },
+ "0.0.376": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "cf13e592327d70d3355407793b2fb959bf7be1ce",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39506705596",
+  "checked": "2026-10-20T23:29Z",
+  "inspect": true
+ },
+ "0.0.375": {
+  "result": "ok",
+  "failed": [],
+  "commit": "471f18d45fae182a42c1b7b19b42bb3f2329c99b",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39474040826",
+  "checked": "2026-10-20T20:35Z",
+  "inspect": true
+ },
+ "0.0.374": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "4d665adb6d47881f595f91182346e93739d38c5c",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39472185973",
+  "checked": "2026-10-20T19:22Z",
+  "inspect": true
+ },
+ "0.0.373": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "bf703d98624c68eda0fef695f533dcd7864f1ff5",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39461663613",
+  "checked": "2026-10-20T18:08Z",
+  "inspect": true
+ },
+ "0.0.372": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "4e2562e1e4ebf6a608f9a492edccfe09c111993b",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39369965765",
+  "checked": "2026-10-20T05:45Z",
+  "inspect": true
+ },
+ "0.0.362": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "fbd20489d16c5f00d76d4a815d2a4929a2a89bf6",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39363945976",
+  "checked": "2026-10-20T04:33Z",
+  "inspect": true
+ },
+ "0.0.347": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "2f5fd0f3bcc62bc55717422fc604518c3e87e3d8",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39355541252",
+  "checked": "2026-10-20T03:22Z",
+  "inspect": true
+ },
+ "0.0.345": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "1779ca021860467db20c353cb75239703c05c4a6",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39350917693",
+  "checked": "2026-10-20T02:11Z",
+  "inspect": true
+ },
+ "0.0.343": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "d2c45121d964d0f8a07e0b9938512a00b0254530",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39334383664",
+  "checked": "2026-10-19T23:46Z",
+  "inspect": true
+ },
+ "0.0.336": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "bc3c6142a2ce309c991746c40e7ab5364d62b36a",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39326440718",
+  "checked": "2026-10-19T22:35Z",
+  "inspect": true
+ },
+ "0.0.335": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "98269d8c368bc996065b3929be43a780e4594426",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39317599161",
+  "checked": "2026-10-19T21:24Z",
+  "inspect": true
+ },
+ "0.0.334": {
+  "result": "ok",
+  "failed": [],
+  "commit": "2739126a1dff57bd7f9c118f13877fbf8e51eb04",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39279405070",
+  "checked": "2026-10-19T16:46Z",
+  "inspect": true
+ },
+ "0.0.333": {
+  "result": "slow",
+  "failed": [
+   "the frame-rate gate"
+  ],
+  "commit": "f0992ab0902ad8a3247dcc37d1bdc4b4b10a1c40",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39265536869",
+  "checked": "2026-10-19T15:31Z",
+  "inspect": true
+ },
+ "0.0.328": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "7f7bd080e0db476b9dd9a74ff280eceaa23de833",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39258684432",
+  "checked": "2026-10-19T14:21Z",
+  "inspect": true
+ },
+ "0.0.327": {
+  "result": "ok",
+  "failed": [],
+  "commit": "18b7d39bea1ba4b3c21cf24941137c78c9bfd413",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39248580789",
+  "checked": "2026-10-19T13:11Z",
+  "inspect": true
+ },
+ "0.0.326": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "ae8f9c191a9bfb6371510fa94b92dc37f1f441ea",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39233371606",
+  "checked": "2026-10-19T11:56Z",
+  "inspect": true
+ },
+ "0.0.325": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "7eef676ff5682e79b1dfc7a9353fad0916ef8f2f",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39227867653",
+  "checked": "2026-10-19T10:49Z",
+  "inspect": true
+ },
+ "0.0.319": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "05f89f3ff46a8c1ca76d1032d3599e5d85ab9316",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39225379252",
+  "checked": "2026-10-19T09:48Z",
+  "inspect": true
+ },
+ "0.0.318": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "fd59fc1f13815fc68c82b538d7d0e2a3700ff928",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39215753838",
+  "checked": "2026-10-19T08:40Z",
+  "inspect": true
+ },
+ "0.0.308": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "ff1f5be3a8c73b1f14739104596e02d47d6ab914",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39209774345",
+  "checked": "2026-10-19T07:40Z",
+  "inspect": true
+ },
+ "0.0.305": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "9a31e8335a5bf69bb7091ee31dd5a515d216f563",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39203988333",
+  "checked": "2026-10-19T06:39Z",
+  "inspect": true
+ },
+ "0.0.303": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "3db58ede0ea233ad8226fc15e17e598fbd752cc3",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39201477718",
+  "checked": "2026-10-19T05:39Z",
+  "inspect": true
+ },
+ "0.0.297": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "762921b8c7c2809e798a0b8f35fcf4a4d8e9af1c",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39196610392",
+  "checked": "2026-10-19T04:50Z",
+  "inspect": true
+ },
+ "0.0.276": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "36fc945360daee1c6d91c85f2c46b00ad659fd30",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39191954416",
+  "checked": "2026-10-19T03:50Z",
+  "inspect": true
+ },
+ "0.0.259": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "eaf822fef21bbe3329917666344ed8cf18939da9",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39187301078",
+  "checked": "2026-10-19T02:55Z",
+  "inspect": true
+ },
+ "0.0.255": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "a1b7f1b8f00415b12ee1caf8b3c6297a937c3e61",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39183824090",
+  "checked": "2026-10-19T02:01Z",
+  "inspect": true
+ },
+ "0.0.249": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "e05bf1c6cb48d7c1f7c2ab0f496cd438cc5d267d",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39179806465",
+  "checked": "2026-10-19T01:07Z",
+  "inspect": true
+ },
+ "0.0.240": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "a15c0f9c21049c3f2c383416201583abdad10f22",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39175451501",
+  "checked": "2026-10-19T00:13Z",
+  "inspect": true
+ },
+ "0.0.235": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "36c0cee4a66e2243c98180f25800ecf7fb9bccb4",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39171881297",
+  "checked": "2026-10-18T23:20Z",
+  "inspect": true
+ },
+ "0.0.231": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "6c1c3f5ffb6ab73f9383134b4152928ac88c7489",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39168497134",
+  "checked": "2026-10-18T22:27Z",
+  "inspect": true
+ },
+ "0.0.225": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "470a29a39b107ff299e6f4dba96ee04290c7bde3",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39164043245",
+  "checked": "2026-10-18T21:36Z",
+  "inspect": true
+ },
+ "0.0.221": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "79820e906adf5cbff2ce450a78acd0d572538591",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39160680822",
+  "checked": "2026-10-18T20:46Z",
+  "inspect": true
+ },
+ "0.0.217": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "bb6c8279bdf89e97b318d472f19d2a3e1c5fd51c",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39157306426",
+  "checked": "2026-10-18T19:56Z",
+  "inspect": true
+ },
+ "0.0.209": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "4245444e527453956b6ed184b3333aca6d029181",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39150403198",
+  "checked": "2026-10-18T19:07Z",
+  "inspect": true
+ },
+ "0.0.207": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "cfb1258dc7200b860e9c99715c4ba1e0d18257fe",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39145998310",
+  "checked": "2026-10-18T18:15Z",
+  "inspect": true
+ },
+ "0.0.206": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "b4904c05e9cd3881faad47d73d48549925e0d65c",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39144024126",
+  "checked": "2026-10-18T17:24Z",
+  "inspect": true
+ },
+ "0.0.202": {
+  "result": "broken",
+  "failed": [
+   "the checks"
+  ],
+  "commit": "3a2f3dba13830ca97806e15462b7a1053c1f5a38",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39141771207",
+  "checked": "2026-10-18T16:32Z",
+  "inspect": true
+ },
+ "0.0.201": {
+  "result": "ok",
+  "failed": [],
+  "commit": "dbca75bd56f5515db2bb89d6ac11826068c6b239",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39100712067",
+  "checked": "2026-10-18T08:44Z",
+  "inspect": true
+ },
+ "0.0.198": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate"
+  ],
+  "commit": "162a5c003a14ea4cf45e3c5a13a400646ca05eae",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39099259041",
+  "checked": "2026-10-18T05:56Z"
+ },
+ "0.0.197": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate"
+  ],
+  "commit": "32869964867eb176f90b0fdb5eee90595ef4514f",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39096777805",
+  "checked": "2026-10-18T05:08Z"
+ },
+ "0.0.189": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate",
+   "the frame-rate gate's slow scenes"
+  ],
+  "commit": "161fa73b2716e49d6d49bdf107472570fdea4575",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39094215599",
+  "checked": "2026-10-18T04:22Z"
+ },
+ "0.0.184": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate"
+  ],
+  "commit": "172ddb32f55588137e3d838dec2a2a3ce98fcdd4",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39090957874",
+  "checked": "2026-10-18T03:37Z"
+ },
+ "0.0.183": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate"
+  ],
+  "commit": "9b747e374a7e3142868775bf7ffd71a91e1496aa",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39088423186",
+  "checked": "2026-10-18T02:54Z"
+ },
+ "0.0.180": {
+  "result": "broken",
+  "failed": [
+   "the checks",
+   "the frame-rate gate"
+  ],
+  "commit": "243cf81c8833384907551a84ab1548b5febf10a3",
+  "run": "https://github.com/matthewhammer/kids-choice-games/actions/runs/39084376306",
+  "checked": "2026-10-18T02:10Z"
+ }
+}

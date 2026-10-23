@@ -1,0 +1,1123 @@
+/* Messed Up Dress Up. Copyright 2026 Matthew Hammer and family (M and N). Reuse welcome, with credit: see LICENSE and NOTICE.
+   SPDX-License-Identifier: Apache-2.0 */
+/* Messed Up Dress Up's style (ticket 178: it was in index.html) */
+  :root { --ink: #222; --muted: #666; --line: #d6d6d6; --paper: #fffdf7; --bg: #f3f0ff;
+          --panel: #ffffff; --accent: #7c3aed; --accent-ink: #fff;
+          /* (ticket 170) the music tab's groups, each its own colour: the
+             main controls, the whole tune's strip, the LFOs, the instruments */
+          --mu-main: #e8f1ff; --mu-mix: #fff0d9; --mu-lfo: #f0e8ff; --mu-inst: #e4f6ea; }
+  /* (ticket 194, M: a light / dark switch, auto / light / dark, under ⚙️ Advanced)
+     dark when the switch says so, or says auto (no data-theme) and the system is dark */
+  :root { color-scheme: light dark; }
+  :root[data-theme="light"] { color-scheme: light; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --muted: #aaa; --line: #444; --paper: #fffdf7; --bg: #1d1a26;
+            --panel: #29253a; --accent: #a78bfa; --accent-ink: #1d1a26;
+            --mu-main: #1b2238; --mu-mix: #2c2416; --mu-lfo: #261c38; --mu-inst: #162a20; }
+  }
+  :root[data-theme="dark"] { color-scheme: dark; --ink: #eee; --muted: #aaa; --line: #444; --paper: #fffdf7; --bg: #1d1a26;
+            --panel: #29253a; --accent: #a78bfa; --accent-ink: #1d1a26;
+            --mu-main: #1b2238; --mu-mix: #2c2416; --mu-lfo: #261c38; --mu-inst: #162a20; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 8px; background: var(--bg); color: var(--ink);
+         font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif; }
+  /* (at the top of the controls, so the picture's column is all picture: ticket 116) */
+  h1 { margin: 0 0 6px; font-size: 1.3em; letter-spacing: 0.02em; }
+  /* (ticket 134) this version and when it came out; a newer one, as a chip to change to */
+  h1 .version { font-size: 0.6em; font-weight: 400; letter-spacing: 0; color: var(--muted, #888); white-space: nowrap; }
+  /* (ticket 184) this version came out slow (or with something to fix) on GitHub's computers, after it went live */
+  h1 .speed-mark { font-size: 0.6em; font-weight: 600; letter-spacing: 0; padding: 2px 10px; vertical-align: 0.15em; border-radius: 999px;
+                   background: #fde68a; color: #713f12; border: 1px solid #f59e0b; white-space: nowrap; text-decoration: none; }
+  h1 .newer { font-size: 0.6em; font-weight: 600; letter-spacing: 0; padding: 2px 10px; vertical-align: 0.15em;
+              background: var(--accent); color: var(--accent-ink); border-color: var(--accent); white-space: nowrap; }
+  /* The whole window: the picture's column, a divider to drag, the controls
+     (ticket 116: no more 1100px cap with margins either side). The
+     picture's column is as wide as the picture can use at the window's
+     height (setSplit), or where the divider was dragged to. */
+  .app { display: grid; grid-template-columns: minmax(240px, var(--split, 60%)) 14px minmax(0, 1fr); gap: 0 4px; }
+  @media (max-width: 760px) { .app { grid-template-columns: minmax(0, 1fr); } }
+  /* The picture, its caption and buttons always fit on the screen, so the
+     picture stays in view while the controls scroll; the picture takes all
+     the height its caption and buttons leave (fitPic sizes it) */
+  .stage { position: sticky; top: 8px; align-self: start; min-width: 0;
+           height: calc(100vh - 16px); height: calc(100dvh - 16px); display: flex; flex-direction: column; }
+  .pic-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .pic-area { flex: 1 1 0; min-height: 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+  .pic-box { position: relative; line-height: 0; max-width: 100%; }
+  svg#pic { display: block; width: 100%; height: auto; max-width: 100%;
+            background: var(--paper); border-radius: 18px; border: 2px solid var(--line);
+            user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  /* (ticket 383) the layered foam: the bubble room's backdrop in a picture of its own under the scene's (#pic-under), each moving
+     bubble a page element between the two (#foam-layers), scaled by a CSS animation the browser runs without painting either picture
+     again; the scene's picture see-through over them. In .pic-box's own stacking (isolation), under the in-flow #pic, the overlays
+     over it as before */
+  .pic-box { isolation: isolate; }
+  #pic-under, #foam-layers { position: absolute; left: 2px; top: 2px; width: calc(100% - 4px); height: calc(100% - 4px);
+                             pointer-events: none; overflow: hidden; border-radius: 16px; }
+  #pic-under { z-index: -2; }
+  #foam-layers { z-index: -1; }
+  body.pic-see-through svg#pic { background: transparent; }
+  #foam-layers > .foam-in { position: absolute; }
+  #foam-layers .foam-b { position: absolute; will-change: transform; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+  #foam-layers .foam-b > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  @keyframes foam-breathe-1 { 0%, 100% { transform: scale(1); } 33% { transform: scale(1.06); } 66% { transform: scale(0.95); } }
+  @keyframes foam-breathe-2 { 0%, 100% { transform: scale(1); } 33% { transform: scale(1.085); } 66% { transform: scale(0.92); } }
+  @keyframes foam-breathe-3 { 0%, 100% { transform: scale(1); } 33% { transform: scale(1.11); } 66% { transform: scale(0.9); } }
+  @keyframes foam-pop { 0%, 72% { transform: scale(1); } 75%, 80% { transform: scale(0.05); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { #foam-layers .foam-b { animation: none; } }
+  /* (ticket 340) the makers' bubbles, in a picture of their own over the scene's, inside its border (the box is the picture's;
+     makerOver keeps its viewBox the scene's); its own layer, so a bubble moving draws it alone again */
+  #pic-over { position: absolute; left: 2px; top: 2px; width: calc(100% - 4px); height: calc(100% - 4px);
+              pointer-events: none; overflow: hidden; border-radius: 16px; will-change: transform; }
+  /* the caption and the buttons, in one row under the picture */
+  .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; padding-top: 6px; width: 100%; }
+  body.big .bar { display: none; }
+  .caption { text-align: center; font-size: 1.1em; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  /* saving, in a menu of its own: the kinds of file, the button, the links to what was saved */
+  .save-menu { position: relative; }
+  .save-pop { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 30;
+              width: max-content; max-width: min(92vw, 440px); display: flex; flex-direction: column; align-items: center; gap: 8px;
+              background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px;
+              box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28); }
+  .save-pop[hidden] { display: none; }
+  .save-pop .formats, .save-pop .saved { margin-top: 0; }
+  /* (ticket 43) a postcard: what to write on it, and its button */
+  .save-pop .postcard { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;
+                        border-top: 1px solid var(--line); padding-top: 8px; width: 100%; }
+  .save-pop .postcard input { font: inherit; padding: 4px 8px; border: 2px solid var(--line); border-radius: 8px; flex: 1 1 14em; min-width: 0; }
+  /* the divider between the picture and the controls: drag it */
+  .divider { position: sticky; top: 8px; height: calc(100vh - 16px); height: calc(100dvh - 16px); cursor: col-resize;
+             touch-action: none; display: flex; align-items: center; justify-content: center; border-radius: 7px; outline: none; }
+  .divider::before { content: ""; width: 5px; height: 56px; border-radius: 3px; background: var(--line); }
+  .divider:hover::before, .divider:focus-visible::before, .divider.drag::before { background: var(--accent); height: 96px; }
+  body.dragging-split { cursor: col-resize; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 760px) { .divider { display: none; } }
+  button { font: inherit; cursor: pointer; border-radius: 12px; border: 2px solid var(--line);
+           background: var(--panel); color: var(--ink); padding: 6px 12px; }
+  button.big { background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+               font-weight: 600; padding: 8px 16px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tabs button { font-weight: 600; }
+  .tabs button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .ctl.master .name { font-weight: 700; }
+  .lfo-chip { font-size: 0.75em; padding: 1px 8px; margin-left: auto; margin-right: 8px; }
+  .ctl.master.mixed input, .ctl.master.mixed .name { opacity: 0.45; }
+  .ctl.master.mixed .val { font-style: italic; color: var(--muted); }
+  /* (ticket 159) the 🎵 Music tab full screen: the tune, where it is, the
+     tunes and the mixing board take the whole window; the picture, the
+     title and the other tabs hidden until ✕, Escape or leaving full screen */
+  /* (ticket 210) and the 🗺️ World design tab full screen, the same way (world-big) */
+  /* (ticket 285, ^du_report(5)'s step 1) Three pieces for every tab, the two full screens first. The designer's shell:
+     body.designer-big (with the designer's own class) is a tab full screen under a slim bar (22-full-screen.js,
+     designerShell). A box: one thing you can see or hear, its name once, nesting by boxes alone (.box, .boxes for a grid
+     of them). The one-line row: its label, its control, its value (.row1; the music's .knob is one). Their sizes are
+     the tokens below, so a card, a strip and a knob are one size wherever they are. */
+  :root { --box-line: 2px solid var(--line); --box-radius: 12px; --box-pad: 8px 10px; --box-gap: 8px; --box-min: 280px; --row-label: 6.2em; --row-value: 3.8em; }
+  .box { border: var(--box-line); border-radius: var(--box-radius); padding: var(--box-pad); background: var(--box-tint, var(--mu-main)); }
+  .boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--box-min)), 1fr)); gap: var(--box-gap); align-items: start; }
+  .row1 { display: grid; grid-template-columns: var(--row-label) 1fr var(--row-value); align-items: center; gap: 4px; }
+  /* (ticket 375) every tab's rows in boxes (boxLayout, TAB_BOXES): each box its name once at its top, its rows inside, close; a
+     box inside a box (a group) a shade lighter, no dashed lines; the boxes a grid, one column in the side panel, more as it widens */
+  .tabboxes { margin-top: 4px; }
+  .tabbox > .box-name, .chipset > .cap { margin: 0 0 4px; font-size: 0.92em; font-weight: 700; color: var(--ink, inherit); }
+  .tabbox > .ctl { margin: 6px 0; }
+  .tabbox > .ctl:first-of-type { margin-top: 2px; }
+  .tabbox[hidden] { display: none; }
+  #panel [hidden] { display: none !important; }   /* (ticket 369: a row's own display, a slider's grid, a switch's flex, no longer outranks hidden: burst329 found a hidden slider showing) */
+  /* (ticket 377) the part of the friend a pointed-at box is about, lit in the game */
+  body[data-lit~="head"] #figure [data-part="head"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="eyes"] #figure [data-part="eyes"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="hair"] #figure [data-part="hair"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="shirt"] #figure [data-part="shirt"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="pants"] #figure [data-part="pants"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="feet"] #figure [data-part="feet"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  body[data-lit~="hands"] #figure [data-part="hands"] { filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 0 2px #ffb300); }
+  /* (knolled) a box's on/off switches and one-tap actions, side by side as chips, not one to a line */
+  :is(.tabbox, .chipset) > .ctl:has(> .lbl:empty) { display: inline-flex; margin: 3px 6px 3px 0; vertical-align: top; }
+  :is(.tabbox, .chipset) > .ctl:has(> .lbl:empty) > .lbl { display: none; }
+  .tabbox > .ctl[hidden] { display: none; }
+  /* (the report's rule 4) a slider row on one line, as the music's knob: its name, the slider, its value */
+  :is(.tabbox, .chipset) > .ctl:has(> input[type="range"]) { display: grid; grid-template-columns: minmax(6.2em, 38%) 1fr 2.6em; align-items: center; column-gap: 6px; }
+  :is(.tabbox, .chipset) > .ctl:has(> input[type="range"]) > .lbl { display: contents; }
+  :is(.tabbox, .chipset) > .ctl:has(> input[type="range"]) > .lbl > span:first-child { grid-column: 1; grid-row: 1; min-width: 0; line-height: 1.15; }
+  :is(.tabbox, .chipset) > .ctl:has(> input[type="range"]) > input[type="range"] { grid-column: 2; grid-row: 1; width: 100%; margin: 0; }
+  :is(.tabbox, .chipset) > .ctl:has(> input[type="range"]) > .lbl > .val { grid-column: 3; grid-row: 1; text-align: right; }
+  .box .chipset, .box .box { background: rgba(255, 255, 255, 0.035); }
+  /* (ticket 375) the things put in a place, knolled: same-size cards in a grid, each its picture, its name once, ✖, its chips, a line
+     for each setting */
+  .cross-list:has(> .thingcard) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: var(--box-gap); align-items: stretch; }
+  .cross-list > .row.thingcard { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 6px 8px; border: var(--box-line); border-radius: var(--box-radius); background: rgba(255, 255, 255, 0.035); }
+  .thingcard > .thead { display: grid; grid-template-columns: 2.6em 1fr auto; align-items: center; gap: 6px; }
+  .thingcard .tpic { width: 2.6em; height: 2.6em; }
+  .thingcard > .thead > .name { font-weight: 700; }
+  .thingcard > .tline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .thingcard > .tline-range > input[type="range"] { flex: 1 1 6em; min-width: 0; }
+  .thingcard > .tline > .hint:first-child { min-width: 1.6em; }
+  details.how > summary { cursor: pointer; color: var(--muted); font-size: 0.85em; margin: 2px 0; }   /* (ticket 375: a long account folded, open on a tap) */
+  /* (ticket 486) ✈️ adding the game to a device, for airplane mode: folded in ⚙️ Advanced, the steps for each kind of device */
+  details.offline-help { margin: 6px 0; }
+  details.offline-help > summary { color: var(--ink); font-size: 0.95em; }
+  details.offline-help ol { margin: 6px 0 6px 1.3em; padding: 0; }
+  details.offline-help li { margin: 4px 0; line-height: 1.35; }
+  details.offline-help .offline-status { margin: 6px 0; color: var(--ink); }
+  .cap > .cap-pic { width: 2.4em; height: 2.4em; vertical-align: -0.85em; margin-right: 6px; }   /* (a bubble theme's bubble, by its name) */
+  button > .flag-chip { width: 1.4em; height: 1.4em; vertical-align: -0.35em; margin-right: 3px; }   /* (a room's theme chip, its flag) */
+  /* (knolled) a group of groups, like things (the three bubble themes): side by side, the same size, as wide as there is room */
+  .ctlgroup:has(> .ctlgroup) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: var(--box-gap); align-items: start; }
+  .ctlgroup:has(> .ctlgroup) > :not(.ctlgroup) { grid-column: 1 / -1; }
+  .ctlgroup:has(> .ctlgroup) > .ctlgroup { margin: 0; }
+  body.designer-big { overflow: hidden; }
+  body.designer-big .stage, body.designer-big .divider, body.designer-big .side > h1, body.designer-big #tabs { display: none; }
+  body.designer-big .side { position: fixed; inset: 0; z-index: 30; overflow: auto; background: var(--bg);
+                         padding: 12px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)); }
+  body.music-big .mixer { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  body.designer-big:not(.pic-in-world) .touchpad { display: none; }   /* (the music: no friend to move there; the world and background designers show the game, so its controller too) */
+  /* (ticket 210, Matthew: the music full screen "especially large and over-stated"; full screens "more compact, and
+     sleek looking") Both tabs' full screens: a slim bar across the top (the tab's name, and ✕ back to the game, small),
+     the panel's own frame gone, and the music's controls as cards in columns, not a row each the window's width */
+  body.designer-big .side { padding-top: 0; }
+  body.designer-big #panel { background: transparent; border: 0; padding: 0; border-radius: 0; }
+  body.designer-big #panel > .ctl:has(> button.designer-chip) {
+    position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 8px 2px;
+    background: var(--bg); border-bottom: 1px solid var(--line); border-radius: 0; }
+  body.designer-big #panel > .ctl:has(> button.designer-chip) > .lbl { display: none; }
+  body.music-big #panel > .ctl:has(> button.musicbig)::before { content: "🎵 Music"; font-weight: 700; font-size: 1.1em; margin-right: auto; }
+  body.world-big #panel > .ctl:has(> button.worldbig)::before { content: "🗺️ World design"; font-weight: 700; font-size: 1.1em; margin-right: auto; }
+  body.designer-big button.designer-chip { padding: 3px 12px; font-size: 0.9em; }
+  body.music-big #panel[data-part=music] { grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 8px; }
+  /* (ticket 250, Matthew: "let's use these UX improvements in the non-FS mode of Music panel. Also, in this FS mode, the song
+     progress sub-panel ... can extend to fill the rest of the row"; "maybe stack the first two subpanels vertically -- they
+     are each rather short") its controls as cards in a grid in both views, the side column's width or the window's; the
+     full screen chip, the tune picker and the mixing board across it; where there are two columns or more, 🔊 and ▶ one
+     over the other in the first, ⏯️ where the tune is beside them to the row's end */
+  #panel[data-part=music] { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 6px 8px; align-items: start; container-type: inline-size; }
+  #panel[data-part=music] > .ctl:has(> button.musicbig), #panel[data-part=music] > .mixctl, #panel[data-part=music] > .ctl:has(.chipset) { grid-column: 1 / -1; }
+  @container (min-width: 386px) {
+    #panel[data-part=music] > .ctl[data-key=mute] { grid-column: 1; grid-row: 2; }
+    #panel[data-part=music] > .ctl[data-key=now] { grid-column: 1; grid-row: 3; }
+    #panel[data-part=music] > .ctl[data-key=where] { grid-column: 2 / -1; grid-row: 2 / span 2; align-self: stretch; }
+  }
+  /* (ticket 210) the world designer full screen: on a wide window the grid on the left, as tall as the window
+     allows, and the square's controls beside it, scrolling on their own */
+  body.world-big .world-grid { --grid-h: calc(100dvh - 190px); }
+  body.world-big #panel > .ctl:not(:has(> button.worldbig)) > .lbl { display: none; }   /* (the bar names the tab) */
+  body.world-big .world-intro { display: none; }   /* (ticket 224: the grid as large as it can be; the bar names the tab) */
+  @media (min-width: 900px) {
+    /* (ticket 224) the grid's column on the left, held in place (sticky, under the bar) as the right side scrolls past
+       it, as tall as the window allows and as wide as its side; the dragger between (--left, kept in this browser);
+       the rest on the right as cards in a grid of their own, as the music's */
+    body.world-big .world-layout { display: grid; grid-template-columns: minmax(260px, var(--left, 60%)) 12px minmax(300px, 1fr); column-gap: 8px; align-items: start; }
+    body.world-big .world-gridcol { grid-column: 1; grid-row: 1; position: sticky; top: 56px; }
+    body.designer-big .world-split { display: block; grid-column: 2; grid-row: 1; position: sticky; top: 56px; height: calc(100dvh - 72px);
+                                  cursor: col-resize; touch-action: none; border-radius: 6px; background: var(--line); opacity: 0.45; }
+    body.designer-big .world-split:hover, body.designer-big .world-split:active { opacity: 1; }   /* (the world designer's, and since ticket 285 the background designer's) */
+    body.world-big .world-rest { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--box-min)), 1fr)); gap: var(--box-gap); align-items: start; }   /* (as .boxes) */
+    body.world-big .world-rest > :not([hidden]) { margin: 0; border: var(--box-line); border-radius: var(--box-radius); padding: var(--box-pad); background: var(--mu-main); }   /* (each a .box) */
+    body.world-big .world-rest > :is(.world-alert, .world-warn, .world-palette, .world-things, .world-off, .world-settings:has(.world-settings-boxes)) { grid-column: 1 / -1; }
+    body.world-big .world-rest > .world-alert { border-color: #d97706; background: color-mix(in srgb, #f59e0b 18%, var(--panel)); }
+    /* (ticket 231's check: the grid's column, 🗑️ under it, no taller than the window under the bar, or at the end of
+       the right side's scroll it rose 13px; 120px was the grid alone) */
+    body.world-big .world-grid { --grid-h: calc(100dvh - 140px); margin-top: 0; }
+    /* the things here, each its own card, side by side (Matthew: "especially for squares with lots of objects, each with their own controls") */
+    body.world-big .world-things .cross-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 8px; }
+    body.world-big .world-things .cross-list > .row { margin: 0; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--mu-inst); flex-wrap: wrap; align-content: flex-start; }
+  }
+  /* (ticket 224) the columns' letters and the rows' numbers, full screen: a band the grid's size is reckoned with */
+  body.world-big .world-grid { --lab: 2.2rem; --cell: min(calc((100cqw - var(--lab) - var(--cols, 5) * var(--gap)) / var(--cols, 5)),
+                                                      calc((var(--grid-h) - var(--lab) - var(--rows, 6) * var(--gap)) / var(--rows, 6)));
+                               grid-template-columns: var(--lab) repeat(var(--cols, 5), var(--cell)); grid-template-rows: var(--lab); }
+  body.world-big .world-lab { display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); font-size: clamp(12px, calc(var(--cell) * 0.16), 30px); }
+  body.world-big .world-name-row input { font-size: 1.25em; padding: 8px 12px; }
+  /* (ticket 231) the in-game view, full screen on a wide window only: the right side's first card, the picture itself
+     (placePic) its whole width (fitPic: at most 60% of the window's height), held under the bar as the cards below
+     scroll past it; a strip of the page's colour over it hides them between it and the bar. Its 👁️ folds it to its
+     name, a card that scrolls with the rest. The picture's own full-screen and controller buttons are not for here. */
+  .world-view { display: none; }
+  @media (min-width: 900px) {
+    body.world-big .world-rest > .world-view { display: block; grid-column: 1 / -1; }
+    body.world-big .world-rest > .world-view:not(.folded) { position: sticky; top: 56px; z-index: 4; }
+    body.world-big .world-rest > .world-view:not(.folded)::before { content: ""; position: absolute; left: -2px; right: -2px; bottom: 100%; height: 16px; background: var(--bg); }
+  }
+  /* (ticket 285, ^du_report(5)'s step 2) 🏞️ Background, as a designer. Outside its full screen its two columns are not
+     there (display: contents), the tab as it always was, and its pictures hidden, so never fetched. Full screen: the
+     place's boxes in a grid on the left, each a .box, the wide ones across it; the game the first card on the right,
+     held under the bar; the places and what stands in them as pictures; an object lit in the game while pointed at */
+  .bg-layout, .bg-boxes, .bg-viewcol { display: contents; }
+  /* (ticket 375, the report's rules 7 and 8) every other tab a designer too (tabDesigner): outside its full screen as it was, its ⛶ chip
+     first; full screen, its boxes on the left (a grid, as wide as there is room), the game the first card on the right, the dragger
+     between, from 900 px wide */
+  .tab-layout, .tab-content, .tab-viewcol { display: contents; }
+  body.tab-big #panel > .tab-bar::before { content: attr(data-name); font-weight: 700; font-size: 1.1em; margin-right: auto; }
+  body.tab-big .tab-layout { display: grid; grid-template-columns: minmax(260px, var(--left, 62%)) 12px minmax(300px, 1fr); column-gap: 8px; align-items: start; }
+  body.tab-big .tab-content { display: block; grid-column: 1; grid-row: 1; min-width: 0; }
+  body.tab-big .tab-viewcol { display: block; position: sticky; top: 56px; grid-column: 3; grid-row: 1; }
+  body.tab-big .tab-view { display: block; }
+  @media (max-width: 899px) { body.tab-big .tab-layout { grid-template-columns: minmax(0, 1fr); } body.tab-big .tab-viewcol, body.tab-big .tab-split { display: none; } }
+  .place-thumb, .obj-pic { display: none; }
+  [data-obj].obj-lit { filter: drop-shadow(0 0 6px #ffd54a) drop-shadow(0 0 2px #ffd54a); }
+  body.bg-big #panel > .ctl:has(> button.designer-chip)::before { content: "🏞️ Background designer"; font-weight: 700; font-size: 1.1em; margin-right: auto; }
+  body.bg-big .bg-layout { display: grid; grid-template-columns: minmax(260px, var(--left, 62%)) 12px minmax(300px, 1fr); column-gap: 8px; align-items: start; }   /* (the dragger between, as the world designer's) */
+  body.bg-big .bg-boxes { grid-column: 1; grid-row: 1; }
+  body.bg-big .bg-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--box-min)), 1fr)); gap: var(--box-gap); align-items: start; }
+  body.bg-big .bg-boxes > :not([hidden]) { margin: 0; border: var(--box-line); border-radius: var(--box-radius); padding: var(--box-pad); background: var(--mu-main); }
+  body.bg-big .bg-boxes > .box-wide { grid-column: 1 / -1; }   /* (ticket 375: the place, the default background objects, the things and the castles across) */
+  body.bg-big .bg-viewcol { display: block; position: sticky; top: 56px; grid-column: 3; grid-row: 1; }
+  body.bg-big .bg-view { display: block; }
+  body.bg-big .place-thumb { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
+  body.bg-big .ctl[data-key=kind] .row > button:has(.place-thumb) { width: 132px; padding: 4px; font-size: 0.85em; display: flex; flex-direction: column; align-items: stretch; }
+  body.bg-big .obj-pic { display: block; width: 100%; height: 60px; object-fit: contain; margin-bottom: 2px; }
+  body.bg-big .row.objs button.obj:has(.obj-pic) { width: 100px; display: inline-flex; flex-direction: column; align-items: center; padding: 4px; line-height: 1.25; }
+  @media (max-width: 899px) { body.bg-big .bg-layout { grid-template-columns: minmax(0, 1fr); } body.bg-big .bg-viewcol, body.bg-big .bg-split { display: none; } }   /* (the game's card from 900 px, as the world designer's) */
+  /* (ticket 365) 🏰 the castle designer full screen (body.castle-big, with bg-big under it): the bar named for it, its ✕ in the
+     background's chip's place; only 🏰 the castles left of the game, knolled as a grid of its own: which castle and the rooms' map
+     across the top, then every room a box in order (its picture first; the one you are in, and the one picked on the map, marked),
+     then the castle's look, its themes and who lives there. The designer's open/close and ⛶ chips are not needed there */
+  body:not(.castle-big) #panel > .ctl > button.castle-bar-chip, body.castle-big #panel > .ctl > button.bgbig, body.castle-big .castle-in { display: none; }
+  body.castle-big #panel > .ctl:has(> button.designer-chip)::before { content: "🏰 Castle designer"; }
+  body.castle-big .bg-boxes > :not([data-box="castles"]) { display: none; }
+  body.castle-big .bg-boxes > [data-box="castles"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--box-gap); align-items: start; }
+  body.castle-big [data-box="castles"] > * { order: 3; margin: 0; min-width: 0; }
+  body.castle-big [data-box="castles"] > .box-name { order: 0; grid-column: 1 / -1; margin: 0; }
+  body.castle-big [data-box="castles"] > .ctl[data-key="castle"], body.castle-big [data-box="castles"] > [data-group^="castleRoomList"] { order: 1; grid-column: 1 / -1; }
+  body.castle-big [data-box="castles"] > [data-group^="castleRoomBox"] { order: 2; }
+  body.castle-big [data-box="castles"] > [data-group^="castleRoomBox"].picked { outline: 3px solid var(--accent); outline-offset: 2px; }
+  body.castle-big [data-box="castles"] > .box-name, body.castle-big .ctl[data-key^="castleDesign"] > .lbl, body.castle-big .room-kind > .lbl { display: none; }   /* (the bar names it; the box's name says the kind) */
+  body.castle-big .room-kind > .row { gap: 4px; }
+  body.castle-big .room-kind > .row > button { font-size: 0.8em; padding: 2px 7px; }
+  .room-pic { display: none; }
+  body.castle-big .room-pic:not([hidden]) { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; margin: 2px 0 6px; }
+  .world-view-head { gap: 6px; align-items: center; margin-bottom: 6px; }
+  .world-view-head .eye { font-size: 1.2em; margin: 0; }
+  .world-view.folded .world-view-head { margin-bottom: 0; }
+  .world-view-pic { display: flex; justify-content: center; }
+  .world-view.folded .world-view-pic { display: none; }
+  body.pic-in-world .max-btn, body.pic-in-world .pad-btn { display: none; }
+  /* (ticket 164) a still place, on a slow computer: no CSS animations in the scenery either (the fairies' wings) */
+  body.still-scenery #bg * { animation: none !important; }
+  /* (ticket 155) the ⚙️ advanced tab: a feature kept off until it is fast, a row each */
+  .perfrow { border-top: 1px solid var(--line); padding: 8px 0 4px; margin-top: 6px; }
+  .perfrow .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .perfrow button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* (ticket 179) measuring: the controls that would disturb it rest, and a notice says to wait */
+  body.measuring .perfrow button:disabled, body.measuring .perfrow a.resting { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+  .measuring-note { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(92vw, 560px);
+                    background: var(--accent); color: var(--accent-ink); border-radius: 14px; padding: 12px 16px; text-align: center;
+                    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35); font-size: 1.15em; }
+  .measuring-note[hidden] { display: none; }
+  .measuring-note .big { font-size: 1.25em; font-weight: 700; display: block; }
+  .measuring-note .bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.35); margin-top: 8px; overflow: hidden; }
+  .measuring-note .bar > i { display: block; height: 100%; width: 0; background: currentColor; }
+  .panel { background: var(--panel); border-radius: 18px; padding: 12px 14px; border: 2px solid var(--line); }
+  .ctl { margin: 10px 0; }
+  .ctl > .lbl { font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .ctl > .lbl .val { color: var(--muted); font-weight: 400; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row button[aria-pressed=true], .world-compass button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* (0.0.139) ♿'s chips say only what they are: lit while on */
+  #panel[data-part=access] button.flip[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* (ticket 285) any flip whose two words are the same is such a chip too: the bubble themes' on and off, the blowing themes */
+  button.flip.lit[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* (ticket 302, M) the pop-up when a new version is out (⚙️ Advanced switches it on), and its switch there, lit while on */
+  #ask-new { position: fixed; z-index: 2147483600; left: 0; right: 0; top: 14px; margin: 0 auto; width: fit-content; max-width: min(92vw, 440px); box-sizing: border-box; text-align: center;   /* (centred across the whole window: a phone's too) */
+    background: var(--panel); border: 2px solid var(--accent); border-radius: 16px; padding: 12px 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35); }
+  #ask-new p { margin: 0 0 6px; font-weight: 600; } #ask-new p.hint { font-weight: 400; color: var(--muted); font-size: 0.85em; margin-bottom: 10px; }
+  #ask-new .row { justify-content: center; }
+  button.ask-new-toggle[aria-pressed=true], button.lever-far-toggle[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }   /* (lever-far: ticket 364) */
+  /* a menu for each hand, mirrored about a line down the middle */
+  .ctl.pair:not([hidden]) { display: flex; }
+  .pair > .side { flex: 1 1 0; min-width: 0; }
+  .pair > .side:first-child { padding-right: 10px; }
+  .pair > .side:last-child { padding-left: 10px; border-left: 2px solid var(--line); }
+  .pair > .side > .lbl { font-weight: 600; margin-bottom: 4px; }
+  .pair > .side:last-child > .lbl { text-align: right; }
+  .pair > .side:last-child .row { justify-content: flex-end; }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 3px solid var(--line); }
+  .swatch[aria-pressed=true] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .swatch.skin { font-size: 0.6em; }
+  input[type=range] { width: 100%; height: 28px; accent-color: var(--accent); }
+  input[type=color] { width: 40px; height: 34px; border: none; padding: 0; background: none; }
+  .hint { color: var(--muted); font-size: 0.9em; }
+  .padmap { display: grid; gap: 4px; margin: 8px 0; }
+  /* (ticket 375: a row on one line that fits the panel: the action, its button, set; their min-widths, 15em and 10em, ran past it) */
+  .padrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 2px 6px; border-radius: 8px; }
+  .padrow .pbtn { min-width: 0; }
+  .padrow .pwhich { min-width: 4.5em; color: var(--muted); white-space: nowrap; }
+  .padteach { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; padding: 6px 8px; border-radius: 8px; outline: 2px solid #8b5cf6; }
+  .padask { font-weight: bold; }
+  .padline { width: 100%; max-width: 46em; font: inherit; font-size: 0.85em; margin: 4px 0; }
+  .padrow.down { outline: 2px solid #8b5cf6; background: color-mix(in srgb, #8b5cf6 14%, transparent); }
+  /* the figure's place in its scene: the stage in small, the figure a box */
+  svg.place { display: block; width: 100%; max-width: 240px; height: auto; touch-action: none; cursor: crosshair;
+              border-radius: 10px; border: 2px solid var(--line); }
+  svg.pad { width: 140px; height: 140px; display: block; touch-action: none; cursor: crosshair;
+            border-radius: 14px; border: 2px solid var(--line); }
+  /* On a phone the controls are below the picture, so the picture is
+     kept small and pinned at the top: a change shows while you make it. */
+  @media (max-width: 760px) {
+    body { padding-top: 8px; }
+    h1 .game-name, h1 .version { display: none; }   /* (a newer version's chip still shows: ticket 134) */
+    h1 { margin: 0; font-size: 1.1em; }
+    .stage { top: 0; z-index: 1; background: var(--bg); padding: 4px 0 8px; margin: 0 -8px; padding-inline: 8px; height: auto; }
+    .pic-wrap, .pic-area { flex: none; }
+    .actions { gap: 4px; flex-wrap: nowrap; }
+    .actions button { padding: 4px 6px; font-size: 0.85em; white-space: nowrap; }
+    .caption { font-size: 1em; }
+  }
+  .formats { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: center;
+             margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .formats label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+  .saved { text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 1em; }
+  .saved a { color: inherit; font-weight: 600; margin: 0 4px; }
+  /* Full screen: the button at the picture's top right fills the window
+     with the picture, the controls hidden; again (an X then) or Escape
+     brings them back. */
+  .pic-wrap { position: relative; }
+  .max-btn { position: absolute; top: 8px; right: 8px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
+             background: var(--panel); opacity: 0.9; }
+  body.big { overflow: hidden; }
+  /* (the sticky stage is its own stacking context: raised, or the panel's
+     half-faded pins, each a layer of its own, paint over the full screen) */
+  body.big .stage { z-index: 20; }
+  body.big .app > :not(.stage) { visibility: hidden; }
+  body.big .pic-wrap { position: fixed; inset: 0; z-index: 10; background: var(--bg); padding: 8px;
+                      display: flex; flex-direction: column; gap: 8px; }
+  /* the music's quick mute, at the picture's other top corner */
+  .mute-btn { position: absolute; top: 8px; left: 8px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
+              background: var(--panel); opacity: 0.9; }
+  /* back through the last doorway, after a trip through one */
+  .back-btn { position: absolute; bottom: 8px; left: 8px; padding: 0 10px; font-size: 1.15em; line-height: 1.6;
+              background: var(--panel); opacity: 0.92; }
+  body.big .back-btn { bottom: auto; top: 8px; left: 124px; }
+  /* (ticket 170) in full screen, next to the mute: the music's controls,
+     full screen (✕ there comes back here) */
+  .mfs-btn { display: none; position: absolute; top: 8px; left: 66px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
+             background: var(--panel); opacity: 0.9; }
+  body.big .mfs-btn { display: block; }
+  body.big .mute-btn[hidden] + .mfs-btn { left: 8px; }
+  body.big .mute-btn[hidden] ~ .back-btn { left: 66px; }
+  /* (a phone: the way back on a row of its own, clear of the right corner's buttons) */
+  @media (max-width: 480px) { body.big .back-btn, body.big .mute-btn[hidden] ~ .back-btn { top: 52px; left: 8px; } }
+  /* (ticket 150) the on-screen controller, offered while no game controller
+     is connected: the button that shows it, at the picture's bottom right */
+  .pad-btn { position: absolute; bottom: 8px; right: 8px; padding: 0 9px; font-size: 1.3em; line-height: 1.45;
+             background: var(--panel); opacity: 0.9; }
+  .pad-btn[hidden] { display: none; }
+  /* its two halves, in the screen's bottom corners, over everything: the
+     arrows and L and select on the left, the four buttons and R and start on
+     the right, as on a SNES controller. Only the controls take a touch; a
+     press never scrolls, zooms or selects. */
+  .touchpad { --tp: clamp(118px, 24vmin, 176px); position: fixed; inset: auto 0 0 0; z-index: 40; pointer-events: none;
+              display: flex; justify-content: space-between; align-items: flex-end;
+              padding: 0 max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
+  .touchpad[hidden] { display: none; }
+  .touchpad .half { display: grid; gap: 6px; align-items: end; justify-items: center; }
+  .touchpad .half.l { grid-template-columns: auto auto; grid-template-areas: "sh ." "pad sm"; }
+  .touchpad .half.r { grid-template-columns: auto auto; grid-template-areas: ". sh" "sm pad"; }
+  .touchpad .sh { grid-area: sh; } .touchpad .sm { grid-area: sm; } .touchpad .pad { grid-area: pad; }
+  /* (ticket 499) select over 🫧, start over 🔥: a column in their corner, each its own place (🫧 had lain on select) */
+  .touchpad .sms { grid-area: sm; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  body.big .pad-btn { bottom: auto; top: 8px; right: 124px; }
+  .touchpad button, .touchpad .dpad { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none;
+                                      -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  .touchpad button { font: 600 calc(var(--tp) * 0.13)/1 sans-serif; color: #fff; border: 2px solid rgba(255, 255, 255, 0.55);
+                     background: rgba(40, 36, 56, 0.62); padding: 0; display: flex; flex-direction: column; align-items: center;
+                     justify-content: center; gap: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+  .touchpad button small { font-size: 0.72em; font-weight: 400; line-height: 1; }
+  .touchpad button.down, .touchpad .dpad .arm.down { filter: brightness(1.45); transform: scale(0.94); }
+  .touchpad .sh { width: calc(var(--tp) * 0.62); height: calc(var(--tp) * 0.26); border-radius: 14px 14px 8px 8px; }
+  .touchpad .sm { width: calc(var(--tp) * 0.42); height: calc(var(--tp) * 0.2); border-radius: 99px; font-size: calc(var(--tp) * 0.09); }
+  /* the arrows: one cross, a press anywhere on it is a direction (a
+     diagonal too), and a finger slides from one to the next */
+  .touchpad .dpad { width: var(--tp); height: var(--tp); position: relative; border-radius: 50%; }
+  .touchpad .dpad .arm { position: absolute; background: rgba(40, 36, 56, 0.66); border: 2px solid rgba(255, 255, 255, 0.55);
+                         color: #fff; font-size: calc(var(--tp) * 0.13); display: flex; align-items: center; justify-content: center; }
+  .touchpad .dpad .arm.u { left: 34%; top: 0; width: 32%; height: 38%; border-radius: 8px 8px 0 0; border-bottom: none; }
+  .touchpad .dpad .arm.d { left: 34%; bottom: 0; width: 32%; height: 38%; border-radius: 0 0 8px 8px; border-top: none; }
+  .touchpad .dpad .arm.l { top: 34%; left: 0; width: 38%; height: 32%; border-radius: 8px 0 0 8px; border-right: none; }
+  .touchpad .dpad .arm.r { top: 34%; right: 0; width: 38%; height: 32%; border-radius: 0 8px 8px 0; border-left: none; }
+  .touchpad .dpad .hub { position: absolute; left: 34%; top: 34%; width: 32%; height: 32%; background: rgba(40, 36, 56, 0.66); }
+  /* the four buttons in their diamond, in the Super Famicom's colors */
+  .touchpad .abxy { width: var(--tp); height: var(--tp); position: relative; }
+  .touchpad .abxy button { position: absolute; width: 36%; height: 36%; border-radius: 50%; }
+  .touchpad .abxy .bx { left: 32%; top: 0; background: rgba(48, 92, 214, 0.82); }
+  .touchpad .abxy .by { left: 0; top: 32%; background: rgba(36, 150, 72, 0.82); }
+  .touchpad .abxy .ba { right: 0; top: 32%; background: rgba(214, 44, 44, 0.82); }
+  .touchpad .abxy .bb { left: 32%; bottom: 0; background: rgba(226, 178, 20, 0.86); }
+  .touchpad button.idle { opacity: 0.55; }
+  .ctl > p.now { margin: 0; color: var(--muted); }
+  /* the mixing board: a strip for each part, the whole tune's first */
+  .mixer { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 4px; }
+  .mixer p.now { margin: 0; color: var(--muted); }
+  .strip { border: var(--box-line); border-radius: var(--box-radius); padding: 6px 8px; font-size: 0.85em; }
+  .strip.master { border-width: 3px; }   /* (ticket 375: no dashed lines; the master strip by a thicker edge) */
+  .strip.lfo { border-style: dotted; }
+  .mixer .quad { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 520px) { .mixer .quad { grid-template-columns: minmax(0, 1fr); } }
+  /* (ticket 170) the whole tune's strip and the LFOs two of the board's
+     columns wide (and two rows tall, the instruments beside them), so each
+     strip is as wide as an instrument's, not half the screen; one strip to
+     a row where the board is narrow */
+  .mixer { container-type: inline-size; }
+  @container (min-width: 408px) { .mixer .quad { grid-column: span 2; grid-row: span 2; } }
+  @container (min-width: 408px) and (max-width: 487px) { body.music-big .mixer .quad { grid-column: 1 / -1; } }
+  @container (max-width: 407px) { .mixer .quad { grid-template-columns: minmax(0, 1fr); } }
+  .strip { background: var(--mu-inst); }
+  .strip.master { background: var(--mu-mix); }
+  .strip.lfo { background: var(--mu-lfo); }
+  #panel[data-part=music] > .ctl:not(.mixctl) { background: var(--mu-main); border-radius: var(--box-radius); padding: 6px 10px; margin: 0; }   /* (ticket 250: cards in a grid, its gap between them) */
+  /* the castle designer: a map of the castle's rooms and the ways between them */
+  .designer { margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+  .designer .map { height: 340px; border: 2px solid var(--line); border-radius: 12px; background: rgba(127, 127, 127, 0.08); }
+  .designer .note { color: var(--muted); font-size: 0.85em; margin: 0; }
+  .designer .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .designer ul.problems { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .designer ul.problems li { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+  /* a set of chips in a dashed box of its own, with its name (the music's
+     kinds, then the kind's tunes), as the mixing board's master strip */
+  .chipset { border: var(--box-line); border-radius: var(--box-radius); padding: var(--box-pad); background: var(--box-tint, var(--mu-main)); }   /* (ticket 375: a box, no longer dashed) */
+  .chipset + .chipset { margin-top: 6px; }
+  /* (ticket 226) 🎶 genre/track selection, compact: each row's name at its start, its chips tighter, no dashed boxes */
+  .tunesctl > .chipset { border: 0; padding: 0; display: grid; grid-template-columns: minmax(3.6em, auto) 1fr; align-items: center; column-gap: 8px; }
+  .tunesctl > .chipset + .chipset { margin-top: 6px; }
+  .tunesctl > .chipset > .cap { margin: 0; font-size: 0.82em; line-height: 1.15; }
+  .tunesctl .row { gap: 5px; }
+  .tunesctl .row > button { padding: 3px 10px; font-size: 0.92em; border-radius: 10px; }
+  @media (max-width: 520px) { .tunesctl > .chipset { grid-template-columns: 1fr; row-gap: 3px; } }   /* (a phone: each row's name above it, the chips the width) */
+  /* (ticket 99) a scene's objects: small chips, many to a line */
+  .row.objs { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+  .row.objs button.obj { font-size: 0.78em; padding: 0 5px; line-height: 1.5; border-radius: 9px; }
+  .row.objs button.obj.off { opacity: 0.5; text-decoration: line-through; }
+  .row.objs .me { font-size: 0.95em; padding: 0 2px; }
+  .chipset > .cap { color: var(--muted); font-size: 0.85em; margin-bottom: 4px; }
+  /* a group of controls in its box (the castle's look, its rooms, each room's own; dashed till ticket 375) */
+  .ctlgroup { margin: 10px 0; }
+  .ctlgroup > .ctl { margin: 8px 0; }
+  .ctlgroup.here { border-style: solid; border-color: var(--accent); }
+  .ctlgroup.here > .cap { color: var(--accent); font-weight: 600; }
+  .strip.dim { opacity: 0.45; }
+  .strip-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+  .strip-name { flex: 1 1 auto; font-weight: 600; }
+  .strip-name small { color: var(--muted); font-weight: 400; }
+  .strip button.ms { padding: 1px 7px; font-size: 0.95em; }
+  .strip button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* a throw is held down: no text selection or long-press menu on a tablet */
+  .strip button.throw { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  .knob { display: grid; grid-template-columns: var(--row-label) 1fr var(--row-value); align-items: center; gap: 4px; }   /* (a .row1) */
+  .knob input[type=range] { height: 22px; }
+  .knob .val { color: var(--muted); text-align: right; font-size: 0.9em; }
+  /* a channel's move: its chips beside the name, how far it is moved on a line of its own */
+  .knob.move { grid-template-columns: var(--row-label) 1fr; }
+  .knob.move .row { display: flex; gap: 4px; flex-wrap: nowrap; }
+  .knob.move .row button { white-space: nowrap; flex-shrink: 0; }
+  .knob.move .val { grid-column: 1 / -1; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; }
+  .dot.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+  /* the transport: where the tune is, its sections marked under it */
+  /* where the tune is: one line that never wraps (the numbers keep their width) */
+  .ctl .pos { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; margin-top: 4px; }
+  .ctl .where { font-weight: 600; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .ctl .when { color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+  .marks { display: flex; gap: 2px; margin-top: 2px; }
+  .marks span { height: 14px; border-radius: 4px; background: var(--line); color: var(--muted); font-size: 10px; line-height: 14px; text-align: center; overflow: hidden; }
+  .marks span.on { background: var(--accent); color: var(--accent-ink); }
+  .ctl.idle input[type=range], .ctl.idle .marks { opacity: 0.4; }
+  /* In full screen, a heads-up display of chosen controls: hidden until
+     its button is pressed; the scene's own controls and every pinned slider. */
+  .hud-btn { display: none; position: absolute; top: 8px; right: 66px; padding: 0 9px; font-size: 1.3em;
+             line-height: 1.45; background: var(--panel); opacity: 0.9; }
+  body.big .hud-btn { display: block; }
+  /* (below the picture, which shrinks to make room: it never covers the
+     figure or its face) */
+  .hud { flex: 0 0 auto; max-height: 40vh; overflow: auto; border-radius: 14px;
+         display: flex; flex-wrap: wrap; gap: 0 18px; padding: 6px 16px 10px;
+         background: rgba(24, 20, 36, 0.86); color: #fff; }
+  .hud[hidden] { display: none; }
+  .hud .ctl { flex: 1 1 220px; margin: 6px 0; }
+  .hud .ctl > .lbl .val { color: #ddd; }
+  .hud .empty { color: #ddd; padding: 8px 0; }
+  .pin { border: none; background: none; padding: 0; margin-right: 6px; font-size: 0.85em; opacity: 0.3;
+         cursor: pointer; vertical-align: baseline; }
+  .pin[aria-pressed=true] { opacity: 1; }
+  /* in the HUD, an eye on each slider folds it away to its name, and back
+     (it stays pinned) */
+  .eye { border: none; background: none; padding: 0; margin-right: 6px; font-size: 0.95em; cursor: pointer; }
+  .eye[aria-pressed=false] { opacity: 0.45; }
+  .hud .ctl.min { flex: 0 0 auto; }
+  .hud .ctl.min input, .hud .ctl.min .val { display: none; }
+  .hud .ctl.min > .lbl { margin: 0; }
+  .hud svg.place { max-width: 130px; }
+  .hud .ctl.min svg.place { display: none; }
+  /* a doorway into another scene (a picture, a window, a tree house, a
+     door) glows under the pointer; a click goes through it */
+  #bg .portal { cursor: pointer; }
+  /* (ticket 324, Matthew: "levers glow when we hover over them") a lever under the pointer, the trap room's or one put there,
+     glows warm, as a torch's light: a filter only while hovered, so it costs nothing the rest of the time */
+  /* (ticket 342, Matthew: "when we hover over a placeable object, it glows like the doors, etc.") every placed thing, not the room's own */
+  #bg [data-lever]:hover, #bg .thing[data-drag^="thing:"]:hover { filter: drop-shadow(0 0 3px rgba(255, 214, 120, 0.95)) drop-shadow(0 0 9px rgba(255, 190, 80, 0.7)); }
+  #bg [data-lever-thing] { cursor: pointer; }
+  #bg .portal:hover { filter: drop-shadow(0 0 3px #fffbe0) drop-shadow(0 0 9px #ffd23f) brightness(1.08); }
+  /* (ticket 145) the picture the controller's ✨ would go into: its glow breathes */
+  #bg .enter-glow { animation: enter-glow 1.3s ease-in-out infinite alternate; }
+  @keyframes enter-glow { from { opacity: 0.45; } to { opacity: 1; } }
+/* A fairy's wings flap, and their stars twinkle, by CSS, not SVG
+   animation: a drag pauses the picture's SVG animations (see pointerdown),
+   and the wings go on flapping through it, to fly. Each redraw starts them
+   in step with the clock (fairyPhase), so they never restart mid-flap. */
+@keyframes fairy-flap-l { 50% { transform: rotate(9deg); } }
+@keyframes fairy-flap-r { 50% { transform: rotate(-9deg); } }
+@keyframes fairy-twinkle { 50% { opacity: 0.2; } }
+
+/* (ticket 185) the world designer's grid */
+/* (ticket 210, Matthew: "re-scale the grid to fill the available space, even in two column mode") A square's side
+   is the most that fits both the column's width (the wrap is the container) and the room's height (--grid-h: the
+   window less the tab's top, so the whole grid can be seen at once); its emoji, name and way marks scale with it.
+   The squares are the panel's colour with its ink: --card was never defined, so in dark mode they were white under
+   light words, the names faint. */
+.world-grid-wrap { container-type: inline-size; }
+.world-grid { --gap: 4px; --cell: min(calc((100cqw - (var(--cols, 5) - 1) * var(--gap)) / var(--cols, 5)), calc((var(--grid-h, calc(100dvh - 140px)) - (var(--rows, 6) - 1) * var(--gap)) / var(--rows, 6)));
+  display: grid; grid-template-columns: repeat(var(--cols, 5), var(--cell)); grid-auto-rows: var(--cell); gap: var(--gap); margin: 0.5rem 0; justify-content: center; }
+.world-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0;
+  padding: 2px; border-radius: clamp(6px, calc(var(--cell) * 0.07), 14px); border: 2px solid var(--line, #ccc); --sq: var(--panel); background: color-mix(in srgb, var(--sq) 26%, var(--panel)); color: var(--ink);
+  font: inherit; font-size: clamp(8px, calc(var(--cell) * 0.105), 21px); line-height: 1.1; overflow: hidden; cursor: pointer; }
+.world-cell.empty { opacity: 0.55; color: var(--muted, #888); background: transparent; cursor: default; }   /* (ticket 375: faint, not dashed) */
+/* (ticket 210, Matthew: "each type of grid square its own faint background color, like the instrument part panels in
+   the music panel are different from the LFOs", "so water is blue, and green areas are green, witch is purple",
+   "castle is grey (or the castle stone color...)") Each kind's own colour (from its place: the sea, the crossing's
+   floor, the witch's purple, the castle's stone), mixed faint into the panel's, so light and dark alike; the place
+   chips over the grid the same, so a place looks the same in both. */
+.world-chip { --sq: var(--panel); background: color-mix(in srgb, var(--sq) 26%, var(--panel)); }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="sea"] { --sq: #2a9fd6; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="lake"] { --sq: #4cc0e6; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="deepsea"] { --sq: #1e40af; }   /* (ticket 219) */
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="waterfall"] { --sq: #24b0a0; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="beach"] { --sq: #e8c46a; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="forest"] { --sq: #2f8f3e; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="clearing"] { --sq: #7cc35a; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="crossing"] { --sq: #76843a; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="woodpath"] { --sq: #5f8f3a; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="pasture"] { --sq: #a3c447; }   /* (ticket 503: the pasture's grass, sunnier than the clearing's) */
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="treehouse"] { --sq: #4f9a3a; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="house"] { --sq: #9cc95c; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="campsite"] { --sq: #c08a3e; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="witch"] { --sq: #6a2c91; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="cemetery"] { --sq: #77738f; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="mountains"] { --sq: #7f8c99; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="fairyforest"] { --sq: #e05aa8; }
+:is(.world-cell, .world-chip, .world-compass-mid)[data-kind="castle"] { --sq: #9a9aaa; }
+.world-cell.bad { border-color: #d9480f; border-width: clamp(4px, calc(var(--cell) * 0.045), 8px); background: #fff1e6; color: #7c2d12; }
+/* (ticket 210, Matthew: "make the 'this square has an error' red outline stroke bigger. Same for 'this is the current
+   square'") both thick, with the squares' size: the error's border, the current square's outline over its neighbours */
+.world-cell.here { outline: clamp(4px, calc(var(--cell) * 0.045), 8px) solid #3b82f6; outline-offset: 1px; z-index: 1; }
+.world-cell.start .world-emoji::after { content: " 🏁"; font-size: 0.7em; }
+.world-emoji { font-size: 3.3em; line-height: 1; }
+.world-name { text-align: center; max-width: 100%; overflow-wrap: anywhere; }
+.world-way { --w: clamp(6px, calc(var(--cell) * 0.065), 14px); position: absolute; width: var(--w); height: var(--w); background: #8a5528; border-radius: 2px; }
+.world-way.w-N { top: 1px; left: calc(50% - var(--w) / 2); } .world-way.w-S { bottom: 1px; left: calc(50% - var(--w) / 2); }
+.world-way.w-E { right: 1px; top: calc(50% - var(--w) / 2); } .world-way.w-W { left: 1px; top: calc(50% - var(--w) / 2); }
+.world-way.w-NE { top: 1px; right: 1px; } .world-way.w-NW { top: 1px; left: 1px; } .world-way.w-SE { bottom: 1px; right: 1px; } .world-way.w-SW { bottom: 1px; left: 1px; }
+.world-warn { align-items: center; gap: 8px; }
+/* (ticket 210) the picture shows a place that is not the square the friend is in */
+.world-alert { margin: 6px 0; padding: 8px 12px; border-radius: 10px; border: 2px solid #d97706; background: color-mix(in srgb, #f59e0b 18%, var(--panel)); color: var(--ink); font-weight: 600; }
+/* (ticket 200) what's new, in ⚙️ Advanced: version cards in a box of their own that scrolls */
+.news-cap { margin-top: 14px; }
+.news { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--paper); color: #222; }
+.news-card { padding: 8px 10px 4px; margin-bottom: 8px; border-radius: 8px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+.news-card.now { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+.news-head { font-size: 1.05em; margin-bottom: 4px; }
+.news-this { font-size: 0.75em; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
+.news-card p { margin: 4px 0; }
+.news-sub { font-weight: 600; margin: 8px 0 2px; }
+.news-card ul { margin: 4px 0 6px; padding-left: 1.2em; }
+.news-card li { margin: 3px 0; line-height: 1.35; }
+.news-card code { font-size: 0.9em; }
+/* (ticket 201) a place too busy for this computer: the moving things' buttons greyed, the busiest marked */
+.thing-slow { color: #b45309; font-weight: 600; margin: 4px 0; }
+.thing-items button:disabled { opacity: 0.4; cursor: not-allowed; }
+.cross-list .row.thing-costly { outline: 2px dashed #d9480f; outline-offset: 2px; border-radius: 6px; }
+.cross-list .row.thing-costly .name::after { content: " 🐢"; }
+.world-ways-out button:disabled { opacity: 0.28; cursor: not-allowed; }
+.world-ways-out button.way-suggest { position: relative; outline: 2px dashed #d9480f; outline-offset: 2px; }
+.world-ways-out button.way-suggest::after { content: "★"; position: absolute; top: -10px; right: -8px; font-size: 0.8em; color: #d9480f; text-shadow: 0 0 2px #fff; }
+.world-ways-out button.way-offmap { outline: 2px solid #d9480f; }
+.world-ways-out button.way-suggest-off { position: relative; outline: 2px dashed #d9480f; outline-offset: 2px; }
+.world-ways-out button.way-suggest-off::after { content: "✕"; position: absolute; top: -10px; right: -8px; font-size: 0.75em; font-weight: bold; color: #d9480f; text-shadow: 0 0 2px #fff; }
+.world-warn-count { font-size: 0.9em; }
+.world-probs-here, .world-probs-else { margin: 4px 0 8px; }
+.world-prob { font-size: 0.85em; margin: 2px 0; padding-left: 1em; text-indent: -1em; }
+.world-prob::before { content: "• "; }
+.world-off { margin-top: 0.5rem; }
+.world-palette { flex-wrap: wrap; gap: 4px; }
+/* (ticket 283) 🔬 collision boxes: each kind hidden when its chip is off */
+svg.solid-boxes[data-hide~="back"] .back, svg.solid-boxes[data-hide~="walls"] .wall,
+svg.solid-boxes[data-hide~="walks"] g[data-walk], svg.solid-boxes[data-hide~="walks"] g[data-walk] + text,
+svg.solid-boxes[data-hide~="pits"] g[data-solid]:has(.pit), svg.solid-boxes[data-hide~="pits"] g[data-solid]:has(.pit) + text,
+svg.solid-boxes[data-hide~="things"] g[data-solid]:not(:has(.pit)):not(.seat), svg.solid-boxes[data-hide~="things"] g[data-solid]:not(:has(.pit)):not(.seat) + text,
+svg.solid-boxes[data-hide~="seats"] g.seat, svg.solid-boxes[data-hide~="seats"] g.seat + text,
+svg.solid-boxes[data-hide~="you"] .you { display: none; }
+/* (ticket 300) the palette by kind of place, a line each, its name first */
+.world-palette-kind { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; }
+.world-palette-name { font-size: 0.8em; opacity: 0.75; margin-right: 2px; white-space: nowrap; }
+.world-chip { font-size: 0.8em; padding: 2px 8px; cursor: grab; }
+.world-trash { border: 2px solid var(--line, #ccc); border-radius: 8px; padding: 6px 10px; }
+.world-here { margin: 0.5rem 0; }
+/* (ticket 224) the tab's order, the grid's column among the rest (in the page they are the rest, the dragger, the grid's
+   column); the labels and the dragger full screen only */
+.world-layout { display: flex; flex-direction: column; }
+.world-rest { display: contents; }
+.world-rest > .world-alert { order: 1; } .world-rest > .world-warn { order: 2; } .world-rest > .world-palette { order: 3; } .world-gridcol { order: 4; }
+.world-rest > .world-sizes { order: 5; } .world-rest > .world-here { order: 6; } .world-rest > .world-things { order: 7; } .world-rest > .world-off { order: 8; }
+.world-rest > .world-settings { order: 6; }   /* (ticket 524: after the square's card, as it is in the page) */
+.world-split { display: none; }
+/* (ticket 488, ^du_report(5)'s "Always Be Knolling"; Matthew: "Especially, for example, non-FS world design control panels")
+   🗺️ World design in the side panel, knolled as it is full screen: each part a box, named once (its own heading, or its
+   data-box-name), the boxes a grid (one column in the side panel's width, more as it widens), the world's grid, the places
+   to put and the things here across all of them; in the order they had (the order above) */
+body:not(.world-big) .world-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--box-min)), 1fr)); gap: var(--box-gap); align-items: start; }
+body:not(.world-big) .world-rest > :not([hidden]):not(.world-view) { margin: 0; border: var(--box-line); border-radius: var(--box-radius); padding: var(--box-pad); background: var(--mu-main); }
+body:not(.world-big) :is(.world-gridcol, .world-rest > .world-alert, .world-rest > .world-palette, .world-rest > .world-things, .world-rest > .world-settings:has(.world-settings-boxes)) { grid-column: 1 / -1; }
+body:not(.world-big) .world-rest > .world-alert:not([hidden]) { border-color: #d97706; background: color-mix(in srgb, #f59e0b 18%, var(--panel)); }   /* (as specific as the box rule above, after it: the review after 0.0.385) */
+.world-rest > [data-box-name]::before { content: attr(data-box-name); display: block; flex-basis: 100%; margin: 0 0 4px; font-size: 0.92em; font-weight: 700; color: var(--ink, inherit); }
+/* (ticket 255, Matthew: "the letters do not scale large enough in the grid when not full screen. I misread them") the
+   columns' letters and the rows' numbers outside full screen too, a band the grid's size is reckoned with, as full screen
+   has (ticket 224); each at least 13px; an empty square's own name (its letter and number) as big */
+.world-grid { --lab: 1.5rem; --cell: min(calc((100cqw - var(--lab) - var(--cols, 5) * var(--gap)) / var(--cols, 5)),
+                                         calc((var(--grid-h, calc(100dvh - 140px)) - var(--lab) - var(--rows, 6) * var(--gap)) / var(--rows, 6)));
+              grid-template-columns: var(--lab) repeat(var(--cols, 5), var(--cell)); grid-template-rows: var(--lab); }
+.world-lab { display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); font-size: clamp(13px, calc(var(--cell) * 0.2), 30px); }
+.world-cell.empty { font-size: clamp(13px, calc(var(--cell) * 0.2), 24px); font-weight: 600; }
+/* (ticket 224) the square's name, with room round it and in it; its ways out as a compass round its emoji; this square's warnings in a dotted box */
+.world-name-row { margin: 8px 0; gap: 8px; align-items: center; flex-wrap: wrap; }
+.world-name-row input { padding: 6px 10px; font-size: 1em; border-radius: 8px; border: 1px solid var(--line); }
+.world-ways-out { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.world-compass { display: grid; grid-template-columns: repeat(3, 2.6em); grid-auto-rows: 2.6em; gap: 4px; }
+.world-compass button { width: 100%; height: 100%; padding: 0; font-size: 1.1em; }
+.world-compass-mid { display: flex; align-items: center; justify-content: center; font-size: 1.6em; border-radius: 8px; border: 2px solid var(--line);
+                     --sq: var(--panel); background: color-mix(in srgb, var(--sq) 26%, var(--panel)); }
+body.world-big .world-compass { grid-template-columns: repeat(3, 3.2em); grid-auto-rows: 3.2em; }
+.world-compass-mid.empty { opacity: 0.5; }   /* (ticket 249: a crossing's paths, round nothing) */
+.world-back-row { flex-wrap: wrap; gap: 4px; }
+/* (ticket 524) ⚙️ the place's settings: Background's boxes, a grid of them; the places off the grid as chips; which one */
+.world-settings-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--box-min)), 1fr)); gap: var(--box-gap); align-items: start; margin-top: 6px; }
+.world-off-chips, .world-which { flex-wrap: wrap; gap: 4px; align-items: center; }
+.world-off-chip[aria-pressed="true"] { outline: 2px solid var(--accent, #38bdf8); }
+.world-here .world-probs { border: 2px dotted var(--line); border-radius: 10px; padding: 6px 10px; margin: 8px 0; }
+.drag-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: translate(-50%, -60%); font-size: 2.2em; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)); }
+
+/* (ticket 185) the world square's ways out, over the picture and its buttons: each shown only while the friend is near it */
+.ways-layer { position: absolute; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
+.way-arrow { position: absolute; left: 0; top: 0; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  opacity: 0; pointer-events: none;
+  /* (ticket 404) going away takes ♿'s --label-stay (500 ms by default, twice the old 250), held near full before it fades */
+  transition: opacity var(--label-stay, 500ms) cubic-bezier(0.8, 0, 1, 1); }
+/* (ticket 424) coming in, quickly: near, aimed, or shown by ♿'s 🧭 all arrows (.always; since 0.0.335 those came in on the slow
+   curve meant for going away). Going away, the class taken off, takes the slow fade above */
+.way-arrow.near, .way-arrow.aimed, .way-arrow.always { transition: opacity 0.25s; }
+.way-arrow.near { opacity: 1; pointer-events: auto; }
+/* (ticket 187) near but not the one X, Enter or a tap would take: dimmer */
+.way-arrow.near:not(.aimed) { opacity: 0.55; }
+/* (ticket 199) the one the pointer picks shows, near or not */
+.way-arrow.aimed { opacity: 1; pointer-events: auto; }
+/* (ticket 217) ♿ every arrow shown: a far one dimmer (--arrow-dim) and in its own colour (--arrow-color), the near
+   and aimed ones as before; all at --arrow-scale (the arrow's point stays where it is: it is the box's corner) */
+.way-arrow { scale: var(--arrow-scale, 1); }
+.way-arrow.always:not(.near):not(.aimed) { opacity: var(--arrow-dim, 0.45); pointer-events: auto; }
+.way-arrow.always:not(.near):not(.aimed) .way-tri::before { background: var(--arrow-color, #38bdf8); }
+.way-arrow.terse .way-words { display: none; }
+/* (ticket 221) 🫧 blown bubbles, over the picture */
+.blown { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+/* (ticket 499) 🔥 breathing fire: in a picture of its own over the scene's (#fire-over, inside its border as #pic-over is, its
+   viewBox the scene's), a fixed set of shapes each moved by one of these animations, the mock-up's (mockups/dragon-fire.html):
+   side on (fi-), toward us (fi-f-), away from us (fi-a-). Each shape is placed by its parent group (a turn, a spot), so an
+   animation's transform is about the fire's own (0, 0). Let go, it fades (.fi-out) and is hidden, its animations stopped. */
+#fire-over { position: absolute; left: 2px; top: 2px; width: calc(100% - 4px); height: calc(100% - 4px);
+             pointer-events: none; overflow: hidden; border-radius: 16px; will-change: transform; }   /* (a layer of its own: its flames moving paint it alone) */
+#fire-over .fi-fire { transition: opacity 0.1s; }
+#fire-over .fi-fire.fi-out { opacity: 0; transition: opacity 0.2s; }
+/* (ticket 523) 🐉 the dragon's 🔥 button, held to breathe fire (lit while held, by .row's pressed colours): a touch held on it is
+   not a scroll of the panel, nor a long press's menu or a selection, as the on-screen controller's buttons */
+.fire-hold { font-weight: 600; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+             -webkit-tap-highlight-color: transparent; }
+.fire-hold[aria-pressed=true] { transform: scale(0.96); }
+.fire-hold-row { margin-bottom: 6px; }   /* (a row of its own, over its six chips) */
+.fi-heat { animation: fi-shimmer 0.6s linear infinite; }
+@keyframes fi-shimmer { to { stroke-dashoffset: -22; } }
+.fi-glow { animation: fi-flicker 0.13s ease-in-out infinite alternate; }
+@keyframes fi-flicker { from { transform: scale(0.88); opacity: 0.75; } to { transform: scale(1.15); opacity: 1; } }
+.fi-tail, .fi-bub-flame { animation: fi-tail 0.1s linear infinite alternate; }
+.fi-bub-flame { animation-duration: 0.15s; }
+@keyframes fi-tail { from { transform: scale(0.85, 0.9); } to { transform: scale(1.12, 1.05); } }
+.fi-flick { animation: fi-flick 0.1s linear infinite alternate; }
+@keyframes fi-flick { from { transform: scale(0.85) rotate(-6deg); } to { transform: scale(1.15) rotate(6deg); } }
+/* side on, 1: roaring flame */
+.fi-roar { animation: fi-roar 0.9s linear infinite; }
+@keyframes fi-roar { 0% { transform: translate(0, 0) scale(0.2); fill: #fffbe0; opacity: 1; } 20% { fill: #ffe14d; } 45% { fill: #ff9b1f; }
+  70% { fill: #ef4b1b; opacity: 0.85; } 100% { transform: translate(330px, -26px) scale(2.1); fill: #7c2414; opacity: 0; } }
+.fi-core { animation: fi-core 0.45s linear infinite; }
+@keyframes fi-core { 0% { transform: translate(0, 0) scale(0.15); fill: #ffffff; opacity: 1; } 100% { transform: translate(125px, -4px) scale(0.95); fill: #ffe14d; opacity: 0; } }
+.fi-smoke { animation: fi-smoke 1.8s linear infinite; }
+@keyframes fi-smoke { 0% { transform: translate(230px, 0) scale(0.3); opacity: 0; } 30% { opacity: 0.4; } 100% { transform: translate(400px, -100px) scale(1.7); opacity: 0; } }
+/* 2: fireballs */
+.fi-fb { animation: fi-fb 1.5s linear infinite; }
+@keyframes fi-fb { 0% { transform: translate(0, 0) scale(0.3); opacity: 1; } 50% { transform: translate(215px, -40px) scale(0.95); }
+  86% { transform: translate(390px, -14px) scale(1.15); opacity: 1; } 92% { transform: translate(425px, -6px) scale(1.4); opacity: 0; } 100% { transform: translate(440px, 0) scale(1.4); opacity: 0; } }
+.fi-burst { animation: fi-burst 1.5s linear infinite; }
+@keyframes fi-burst { 0%, 84% { transform: scale(0.2); opacity: 0; } 90% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+/* 3: twisting fire */
+.fi-twirl { animation: fi-twirl 0.7s ease-in-out infinite alternate; }
+@keyframes fi-twirl { from { transform: scale(1, 1); } to { transform: scale(1, -1); } }
+.fi-twa { animation: fi-twa 1.1s linear infinite; }
+.fi-twb { animation: fi-twb 1.1s linear infinite; }
+@keyframes fi-twa { 0% { transform: translate(0, 0) scale(0.2); fill: #fff3b0; opacity: 1; } 25% { transform: translate(85px, -30px) scale(0.55); fill: #ffc83d; }
+  50% { transform: translate(170px, 0) scale(0.85); fill: #ff8a1f; } 75% { transform: translate(255px, 30px) scale(1.15); fill: #e8401c; opacity: 0.85; }
+  100% { transform: translate(340px, 0) scale(1.4); fill: #7c2414; opacity: 0; } }
+@keyframes fi-twb { 0% { transform: translate(0, 0) scale(0.2); fill: #ffffff; opacity: 1; } 25% { transform: translate(85px, 30px) scale(0.55); fill: #fff176; }
+  50% { transform: translate(170px, 0) scale(0.85); fill: #ffd23f; } 75% { transform: translate(255px, -30px) scale(1.15); fill: #ffa726; opacity: 0.85; }
+  100% { transform: translate(340px, 0) scale(1.4); fill: #c2410c; opacity: 0; } }
+/* 4: blue-hot jet */
+.fi-jet { animation: fi-jet 0.07s linear infinite alternate; }
+@keyframes fi-jet { from { transform: scale(0.95, 1.08); } to { transform: scale(1.04, 0.9); } }
+.fi-jettip { animation: fi-jettip 0.5s linear infinite; }
+@keyframes fi-jettip { 0% { transform: translate(270px, 0) scale(0.3); fill: #ffb347; opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translate(400px, -26px) scale(1.3); fill: #ff6a1a; opacity: 0; } }
+.fi-spark { animation: fi-spark 0.38s linear infinite; }
+@keyframes fi-spark { 0% { transform: translate(20px, 0); opacity: 1; } 100% { transform: translate(430px, 0); opacity: 0; } }
+/* 5: brick fire (toy flame pieces that click on, then pop off): the same in every view */
+.fi-brick { animation: fi-brick 1.8s ease-out infinite both; }
+@keyframes fi-brick { 0% { transform: scale(0) rotate(-20deg); opacity: 1; } 7% { transform: scale(1.18) rotate(6deg); } 11% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(1) rotate(-4deg); } 60% { transform: scale(1) rotate(4deg); } 72% { transform: scale(1) rotate(0deg); opacity: 1; }
+  76% { transform: scale(1.25) rotate(0deg); opacity: 0; } 100% { transform: scale(0) rotate(0deg); opacity: 0; } }
+/* 6: fire bubbles */
+.fi-fbub { animation: fi-fbub 2.4s linear infinite; }
+@keyframes fi-fbub { 0% { transform: translate(0, 0) scale(0.15); opacity: 1; } 18% { transform: translate(70px, -14px) scale(0.75); } 40% { transform: translate(150px, -4px) scale(0.95); }
+  62% { transform: translate(230px, -26px) scale(1); } 84% { transform: translate(300px, -20px) scale(1.05); opacity: 1; } 88% { transform: translate(306px, -22px) scale(1.45); opacity: 0; }
+  100% { transform: translate(306px, -22px) scale(1.45); opacity: 0; } }
+.fi-bubpop { animation: fi-bubpop 2.4s linear infinite; }
+@keyframes fi-bubpop { 0%, 84% { transform: scale(0.3); opacity: 0; } 89% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+/* toward us: out from the mouth in every direction (each shape's parent turns it), growing as it comes nearer */
+.fi-f-roar { animation: fi-f-roar 1s linear infinite; }
+@keyframes fi-f-roar { 0% { transform: translate(0, 0) scale(0.15); fill: #fffbe0; opacity: 1; } 25% { fill: #ffe14d; } 50% { fill: #ff9b1f; }
+  75% { fill: #ef4b1b; opacity: 0.8; } 100% { transform: translate(72px, 0) scale(3.3); fill: #7c2414; opacity: 0; } }
+.fi-f-core { animation: fi-f-core 0.5s linear infinite; }
+@keyframes fi-f-core { 0% { transform: translate(0, 0) scale(0.1); fill: #ffffff; opacity: 1; } 100% { transform: translate(22px, 0) scale(1.6); fill: #ffe14d; opacity: 0; } }
+.fi-f-smoke { animation: fi-f-smoke 1.8s linear infinite; }
+@keyframes fi-f-smoke { 0% { transform: translate(80px, 0) scale(0.6); opacity: 0; } 30% { opacity: 0.35; } 100% { transform: translate(165px, 0) scale(2.4); opacity: 0; } }
+.fi-f-ball { animation: fi-f-ball 1.5s linear infinite; }
+@keyframes fi-f-ball { 0% { transform: translate(0, 0) scale(0.25); opacity: 1; } 80% { transform: translate(56px, 0) scale(2.3); opacity: 1; }
+  88% { transform: translate(64px, 0) scale(2.9); opacity: 0; } 100% { transform: translate(64px, 0) scale(2.9); opacity: 0; } }
+.fi-f-burst { animation: fi-f-burst 1.5s linear infinite; }
+@keyframes fi-f-burst { 0%, 82% { transform: scale(0.3); opacity: 0; } 89% { transform: scale(2); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+.fi-f-twa { animation: fi-f-twa 1.1s linear infinite; }
+.fi-f-twb { animation: fi-f-twb 1.1s linear infinite; }
+@keyframes fi-f-twa { 0% { transform: rotate(0deg) translate(0px, 0px) scale(0.2); fill: #fff3b0; opacity: 1; } 25% { fill: #ffc83d; }
+  50% { transform: rotate(-150deg) translate(62px, 0px) scale(0.95); fill: #ff8a1f; } 75% { fill: #e8401c; opacity: 0.85; }
+  100% { transform: rotate(-300deg) translate(128px, 0px) scale(1.9); fill: #7c2414; opacity: 0; } }
+@keyframes fi-f-twb { 0% { transform: rotate(0deg) translate(0px, 0px) scale(0.2); fill: #ffffff; opacity: 1; } 25% { fill: #fff176; }
+  50% { transform: rotate(-150deg) translate(62px, 0px) scale(0.95); fill: #ffd23f; } 75% { fill: #ffa726; opacity: 0.85; }
+  100% { transform: rotate(-300deg) translate(128px, 0px) scale(1.9); fill: #c2410c; opacity: 0; } }
+.fi-f-jet { animation: fi-f-jet 0.07s linear infinite alternate; }
+@keyframes fi-f-jet { from { transform: scale(0.93); } to { transform: scale(1.07); } }
+.fi-f-jettip { animation: fi-f-jettip 0.5s linear infinite; }
+@keyframes fi-f-jettip { 0% { transform: translate(28px, 0) scale(0.4); fill: #ffb347; opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translate(88px, 0) scale(1.9); fill: #ff6a1a; opacity: 0; } }
+.fi-f-spark { animation: fi-f-spark 0.38s linear infinite; }
+@keyframes fi-f-spark { 0% { transform: translate(14px, 0) scale(0.5); opacity: 1; } 100% { transform: translate(120px, 0) scale(2.2); opacity: 0; } }
+.fi-f-bub { animation: fi-f-bub 2.4s linear infinite; }
+@keyframes fi-f-bub { 0% { transform: translate(0, 0) scale(0.15); opacity: 1; } 40% { transform: translate(30px, 0) scale(1.2); } 84% { transform: translate(60px, 0) scale(2.4); opacity: 1; }
+  88% { transform: translate(66px, 0) scale(3); opacity: 0; } 100% { transform: translate(66px, 0) scale(3); opacity: 0; } }
+.fi-f-bubpop { animation: fi-f-bubpop 2.4s linear infinite; }
+@keyframes fi-f-bubpop { 0%, 84% { transform: scale(0.3); opacity: 0; } 89% { transform: scale(1.9); opacity: 1; } 100% { transform: scale(2.8); opacity: 0; } }
+/* away from us: up from behind the head, slowing and shrinking as it goes farther off */
+.fi-a-roar { animation: fi-a-roar 1s linear infinite; }
+@keyframes fi-a-roar { 0% { transform: translate(0, 24px) scale(1.5); fill: #fffbe0; opacity: 0; } 12% { opacity: 1; } 20% { fill: #ffe14d; }
+  35% { transform: translate(0, -110px) scale(0.85); } 45% { fill: #ff9b1f; } 70% { transform: translate(0, -200px) scale(0.48); } 75% { fill: #ef4b1b; opacity: 0.85; }
+  100% { transform: translate(0, -240px) scale(0.3); fill: #7c2414; opacity: 0; } }
+.fi-a-core { animation: fi-a-core 0.5s linear infinite; }
+@keyframes fi-a-core { 0% { transform: translate(0, 20px) scale(1.1); fill: #ffffff; opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(0, -95px) scale(0.35); fill: #ffe14d; opacity: 0; } }
+.fi-a-smoke { animation: fi-a-smoke 1.8s linear infinite; }
+@keyframes fi-a-smoke { 0% { transform: translate(0, -150px) scale(0.7); opacity: 0; } 30% { opacity: 0.35; } 100% { transform: translate(0, -300px) scale(0.5); opacity: 0; } }
+.fi-a-ball { animation: fi-a-ball 1.5s linear infinite; }
+@keyframes fi-a-ball { 0% { transform: translate(0, 20px) scale(1.4); opacity: 0; } 8% { opacity: 1; } 30% { transform: translate(0, -120px) scale(0.75); }
+  55% { transform: translate(0, -205px) scale(0.5); } 80% { transform: translate(0, -250px) scale(0.38); opacity: 1; }
+  88% { transform: translate(0, -262px) scale(0.32); opacity: 0; } 100% { transform: translate(0, -262px) scale(0.32); opacity: 0; } }
+.fi-a-burst { animation: fi-a-burst 1.5s linear infinite; }
+@keyframes fi-a-burst { 0%, 82% { transform: scale(0.1); opacity: 0; } 89% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(0.8); opacity: 0; } }
+.fi-a-twirl { animation: fi-a-twirl 0.7s ease-in-out infinite alternate; }
+@keyframes fi-a-twirl { from { transform: scale(1, 1); } to { transform: scale(-1, 1); } }
+.fi-a-twa { animation: fi-a-twa 1.1s linear infinite; }
+.fi-a-twb { animation: fi-a-twb 1.1s linear infinite; }
+@keyframes fi-a-twa { 0% { transform: translate(0, 20px) scale(1.3); fill: #fff3b0; opacity: 0; } 10% { opacity: 1; } 25% { transform: translate(-38px, -70px) scale(0.95); fill: #ffc83d; }
+  50% { transform: translate(0, -140px) scale(0.68); fill: #ff8a1f; } 75% { transform: translate(18px, -190px) scale(0.48); fill: #e8401c; opacity: 0.85; }
+  100% { transform: translate(0, -222px) scale(0.33); fill: #7c2414; opacity: 0; } }
+@keyframes fi-a-twb { 0% { transform: translate(0, 20px) scale(1.3); fill: #ffffff; opacity: 0; } 10% { opacity: 1; } 25% { transform: translate(38px, -70px) scale(0.95); fill: #fff176; }
+  50% { transform: translate(0, -140px) scale(0.68); fill: #ffd23f; } 75% { transform: translate(-18px, -190px) scale(0.48); fill: #ffa726; opacity: 0.85; }
+  100% { transform: translate(0, -222px) scale(0.33); fill: #c2410c; opacity: 0; } }
+.fi-a-jet { animation: fi-a-jet 0.07s linear infinite alternate; }
+@keyframes fi-a-jet { from { transform: scale(1.06, 0.95); } to { transform: scale(0.92, 1.05); } }
+.fi-a-jettip { animation: fi-a-jettip 0.5s linear infinite; }
+@keyframes fi-a-jettip { 0% { transform: translate(150px, 0) scale(0.6); fill: #ffb347; opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translate(232px, 0) scale(0.3); fill: #ff6a1a; opacity: 0; } }
+.fi-a-spark { animation: fi-a-spark 0.38s linear infinite; }
+@keyframes fi-a-spark { 0% { transform: translate(10px, 0) scale(1); opacity: 1; } 100% { transform: translate(250px, 0) scale(0.4); opacity: 0; } }
+.fi-a-bub { animation: fi-a-bub 2.4s linear infinite; }
+@keyframes fi-a-bub { 0% { transform: translate(0, 20px) scale(1.2); opacity: 0; } 8% { opacity: 1; } 30% { transform: translate(-6px, -100px) scale(0.85); }
+  60% { transform: translate(6px, -180px) scale(0.6); } 84% { transform: translate(0, -230px) scale(0.45); opacity: 1; } 88% { transform: translate(0, -236px) scale(0.6); opacity: 0; }
+  100% { transform: translate(0, -236px) scale(0.6); opacity: 0; } }
+.fi-a-bubpop { animation: fi-a-bubpop 2.4s linear infinite; }
+@keyframes fi-a-bubpop { 0%, 84% { transform: scale(0.15); opacity: 0; } 89% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(0.75); opacity: 0; } }
+/* (ticket 220) 🫧 bubble space: a bubble that touches the friend swells and fades, about its own middle */
+#bubble-layer .bubin, #maker-bubbles .bubin, #ball-pops .bubin, #friend-burst .bubin, #leak-bubbles .bubin { transform-box: fill-box; transform-origin: center; }
+#bubble-layer .bubin.pop, #maker-bubbles .bubin.pop, #ball-pops .bubin.pop, #friend-burst .bubin.pop, #leak-bubbles .bubin.pop { animation: bub-pop 0.25s ease-out forwards; }   /* (ticket 499: a leak's too, popped by a fire's heat) */
+/* (ticket 415) a part of the friend gone to bubbles stays hidden, through every drawing, until they come back */
+#pic[data-burst~="head"] [data-part="head"], #pic[data-burst~="head"] [data-part="eyes"], #pic[data-burst~="head"] [data-part="hair"],
+#pic[data-burst~="torso"] [data-part="shirt"], #pic[data-burst~="torso"] [data-part="hands"],
+#pic[data-burst~="legs"] [data-part="pants"], #pic[data-burst~="feet"] [data-part="feet"] { visibility: hidden; }
+@keyframes bub-pop { to { scale: 1.7; opacity: 0; } }
+/* (ticket 329) a popped bubble's lines, out from it, growing and gone; and its smaller bubbles pop as the others */
+#bubble-kids .bubin { transform-box: fill-box; transform-origin: center; }
+#bubble-kids .bubin.pop { animation: bub-pop 0.25s ease-out forwards; }
+#bubble-kids .pop-rays { animation: pop-rays 0.42s ease-out forwards; }
+@keyframes pop-rays { from { transform: scale(0.7); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }   /* (ticket 227: a far arrow with no room for its words, just its triangle) */
+/* (ticket 217) ♿ the planned path, over the picture while the walk lasts */
+.walk-path { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.walk-path polyline { fill: none; stroke: var(--path-color, #fde047); stroke-width: var(--path-width, 4px); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 9;
+  filter: drop-shadow(0 0 1.5px #3b2a14); }
+.walk-path circle { fill: var(--path-color, #fde047); stroke: #3b2a14; stroke-width: 1.5; }
+.walk-path .walked { opacity: 0.35; }
+.walk-path polyline.alt { stroke: var(--path-alt, #c084fc); }   /* (ticket 266: a queue of clicks' walks by turns) */
+.walk-path circle.alt { fill: var(--path-alt, #c084fc); }
+/* (ticket 217) ♿ the collision boxes: the solids red, a castle room's walls amber, the floor's back limit violet */
+.solid-boxes { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.solid-boxes polygon { fill: color-mix(in srgb, var(--box-color, #ef4444) 20%, transparent); stroke: var(--box-color, #ef4444); stroke-width: var(--box-width, 2px); stroke-dasharray: 6 4; }
+.solid-boxes polygon.face { fill: color-mix(in srgb, var(--box-color, #ef4444) 8%, transparent); stroke-width: calc(0.75 * var(--box-width, 2px)); stroke-dasharray: 3 4; }
+.solid-boxes .wall { fill: none; stroke: #f59e0b; stroke-width: 3; stroke-dasharray: 8 5; }
+.solid-boxes .pit { fill: color-mix(in srgb, #f97316 18%, transparent); stroke: #f97316; stroke-width: var(--box-width, 2px); stroke-dasharray: 5 4; }   /* (0.0.157: a pit's hole, gone round) */
+.solid-boxes .back { fill: none; stroke: #a855f7; stroke-width: 2; stroke-dasharray: 4 6; }
+/* (ticket 258) ♿ 🧩 what a place is made of: its objects, white dashed; its plants, each in its procedure's colour */
+.made-of { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+.made-of rect { fill: none; }
+/* (its colour and line, 🔬 Inspection's controls: --made-color, --made-width, 2 at first; the plants keep their procedures' colours) */
+.made-of .obj rect { stroke: var(--made-color, #ffffff); stroke-width: calc(0.75 * var(--made-width, 2px)); stroke-dasharray: 6 3; }
+.made-of .obj rect.under { stroke: #000000; stroke-width: calc(1.75 * var(--made-width, 2px)); stroke-dasharray: none; opacity: 0.35; }
+.made-of .proc rect { fill: color-mix(in srgb, var(--c) 8%, transparent); stroke: var(--c); stroke-width: calc(0.6 * var(--made-width, 2px)); }
+.made-of text { font: 600 var(--made-font, 10px) sans-serif; fill: var(--made-color, #ffffff); paint-order: stroke; stroke: #000000; stroke-width: 2.5px; }
+.made-of .proc text { fill: var(--c); }
+.made-legend { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-width: 70%; padding: 5px 9px; border-radius: 8px; background: rgba(0, 0, 0, 0.62);
+  color: #ffffff; font: 600 11px/1.45 sans-serif; pointer-events: none; text-align: center; }
+.made-legend b { color: var(--c); }
+[data-front-step] { transition: opacity 0.25s; }
+[data-front-step].seen-through { opacity: 0.3; }   /* (ticket 268: a spiral step in front of the friend, seen through) */
+/* (ticket 251) 👆 the ground a click would walk to: a glowing ellipse in ♿'s colour, pulsing */
+.walk-spot { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.walk-spot ellipse { fill: color-mix(in srgb, var(--spot, #22d3ee) 35%, transparent); stroke: var(--spot, #22d3ee); stroke-width: 2.5px;
+  filter: drop-shadow(0 0 6px var(--spot, #22d3ee)); animation: walk-spot 1.1s ease-in-out infinite alternate; }
+@keyframes walk-spot { from { opacity: 0.55; } to { opacity: 1; } }
+/* (ticket 299) pointing at a seat or a bed: its box glowing, and what a click does there */
+.walk-spot .seat-spot { fill: color-mix(in srgb, var(--spot, #22d3ee) 22%, transparent); stroke: var(--spot, #22d3ee); stroke-width: 2.5px;
+  filter: drop-shadow(0 0 6px var(--spot, #22d3ee)); animation: walk-spot 1.1s ease-in-out infinite alternate; }
+.walk-spot .seat-say { font: 600 15px system-ui, sans-serif; fill: #ffffff; stroke: #0f172a; stroke-width: 4px; paint-order: stroke; }
+.madecats { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
+.madecats .flip.none-here { opacity: 0.45; }
+.solid-boxes .walk { fill: none; stroke: color-mix(in srgb, #10b981 35%, transparent); stroke-width: 12px; stroke-linecap: round; stroke-linejoin: round; }   /* (ticket 245: a rope bridge's way along it) */
+.solid-boxes .walk-mid { fill: none; stroke: #10b981; stroke-width: 2px; stroke-dasharray: 8 5; }
+/* (ticket 229) the friend's own box, and a collision's glow: the two boxes brighter and glowing, back in --glow-fade */
+.solid-boxes .you polygon { fill: color-mix(in srgb, var(--box-color, #ef4444) 30%, transparent); stroke: var(--box-color, #ef4444); stroke-width: var(--box-width, 2px); stroke-dasharray: none; }
+/* (Matthew: "when they glow, their interior temporarily becomes opaque, and then becomes transparent again", "maybe 50% opaque") */
+.solid-boxes .hit polygon, .solid-boxes polygon.hit, .solid-boxes .hit ellipse { animation: solid-glow var(--glow-fade, 800ms) ease-out; }
+.solid-boxes polyline.hit { animation: wall-glow var(--glow-fade, 800ms) ease-out; }
+@keyframes solid-glow { 0% { fill: var(--box-color, #ef4444); fill-opacity: 0.5; stroke-width: 5; filter: drop-shadow(0 0 7px var(--box-color, #ef4444)); } }
+@keyframes wall-glow { 0% { stroke-width: 8; filter: drop-shadow(0 0 7px var(--box-color, #ef4444)); } }
+.solid-boxes text { font: 600 var(--box-font, 11px) sans-serif; fill: #fff; paint-order: stroke; stroke: color-mix(in srgb, var(--box-color, #ef4444) 55%, #000); stroke-width: 3px; }
+/* (ticket 230) ♿ each overlay's row: its chip, and while on, its colour and short sliders beside it, boxed as a mixer's
+   strip; the words' size in a dashed box of its own */
+.accbox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 6px 0; padding: 4px 10px 4px 0; border: 2px solid transparent; border-radius: 12px; }
+.accbox.on { border-color: var(--line); background: var(--mu-inst); padding: 6px 10px; }
+.accbox.plain { background: var(--mu-main); }
+.accbox .cap { font-weight: 600; }
+/* (ticket 375, knolled) the overlays and switches of 🔬 Inspection and ♿ Accessibility: like things side by side as chips, one switched
+   on opening to the panel's width with its own settings */
+#panel[data-part="access"] { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+#panel[data-part="access"] > .accbox { margin: 0; }
+#panel[data-part="access"] > .accbox.on, #panel[data-part="access"] > .accbox.plain, #panel[data-part="access"] > :not(.accbox) { flex-basis: 100%; }
+.accmore { display: contents; }   /* (its items wrap one by one beside the chip, not all onto a line of their own) */
+.accmore[hidden] { display: none; }
+.accitem { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9em; white-space: nowrap; }
+.accitem input[type=range] { width: 96px; }
+.accitem input[type=color] { width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; }
+.accitem .val { min-width: 2.4em; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* (ticket 217) ♿ the words in the game: each text in the place scaled about its own middle; the arrows' words too */
+body.game-font #bg text { transform-box: fill-box; transform-origin: center; scale: var(--game-font, 1); }
+.way-arrow .way-tri { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; transform: rotate(var(--a)); animation: way-bob 1.8s ease-in-out infinite; }
+.way-arrow .way-tri::before { content: ""; position: absolute; inset: 6px; clip-path: polygon(15% 5%, 98% 50%, 15% 95%); background: #fff4cf; filter: drop-shadow(0 0 2px #6b4a24) drop-shadow(0 0 1px #6b4a24); }
+.way-arrow.nowhere .way-tri::before { background: #d6d3d1; }
+.way-arrow.nowhere { cursor: default; }
+.way-arrow:hover .way-tri::before, .way-arrow:focus-visible .way-tri::before, .way-arrow.aimed .way-tri::before { filter: drop-shadow(0 0 3px #fffbe0) drop-shadow(0 0 9px #ffd23f) drop-shadow(0 0 14px #ffd23f); }
+@keyframes way-bob { 0%, 100% { translate: 0 0; } 50% { translate: calc(5px * cos(var(--a))) calc(5px * sin(var(--a))); } }
+.way-arrow .way-words { position: absolute; width: max-content; max-width: 7.5em; text-align: center; white-space: normal; line-height: 1.15;
+  font: 600 calc(0.8rem * var(--game-font, 1))/1.15 sans-serif; color: #fff; text-shadow: 0 0 3px #3b2a14, 0 0 3px #3b2a14, 0 0 2px #3b2a14; }
+.way-arrow[data-side="left"] .way-words { right: 26px; top: 50%; transform: translateY(-50%); text-align: right; }
+.way-arrow[data-side="right"] .way-words { left: 26px; top: 50%; transform: translateY(-50%); text-align: left; }
+.way-arrow[data-side="below"] .way-words { top: 26px; left: 50%; transform: translateX(-50%); }
+.way-arrow[data-side="above"] .way-words { bottom: 26px; left: 50%; transform: translateX(-50%); }
+
+/* (ticket 406) many worlds: the worlds' chips, and a way linked to another world: on the big grid a 🌍 on its mark; the
+   square to link to picked on that world's grid drawn small, each square its emoji and its name */
+.world-worlds { border: 1px solid var(--line, #c9c2b4);   /* (ticket 456: solid, as every panel's box: knoll375) */ border-radius: 10px; padding: 6px 8px; margin: 6px 0; }
+.world-worlds .world-chips button[aria-pressed="true"] { font-weight: bold; }
+.world-way.linked::after { content: "🌍"; font-size: 9px; position: absolute; transform: translate(-50%, -50%); }
+.world-links { border: 1px dotted var(--line, #c9c2b4); border-radius: 8px; padding: 4px 6px; margin-top: 6px; }
+.world-link { gap: 6px; align-items: center; }
+.world-link-compass button.linked { outline: 2px dashed #0ea5e9; }
+.world-mini { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(28px, 44px)); gap: 3px; margin: 4px 0 2px; }
+.world-mini-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 34px; padding: 1px; font-size: 15px; line-height: 1.05; border-radius: 6px; }
+.world-mini-cell small { font-size: 9px; opacity: 0.75; }
+.world-mini-cell.empty { font-size: 9px; opacity: 0.4; border: 1px dashed var(--line, #c9c2b4); }
+.world-mini-cell.chosen { outline: 3px solid #0ea5e9; }
+/* (ticket 525) a cave door's 🧭 on its card: where it leads, the worlds, the small grid, the places off the grid */
+.door-dest, .door-worlds, .door-offs { flex-wrap: wrap; gap: 4px; align-items: center; }
+.door-offs .world-off-chip { font-size: 13px; }
+
+
+/* (ticket 392) a row's name or a group's header that only says its box's name again */
+.head-dup { display: none !important; }
+
+/* (ticket 439) the people: a chip each, the one being dressed bold; the others' rows, name, where, then small buttons */
+.people { border: 1px solid var(--line, #c9c2b4); border-radius: 10px; padding: 6px 8px; margin: 6px 0; }
+.people .person-chip[aria-pressed="true"] { font-weight: bold; }
+.people .person-row { align-items: center; gap: 6px; }
+.people .person-row button { padding: 2px 8px; min-height: 0; }
+.people .person-name { font-weight: 600; }
+/* (ticket 459) the box a costume is chosen in, laid over the panel (not inside it): the chips, then ✖ cancel at its bottom */
+.person-pick { position: fixed; z-index: 1000; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; overflow: auto;
+               background: var(--panel); color: var(--ink); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 12px;
+               box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28); }
+.person-pick .person-pick-chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+.person-pick .person-pick-foot { margin-top: auto; display: flex; justify-content: center; padding-top: 6px; border-top: 1px solid var(--line); }
+/* (ticket 456) the band over the panel, kept at the top as the page scrolls: the tab's name / the box / the group the pointer
+   is over; not in a designer's full screen, which has its own head */
+.crumbs { position: sticky; top: 0; z-index: 6; margin: 0 0 6px; padding: 4px 10px; border-radius: 10px; box-sizing: border-box;
+          background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-size: 0.85em; font-weight: 600;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.crumbs:empty { display: none; }
+body.designer-big .crumbs { display: none; }
+
+/* (ticket 482) 🧩 Scripting: an editor per module, the program's errors, and a script's words over the picture */
+.script-box textarea.script-editor { width: 100%; box-sizing: border-box; font: var(--script-size, 12.5px)/1.45 var(--script-font, ui-monospace, SFMono-Regular, Menlo, monospace); tab-size: 2;
+  padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line, #c8c8c8); background: var(--panel, Canvas); color: inherit; resize: vertical; }
+.script-errors { margin: 4px 0 8px 18px; padding: 0; color: #b42318; font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+.script-errors:empty { display: none; }
+.script-preamble pre { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; margin: 4px 0; }
+/* (ticket 566) each box's three-way chip, and a room's JS shown read-only: the game's own functions, scrolled within the box */
+.script-engines { margin: 2px 0 6px; }
+.script-master { margin-bottom: 2px; }
+.script-mixed:empty { display: none; }
+.script-box pre.script-js { font: var(--script-size, 12.5px)/1.45 var(--script-font, ui-monospace, SFMono-Regular, Menlo, monospace); tab-size: 2; white-space: pre; overflow: auto; max-height: 22em;
+  margin: 4px 0; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line, #c8c8c8); background: color-mix(in srgb, var(--line, #c8c8c8) 14%, transparent); }
+/* (2026-10-23) Hazel's name as one of its tiles: a box with pointed ends, its colour Hazel's */
+/* (a box's tiles still loading: its Hazel tile in the outline spins its colour) */
+@keyframes hazel-tile-wait { 0% { filter: brightness(1); } 50% { filter: brightness(1.6); } 100% { filter: brightness(1); } }
+.hazel-tile.loading { animation: hazel-tile-wait 1s ease-in-out infinite; }
+.hazel-tile.loading::after { content: ""; display: inline-block; width: 0.7em; height: 0.7em; margin-left: 0.35em; vertical-align: -0.05em;
+  border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: hazel-spin 0.8s linear infinite; }
+@keyframes hazel-spin { to { transform: rotate(360deg); } }
+.hazel-tile { display: inline-block; padding: 0.05em 0.85em; margin: 0 0.1em; line-height: 1.35; font-weight: 600; color: #fff;
+  background: #7c3aed; clip-path: polygon(0.55em 0, calc(100% - 0.55em) 0, 100% 50%, calc(100% - 0.55em) 100%, 0.55em 100%, 0 50%); }
+.script-max-lang .hazel-tile { font-size: 0.85em; }
+/* (ticket 577) the code in colour: the editor's text transparent over a <pre> of coloured tokens, the same font, padding and size */
+.script-edit { display: flex; align-items: stretch; }
+.script-edit-in { position: relative; flex: 1; min-width: 0; display: flex; overflow: hidden; border-radius: 6px; }
+.script-edit-in > textarea.script-editor { flex: 1; }
+/* (ticket 581) line numbers: a gutter beside an editor, scrolled with it; a span before each line of a read-only box */
+/* (its size contained: as tall as the editor beside it, not as its numbers, which would push the editor a page down; its width
+   set from its numbers, 25-scripting.js) */
+pre.script-ln { contain: size; flex: none; box-sizing: content-box; margin: 0; overflow: hidden; text-align: right; user-select: none; color: var(--muted, GrayText); opacity: 0.75;
+  font: var(--script-size, 12.5px)/1.45 var(--script-font, ui-monospace, SFMono-Regular, Menlo, monospace); padding: 7px 6px 7px 0; }
+.script-box pre .ln { display: inline-block; min-width: 2.5ch; margin-right: 1.5ch; text-align: right; color: var(--muted, GrayText); opacity: 0.75; user-select: none; }
+body.script-nolines pre.script-ln { display: none; }
+body.script-nolines .script-box pre .ln { font-size: 0; min-width: 0; margin: 0; }   /* (kept, empty: the outline scrolls to them, 582) */
+.script-edit textarea.script-editor { position: relative; z-index: 1; scrollbar-gutter: stable; background: transparent; color: transparent; caret-color: var(--ink, CanvasText); }
+.script-edit textarea.script-editor::selection { background: color-mix(in srgb, #7c3aed 32%, transparent); color: transparent; }   /* (the band's colour: a definition chosen in the outline is selected) */
+.script-edit pre.script-hl { position: absolute; inset: 0; margin: 0; overflow: hidden; scrollbar-gutter: stable; pointer-events: none; white-space: pre;
+  font: var(--script-size, 12.5px)/1.45 var(--script-font, ui-monospace, SFMono-Regular, Menlo, monospace); tab-size: 2; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent;
+  background: var(--panel, Canvas); color: var(--ink, CanvasText); }
+.tk-k { color: #7c3aed; font-weight: 600; } .tk-C { color: #0e7490; } .tk-v { color: #0e7490; } .tk-s { color: #b45309; }
+.tk-n { color: #15803d; } .tk-c { color: #6b7280; font-style: italic; } .tk-o { color: #be185d; }
+@media (prefers-color-scheme: dark) { .tk-k { color: #c4b5fd; } .tk-C, .tk-v { color: #67e8f9; } .tk-s { color: #fcd34d; } .tk-n { color: #86efac; } .tk-c { color: #9ca3af; } .tk-o { color: #f9a8d4; } }
+/* (ticket 577) ⛶ max size: the outline of every box on the left, the chosen box filling the right */
+.script-box > .box-name { display: flex; align-items: center; gap: 8px; }
+.script-max-btn { margin-left: auto; font-size: 0.8em; padding: 1px 8px; }
+.script-max { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-columns: var(--script-max-left, minmax(11em, 16em)) 8px 1fr; gap: 2px; padding: 10px;
+  background: var(--panel, Canvas); color: var(--ink, CanvasText); box-sizing: border-box; }
+.script-max-divider { cursor: col-resize; border-radius: 4px; background: color-mix(in srgb, var(--line, #888) 40%, transparent); touch-action: none; }
+.script-max-divider:hover, .script-max-divider:focus-visible, .script-max-dragging .script-max-divider { background: color-mix(in srgb, #7c3aed 60%, transparent); }
+.script-max-dragging { user-select: none; }
+.script-max-dragging iframe { pointer-events: none; }
+.script-max-left { display: flex; flex-direction: column; gap: 6px; overflow: auto; }
+.script-max-settings-chip { text-align: left; }
+.script-max-settings:empty { display: none; }
+.script-max-settings .script-settings { margin: 0; }
+.script-max-nav { display: flex; flex-direction: column; gap: 3px; }
+.script-max-item { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 5px 8px; border-radius: 6px; }
+.script-max-item[aria-current="true"] { outline: 2px solid #7c3aed; font-weight: 700; }
+/* (ticket 584) the chosen definition's lines, a faint band behind them */
+.script-band { position: absolute; left: 0; right: 0; pointer-events: none; background: color-mix(in srgb, #7c3aed 13%, transparent); border-left: 3px solid color-mix(in srgb, #7c3aed 55%, transparent); }
+.script-edit-in > .script-band { z-index: 0; }
+.script-box pre.script-js { position: relative; white-space: pre-wrap; overflow-wrap: anywhere; }   /* (laid out to its width; a word longer than it, wrapped) */
+/* (ticket 582) the outline: each box's types, then its functions, indented under it */
+.script-max-group { display: flex; flex-direction: column; gap: 2px; }
+.script-max-subs { display: flex; flex-direction: column; margin: 0 0 4px 12px; padding-left: 6px; border-left: 2px solid var(--line, #c8c8c8); }
+.script-max-sub { text-align: left; padding: 1px 6px; border: 0; background: none; color: inherit; font: 12px/1.5 ui-monospace, monospace; border-radius: 4px; cursor: pointer; }
+.script-max-sub:hover, .script-max-sub:focus-visible { background: color-mix(in srgb, #7c3aed 16%, transparent); }
+.script-max-kind { color: #7c3aed; font-weight: 600; }
+.script-max-type { display: flex; align-items: baseline; }
+.script-max-sig, .script-max-fn { display: flex; flex-direction: column; }
+.script-max-fname { display: flex; align-items: baseline; }
+.script-max-type-sig { color: var(--muted, GrayText); font-size: 0.88em; padding-left: 1ch; white-space: normal; }
+.script-max-tail { margin-left: auto; padding-left: 1ch; display: inline-flex; gap: 0.8ch; align-items: baseline; }
+.script-max-cases { color: var(--muted, GrayText); font-size: 0.9em; }
+.script-max-tkind { width: 1.6em; text-align: center; }
+.script-max-tname { margin-left: 1ch; }
+.script-max-type + .script-max-fn { margin-top: 6px; }
+.script-max-lang { color: var(--muted, GrayText); font-size: 0.85em; font-weight: 400; }
+.script-max-main { overflow: auto; min-width: 0; }
+/* (the chosen box pinned over .script-max-main, not moved into it: a frame moved in the page loads again, and the tiles are
+   preloaded; its place and size set from the main area's, 25-scripting.js) */
+.script-box.script-max-pinned { position: fixed; z-index: 61; margin: 0; overflow: auto; box-sizing: border-box; display: flex; flex-direction: column;
+  background: var(--panel, Canvas); }
+.script-max-pinned .script-max-btn { display: none; }
+.script-max-pinned .script-body { flex: 1; display: flex; flex-direction: column; }
+.script-max-pinned .script-edit { flex: 1; }
+.script-max-pinned textarea.script-editor { flex: 1; min-height: 60vh; resize: none; }
+.script-max-pinned pre.script-js { max-height: none; flex: 1; }
+body.script-maxed { overflow: hidden; }
+@media (max-width: 640px) { .script-max { grid-template-columns: 1fr; grid-template-rows: minmax(0, 40vh) 1fr; } .script-max-divider { display: none; } .script-max-main { min-height: 50vh; } .script-max-nav { flex-direction: row; flex-wrap: wrap; } }
+/* (ticket 580) ⚙️ the editor's settings, knolled: names in one column, their chips in the next; colours off: the text box's own text */
+.script-settings > .box-name { display: flex; align-items: center; gap: 8px; }
+.script-about-chip { margin-left: auto; min-width: 2em; padding: 1px 8px; border-radius: 999px; font-weight: 700; }
+.script-settings-grid { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 10px; }
+.script-settings-grid > .cap { font-size: 0.85em; color: var(--muted, GrayText); text-align: right; }
+.script-settings-grid .row { margin: 0; }
+.script-settings-grid .script-master { margin: 0; }
+.script-settings-grid input[type="number"] { width: 5em; }
+body.script-plain .script-edit pre.script-hl { display: none; }
+body.script-plain .script-edit textarea.script-editor { color: inherit; background: var(--panel, Canvas); }
+body.script-plain [class^="tk-"] { color: inherit; font-weight: inherit; font-style: inherit; }
+.script-say { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 50; padding: 6px 14px; border-radius: 999px;
+  background: #1f2937; color: #fff; font: 14px/1.4 system-ui, sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.script-say[hidden] { display: none; }
+/* (ticket 520) Hazel's tiles of the whole program: Hazel's own app in a frame under the editors, as tall as it says (at most
+   SCRIPT_FRAME_MAX), its box scrolling past most of a screen; Hazel's own colours inside, so a light box in the dark theme too.
+   While the game is full screen the panel is visibility: hidden, which keeps a frame laid out and, in some browsers, drawing every
+   animation frame: display: none there, which browsers throttle (the 60 frames a second rule; 25-scripting.js) */
+.script-frame-wrap { max-height: min(70vh, 640px); overflow: auto; border-radius: 6px; border: 1px solid var(--line, #c8c8c8); background: #fff; margin: 4px 0; }
+.script-frame-wrap:empty { display: none; }
+.script-frame { display: block; width: 100%; height: 120px; border: 0; }
+body.big .script-frame { display: none; }
+.script-frame-again { margin-left: 4px; }
+/* (ticket 578) a Hazel box's own tiles, in place of its text box; its chip (🧩 tiles / ✏️ text) above */
+/* (a hidden one hidden: .script-edit's own display would otherwise show it) */
+.script-hazel-body > [hidden] { display: none !important; }
+body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { display: none; }
+.script-max-pinned .script-tile-wrap { max-height: none; }
+.script-tile-wrap { position: relative; }
+.script-tile-wrap > .script-band { z-index: 1; }
+/* (ticket 491) in one column, under the picture's stage, which sticks at the top (its height, --stage-h, kept by
+   21-size-and-divider.js), not across the picture */
+@media (max-width: 760px) { .crumbs { top: var(--stage-h, 0px); } }
