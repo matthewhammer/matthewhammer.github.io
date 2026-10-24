@@ -1115,7 +1115,7 @@ body.big .script-frame { display: none; }
 /* (a hidden one hidden: .script-edit's own display would otherwise show it) */
 .script-hazel-body > [hidden] { display: none !important; }
 body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { display: none; }
-.script-max-pinned .script-tile-wrap { max-height: none; }
+.script-max-pinned .script-tile-wrap, .script-max-pinned .script-frame-wrap { max-height: none; }   /* (Matthew, 2026-10-23: "RHS should extend more vertically, on bottom": at max size the box scrolls, not a capped frame inside it) */
 .script-tile-wrap { position: relative; }
 .script-tile-wrap > .script-band { z-index: 1; }
 /* (ticket 491) in one column, under the picture's stage, which sticks at the top (its height, --stage-h, kept by
