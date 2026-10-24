@@ -1162,3 +1162,5 @@ body.script-max-game-on .stage .pic-box.script-max-game-pinned { pointer-events:
 body.script-max-game-on .stage .pic-area > :not(.pic-box) { visibility: hidden; }
 .pic-box.script-max-game-pinned { position: fixed !important; z-index: 62; margin: 0; border-radius: 8px; overflow: hidden; }
 .pic-box.script-max-game-pinned > #pic { width: 100% !important; height: 100% !important; }
+.script-log .log-effect { background: color-mix(in srgb, #f59e0b 14%, transparent); border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); border-radius: 8px; padding: 4px 10px 6px; margin: 6px 0; font-size: 1.08em; }
+.script-log .log-effect .log-changes { font-size: 1em; }

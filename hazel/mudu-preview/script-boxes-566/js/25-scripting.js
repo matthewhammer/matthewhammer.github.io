@@ -1676,9 +1676,10 @@ function scriptLogBox(maxBtn) {
         return [
           el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms${e.compileMs ? `, ${e.compileMs} ms of it compiling the program first` : ""}`),
           el("div", { class: "cap" }, "event"), scriptJsonView(e.ev, new Set(), full()),
-          el("div", { class: "cap" }, "what it changed"),
-          d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to),
-            late.has(c.path) ? el("span", { class: "hint" }, ` (when its animation ended, ${e.settleMs / 1000} s later)`) : ""]))) : el("div", { class: "hint" }, "nothing: the globals the same after"),
+          // (Matthew, 2026-10-24: "please put a box, with a distinct background, around what it changed ... and increase the font slightly")
+          el("div", { class: "log-effect" }, [el("div", { class: "cap" }, "what it changed"),
+            d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to),
+              late.has(c.path) ? el("span", { class: "hint" }, ` (when its animation ended, ${e.settleMs / 1000} s later)`) : ""]))) : el("div", { class: "hint" }, "nothing: the globals the same after")]),
           // (ticket 594) what the rule answered; a command the room did not know; a rule run in a program with errors
           ...(e.answer !== undefined ? [el("div", { class: "cap" }, "the rule's answer"), scriptJsonView(e.answer, new Set(), full())] : []),
           ...(e.unknown ? [el("div", { class: "log-bad" }, `⚠️ the room does not know ${e.unknown.join(", ")}: the commands from there on were not acted on`)] : []),
