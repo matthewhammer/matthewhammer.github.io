@@ -782,8 +782,10 @@ function scriptReveal(mod, name) {
   let box = null, send = null;
   if (mod === "types") {
     box = document.querySelector(".script-box.script-tiles");
-    const F = scriptFrame;
-    send = () => { if (F && F.phase === "ready" && F.iframe.contentWindow) { F.revealing = true; F.iframe.contentWindow.postMessage({ type: "reveal", name }, SCRIPT_HAZEL_ORIGIN); return true; } return false; };
+    // (a frame still starting: asked again until it is ready and has its program (its first status), for 20 s, not dropped)
+    const t0 = performance.now();
+    send = () => { const F = scriptFrame; if (F && F.phase === "ready" && F.status && F.iframe.contentWindow) { F.revealing = true; F.iframe.contentWindow.postMessage({ type: "reveal", name }, SCRIPT_HAZEL_ORIGIN); return true; }
+      if (performance.now() - t0 < 20000) setTimeout(send, 250); return false; };
   } else {
     box = document.querySelector(`.script-box[data-room="${mod}"]`);
     const T = [...scriptTileFrames, ...scriptTileQueue].find(T => T.mod === mod && box && box.contains(T.holder));
@@ -811,8 +813,9 @@ function scriptGoto(name) {
 }
 // a frame's caret, after a reveal: the view holding the frame scrolled to it
 function scriptCaretTo(iframe, top) {
-  const M = scriptMax;
-  let view = M && M.sec && M.sec.contains(iframe) ? M.sec : iframe.parentElement;
+  // (from the frame up: the whole program's frame scrolls in its own wrap, inside the pinned box; begun at the box, the wrap was
+  // never found and a goto to Globals stayed at the top (Matthew, 2026-10-23))
+  let view = iframe.parentElement;
   while (view && view !== document.body && !(view.scrollHeight > view.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(view).overflowY))) view = view.parentElement;
   if (!view || view === document.body) { window.scrollBy(0, iframe.getBoundingClientRect().top + top - 80); return; }
   view.scrollTop += iframe.getBoundingClientRect().top + top - view.getBoundingClientRect().top - 80;
