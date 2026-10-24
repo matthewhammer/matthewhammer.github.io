@@ -1273,7 +1273,13 @@ function scriptMaxOpen(boxes, sec) {
   if (!scriptMax) {
     const nav = el("nav", { class: "script-max-nav", "aria-label": "the code, box by box" });
     const main = el("div", { class: "script-max-main" });
-    const close = el("button", { class: "script-max-close", title: "back to the panel (Escape)", onclick: () => scriptMaxClose() }, "✖ back");
+    const close = el("button", { class: "script-max-close", title: "back to the game and the panel (Escape)", onclick: () => scriptMaxClose() }, "✖ back to game");
+    // (Matthew, 2026-10-24: "in script FS mode --- let's have an optional (default not shown) in-game viewport, next to the 'back'
+    // button: 'back to game' | 'show game viewport'"; "when shown, it appears at the very top, above all LHS control buttons") the
+    // game's own picture, pinned over a spot at the outline's top (not moved: the game goes on as it is), playable while the scripts
+    // and 🪵 the event log are open; remembered in this browser, off to start
+    const gameSpot = el("div", { class: "script-max-game", hidden: "" });
+    const gameChip = el("button", { class: "script-max-game-chip", "aria-pressed": "false", onclick: () => scriptMaxGame(gameChip.getAttribute("aria-pressed") !== "true") }, "🎮 show game viewport");
     // (Matthew, 2026-10-23: "please make LHS vs RHS of FS script panel dragable") a divider between the outline and the box, dragged
     // to set the outline's width (remembered in this browser)
     const divider = el("div", { class: "script-max-divider", role: "separator", "aria-orientation": "vertical", "aria-label": "drag to widen or narrow the outline", tabindex: "0" });
@@ -1283,7 +1289,7 @@ function scriptMaxOpen(boxes, sec) {
     const setChip = el("button", { class: "script-max-settings-chip", "aria-pressed": "false", onclick: () => scriptMaxSettings(setChip.getAttribute("aria-pressed") !== "true") }, "⚙️ show editor settings here");
     const setHolder = el("div", { class: "script-max-settings" });
     const wrap = el("div", { class: "script-max", role: "dialog", "aria-label": "the game's code, at full size" },
-      [el("div", { class: "script-max-left" }, [close, setChip, setHolder, nav]), divider, main]);
+      [el("div", { class: "script-max-left" }, [gameSpot, el("div", { class: "row script-max-top" }, [close, gameChip]), setChip, setHolder, nav]), divider, main]);
     const setW = px => { const w = Math.max(140, Math.min(window.innerWidth - 240, px)); wrap.style.setProperty("--script-max-left", w + "px"); try { localStorage.setItem("scriptMaxLeft", String(w)); } catch (e) {} };
     try { const w = +localStorage.getItem("scriptMaxLeft"); if (w) setW(w); } catch (e) {}
     divider.addEventListener("pointerdown", e => {
@@ -1297,7 +1303,9 @@ function scriptMaxOpen(boxes, sec) {
     wrap.addEventListener("keydown", key);
     document.body.append(wrap);
     document.body.classList.add("script-maxed");
-    scriptMax = { wrap, nav, main, boxes, sec: null, spot: null, setChip, setHolder, setSpot: null };
+    scriptMax = { wrap, nav, main, boxes, sec: null, spot: null, setChip, setHolder, setSpot: null, gameSpot, gameChip };
+    let g = false; try { g = localStorage.getItem("scriptMaxGame") === "1"; } catch (e) {}
+    if (g) setTimeout(() => scriptMaxGame(true), 0);
   }
   const M = scriptMax;
   // (Matthew, 2026-10-23: "let's pre-load the tile editor for each code block on the LHS, even if not in view": the chosen box is
@@ -1570,8 +1578,30 @@ function scriptMaxSettings(on) {
   setPressed(M.setChip, !!M.setSpot);
 }
 // the pinned box set over the main area: its place and size
+// the game's picture over the spot at the outline's top: as wide as the column, as tall as the picture's own shape (on), or back in
+// its place (off, and when the view closes)
+function scriptMaxGame(on) {
+  const M = scriptMax, pb = document.querySelector(".pic-box"); if (!M || !pb) return;
+  try { localStorage.setItem("scriptMaxGame", on ? "1" : "0"); } catch (e) {}
+  setPressed(M.gameChip, !!on);
+  if (on) {
+    if (!M.gameRatio) { const r = pb.getBoundingClientRect(); M.gameRatio = r.width > 0 ? r.height / r.width : 0.6; }
+    M.gameSpot.hidden = false; document.body.classList.add("script-max-game-on"); pb.classList.add("script-max-game-pinned");
+    scriptMaxGamePlace();
+  } else {
+    M.gameSpot.hidden = true; document.body.classList.remove("script-max-game-on"); pb.classList.remove("script-max-game-pinned");
+    for (const k of ["left", "top", "width", "height"]) pb.style[k] = "";
+  }
+}
+function scriptMaxGamePlace() {
+  const M = scriptMax, pb = document.querySelector(".pic-box.script-max-game-pinned"); if (!M || !pb || M.gameSpot.hidden) return;
+  const w = M.gameSpot.getBoundingClientRect().width; M.gameSpot.style.height = Math.round(w * (M.gameRatio || 0.6)) + "px";
+  const r = M.gameSpot.getBoundingClientRect(), st = pb.style;
+  st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
+}
 function scriptMaxPlace() {
   const M = scriptMax; if (!M || !M.sec) return;
+  scriptMaxGamePlace();
   scriptTilesReflowSoon();   // (the box's width may have changed: its tiles broken to fit again)
   const r = M.main.getBoundingClientRect(), st = M.sec.style;
   st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
@@ -1585,6 +1615,7 @@ function scriptMaxClose() {
   const M = scriptMax; if (!M) return;
   if (M.sec) scriptMaxUnpin(M.sec);
   scriptMaxSettings(false);
+  { const pb = document.querySelector(".pic-box.script-max-game-pinned"); if (pb) { pb.classList.remove("script-max-game-pinned"); for (const k of ["left", "top", "width", "height"]) pb.style[k] = ""; } document.body.classList.remove("script-max-game-on"); }
   if (M.placing) { window.removeEventListener("resize", M.placing); if (M.ro) M.ro.disconnect(); }
   M.wrap.remove(); document.body.classList.remove("script-maxed");
   scriptMax = null;

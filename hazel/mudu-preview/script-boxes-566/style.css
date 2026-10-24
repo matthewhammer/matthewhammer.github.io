@@ -1150,3 +1150,12 @@ body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { di
 :root[data-theme="dark"] .script-log .log-bad { color: #f87171; }
 .script-log .log-check.log-bad > summary .log-diff { color: inherit; }
 .script-max-bad { color: #dc2626; font-size: 0.85em; margin-left: auto; padding: 0 4px; }
+/* (Matthew 2026-10-24) the game's picture in the ⛶ view, at the outline's top: pinned over its spot, above the view; the stage lifted
+   with it (its own stacking), the rest of the stage hidden while it is */
+.script-max-game { flex: none; border-radius: 8px; }
+.script-max-top { gap: 6px; flex-wrap: wrap; }
+.script-max-top > button { flex: 1 1 auto; }
+body.script-max-game-on .stage { z-index: 62; }
+body.script-max-game-on .stage .pic-area > :not(.pic-box) { visibility: hidden; }
+.pic-box.script-max-game-pinned { position: fixed !important; z-index: 62; margin: 0; border-radius: 8px; overflow: hidden; }
+.pic-box.script-max-game-pinned > #pic { width: 100% !important; height: 100% !important; }
