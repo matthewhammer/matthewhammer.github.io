@@ -329,7 +329,10 @@ const scriptBody = t => String(t || "").replace(/;\s*$/, "").trim();
 const scriptTail = () => "(" + [...SCRIPT_ROOMS.map(r => `${r.name.toLowerCase()} = (${r.name}.on_event : (Globals, Event) -> Cmd)`), `rooms = ${SCRIPT_ROOMS.length}`].join(", ") + ")";
 function scriptSpec() {
   const S = SCRIPT_LOGIC === "hazel" ? SCRIPT_DEFAULTS() : scriptsState();
-  return { preamble: SCRIPT_PREAMBLE,
+  // (Matthew, 2026-10-23: "auto line wrap doesn't work on hazel still?": the program's start, the types, went to the tiles as
+  // written, a type to a line; now broken at ⚙️'s wrap, as the modules are: only spaces and breaks change)
+  const wrapAt = (S.editor && S.editor.wrap >= 20) ? S.editor.wrap : 77;
+  return { preamble: scriptFlow("hazel", SCRIPT_PREAMBLE, wrapAt),
     modules: [{ name: "Common", text: scriptBody(S.common) }, ...SCRIPT_ROOMS.map(r => ({ name: r.name, text: scriptBody(S.rooms[r.name]) }))],
     tail: scriptTail() };
 }
