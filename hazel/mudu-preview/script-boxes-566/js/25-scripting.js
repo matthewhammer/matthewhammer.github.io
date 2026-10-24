@@ -512,26 +512,30 @@ function scriptDiff(a, b, path = "", out = []) {
 }
 // (ticket 592) a globals value as indented JSON, each field whose path is in changed (scriptDiff's paths: lever_L, pits_on[0],
 // things[3].open) marked, so before and after side by side show what the event changed
-function scriptJsonView(v, changed) {
+function scriptJsonView(v, changed, cols = 100) {
+  // (Matthew, 2026-10-24: "the JSON data we show for events can use the full width of the screen before doing new lines and
+  // indentation --- will make looking at mult events in detail at once easier, vertically") a part on one line when it fits in cols
+  // characters where it starts, else broken, a field or an item a line
   const pre = el("pre", { class: "log-json" });
   const put = (node, x) => pre.append(node ? node : document.createTextNode(x));
-  const walk = (x, path, ind) => {
+  const walk = (x, path, ind, flat, at) => {
     const mark = changed.has(path || "(all)");
-    // (Matthew: "if you can use some syntax highlighting for the JSON data, that would be nice too": the game's own colours)
     if (x === null || typeof x !== "object") { const t = JSON.stringify(x), tk = el("span", { class: typeof x === "string" ? "tk-s" : typeof x === "number" ? "tk-n" : "tk-k" }, t);
       put(mark ? el("mark", {}, [tk]) : tk); return; }
     const arr = Array.isArray(x), ks = arr ? x.map((_, i) => i) : Object.keys(x);
     if (!ks.length) { put(mark ? el("mark", {}, arr ? "[]" : "{}") : null, arr ? "[]" : "{}"); return; }
+    const one = flat || at + JSON.stringify(x).length + ks.length <= cols;
     put(null, arr ? "[" : "{");
     ks.forEach((k, i) => {
-      const p = arr ? `${path}[${k}]` : path ? `${path}.${k}` : String(k);
-      put(null, "\n" + " ".repeat(ind + 1)); if (!arr) { put(el("span", { class: "tk-C" }, JSON.stringify(k))); put(null, ": "); }
-      walk(x[k], p, ind + 1);
+      const p = arr ? `${path}[${k}]` : path ? `${path}.${k}` : String(k), key = arr ? "" : JSON.stringify(k) + ": ";
+      if (one) put(null, i ? " " : ""); else put(null, "\n" + " ".repeat(ind + 1));
+      if (!arr) { put(el("span", { class: "tk-C" }, JSON.stringify(k))); put(null, ": "); }
+      walk(x[k], p, ind + 1, one, one ? at : ind + 1 + key.length);
       if (i < ks.length - 1) put(null, ",");
     });
-    put(null, "\n" + " ".repeat(ind) + (arr ? "]" : "}"));
+    put(null, one ? "" : "\n" + " ".repeat(ind)); put(null, arr ? "]" : "}");
   };
-  walk(v, "", 0);
+  walk(v, "", 0, false, 0);
   return pre;
 }
 // how much sharing saves: the nodes the log holds, against what plain copies of every globals would hold
@@ -1637,6 +1641,9 @@ function scriptLogBox(maxBtn) {
   const short = v => { const t = JSON.stringify(v); return t === undefined ? "—" : t.length > 60 ? t.slice(0, 57) + "…" : t; };
   const evText = ev => { const v = ev.value; return ev.tag + (v === undefined ? "" : "(" + (v && v.tag ? v.tag : short(v)) + ")"); };
   const ENG = { js: "JS", hazel: "Hazel", fumola: "🍄 Fumola" }, opened = new Set();
+  // (the characters a line of the log's JSON holds: its width over a character's, 0.8 of the code's size; half each, side by side)
+  const ch = () => 0.8 * (parseFloat(getComputedStyle(list).fontSize) || 16) * 0.62;
+  const full = () => Math.max(40, Math.floor((list.clientWidth || 800) / ch()) - 4), half = () => Math.max(30, Math.floor(full() / 2) - 3);
   const draw = () => {
     if (!sec.isConnected) return;
     const S = scriptLogSize();
@@ -1664,21 +1671,21 @@ function scriptLogBox(maxBtn) {
       const body = () => {
         const changed = new Set(d.map(c => c.path)), whole = el("details", { class: "log-globals" }, [el("summary", {}, "globals before and after, in full")]);
         whole.addEventListener("toggle", () => { if (whole.open && whole.children.length === 1) whole.append(el("div", { class: "log-sides" }, [
-          el("div", {}, [el("div", { class: "cap" }, "before"), scriptJsonView(e.before, changed)]),
-          el("div", {}, [el("div", { class: "cap" }, e.settled ? `after (its animations ended, ${e.settleMs / 1000} s later)` : "after"), scriptJsonView(end, changed)])])); }, { once: true });
+          el("div", {}, [el("div", { class: "cap" }, "before"), scriptJsonView(e.before, changed, half())]),
+          el("div", {}, [el("div", { class: "cap" }, e.settled ? `after (its animations ended, ${e.settleMs / 1000} s later)` : "after"), scriptJsonView(end, changed, half())])])); }, { once: true });
         return [
           el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms${e.compileMs ? `, ${e.compileMs} ms of it compiling the program first` : ""}`),
-          el("div", { class: "cap" }, "event"), scriptJsonView(e.ev, new Set()),
+          el("div", { class: "cap" }, "event"), scriptJsonView(e.ev, new Set(), full()),
           el("div", { class: "cap" }, "what it changed"),
           d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to),
             late.has(c.path) ? el("span", { class: "hint" }, ` (when its animation ended, ${e.settleMs / 1000} s later)`) : ""]))) : el("div", { class: "hint" }, "nothing: the globals the same after"),
           // (ticket 594) what the rule answered; a command the room did not know; a rule run in a program with errors
-          ...(e.answer !== undefined ? [el("div", { class: "cap" }, "the rule's answer"), scriptJsonView(e.answer, new Set())] : []),
+          ...(e.answer !== undefined ? [el("div", { class: "cap" }, "the rule's answer"), scriptJsonView(e.answer, new Set(), full())] : []),
           ...(e.unknown ? [el("div", { class: "log-bad" }, `⚠️ the room does not know ${e.unknown.join(", ")}: the commands from there on were not acted on`)] : []),
           ...(e.error ? [el("div", { class: "log-bad" }, `⛔ the rule stopped: ${e.error}`)] : []),
           ...(e.dry ? [el("div", { class: "cap" }, "Hazel's rule, run though the program has errors"),
             el("div", { class: "hint log-bad" }, `${e.dry.errors.length ? e.dry.errors.join("; ") : "its own module is fine"}${e.dry.others.length ? `; errors also in ${e.dry.others.join(", ")}` : ""}. Its answer was not acted on: the game's own JS moved (the change above is the JS's).`),
-            e.dry.threw ? el("div", { class: "log-bad" }, `⛔ it stopped: ${e.dry.threw}`) : scriptJsonView(e.dry.answer, new Set())] : []),
+            e.dry.threw ? el("div", { class: "log-bad" }, `⛔ it stopped: ${e.dry.threw}`) : scriptJsonView(e.dry.answer, new Set(), full())] : []),
           whole];
       };
       const det = el("details", { class: "log-entry" }, [head]);
