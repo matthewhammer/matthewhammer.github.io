@@ -987,21 +987,25 @@ function scriptFlowPieces(lang, toks, indent, cols, out) {
     if (k === "c" && i > 0) places.push({ at: i, depth, rank: -1 });   // (a comment after code: first to go to its own line)
     if (code && i > 0) SCRIPT_BREAKS.forEach(([before], rank) => { if (before.includes(w)) places.push({ at: i, depth: w === "}" ? depth : depth, rank }); });
     if (k === "" || k === "o") for (const ch of w) depth += "([{".includes(ch) ? 1 : ")]}".includes(ch) ? -1 : 0;
-    if (code && i + 1 < toks.length) SCRIPT_BREAKS.forEach(([, after], rank) => { if (after.includes(w)) places.push({ at: i + 1, depth, rank }); });
+    if (code && i + 1 < toks.length) SCRIPT_BREAKS.forEach(([, after], rank) => { if (after.includes(w)) places.push({ at: i + 1, depth, rank, after: w }); });
   });
   if (!places.length) { out.push(" ".repeat(indent) + text); return; }
   const low = Math.min(...places.map(p => p.depth));
   const atLow = places.filter(p => p.depth === low);
   const best = Math.min(...atLow.map(p => p.rank));
-  const cuts = [...new Set(atLow.filter(p => p.rank === best).map(p => p.at))].sort((x, y) => x - y);
-  
-  cuts.sort((x, y) => x - y);
+  // (Matthew, 2026-10-23: "I don't understand the indentation for Fumola in these types either") a block's members cut apart inside
+  // its braces: cut after its { too, so the first member is not left on the opener's line ({#Pull : Side; ... on one, the rest under it)
+  const chosen = atLow.filter(p => p.rank === best || (best === 3 && p.after === "{"));
+  const cuts = [...new Set(chosen.map(p => p.at))].sort((x, y) => x - y);
+  // (and members cut apart at the line's own level, after ; or , or in, are siblings: each at the line's indent, not 2 deeper than
+  // the first; the line a list of a sum's cases, or of statements, broke as a staircase)
+  const sibling = new Set(low === 0 ? chosen.filter(p => [";", ",", "in"].includes(p.after)).map(p => p.at) : []);
   let from = 0;
   for (const c of [...cuts, toks.length]) {
     const piece = toks.slice(from, c);
     if (piece.some(([, w]) => w.trim())) {
       const first = piece.find(([, w]) => w.trim())[1];
-      const ind = from === 0 ? indent : indent + 2 * (/^[)\]}]/.test(first) ? Math.max(0, low - 1) : Math.max(1, low));
+      const ind = from === 0 || sibling.has(from) ? indent : indent + 2 * (/^[)\]}]/.test(first) ? Math.max(0, low - 1) : Math.max(1, low));
       scriptFlowPieces(lang, from === 0 ? piece : piece, ind, cols, out);
     }
     from = c;
@@ -1596,6 +1600,9 @@ function scriptingPanel(box) {
   });
   // (after showTab: its layout moves the rows, and a frame moved in the page loads again; after the tab's first paint, too)
   requestAnimationFrame(() => setTimeout(() => scriptFrameMount(tiles), 0));
+  // (and on a timer too: a page not painting has no animation frames, and the whole program's tiles, which a type in the outline
+  // opens, waited for the first click on one, ~6 s more (the outline test, 2026-10-23); the mount does nothing a second time)
+  setTimeout(() => scriptFrameMount(tiles), 400);
 }
 
 // (ticket 531) under ?logic=hazel, Hazel loaded from the start, so the first event is not the one that waits for it; and the
