@@ -1164,3 +1164,18 @@ body.script-max-game-on .stage .pic-area > :not(.pic-box) { visibility: hidden; 
 .pic-box.script-max-game-pinned > #pic { width: 100% !important; height: 100% !important; }
 .script-log .log-effect { background: color-mix(in srgb, #f59e0b 14%, transparent); border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); border-radius: 8px; padding: 4px 10px 6px; margin: 6px 0; font-size: 1.08em; }
 .script-log .log-effect .log-changes { font-size: 1em; }
+/* (ticket 593) 🖍️ lines only: no fills anywhere, for printing on paper with little toner. Boxes white with grey borders and black text;
+   the game's drawings white shapes with black outlines, the same width at any size; pictures inside drawings and filters left out */
+/* (the game's colours are its variables: redefined, so what was transparent, the layers over the picture among them, stays so; a blanket
+   white background covered the picture) */
+html.lineart.lineart.lineart { color-scheme: light; --ink: #000; --muted: #444; --line: #777; --paper: #fff; --bg: #fff; --panel: #fff;
+  --accent: #fff; --accent-ink: #000; --mu-main: #fff; --mu-mix: #fff; --mu-lfo: #fff; --mu-inst: #fff; }
+html.lineart, html.lineart body { background: #fff !important; color: #000 !important; }
+html.lineart *:not(svg *) { background-image: none !important; box-shadow: none !important; text-shadow: none !important; }
+html.lineart [aria-pressed="true"]:not(svg *) { border-color: #000 !important; border-width: 2px !important; }
+html.lineart svg * { fill: #fff !important; stroke: #000 !important; stroke-width: 1.1px !important; vector-effect: non-scaling-stroke; filter: none !important; }
+html.lineart svg text, html.lineart svg tspan { fill: #000 !important; stroke: none !important; }
+html.lineart svg image, html.lineart svg [fill="none"] { fill: none !important; }
+html.lineart svg image { display: none; }
+html.lineart mark { background: #fff !important; outline: 1.5px solid #000; }
+html.lineart .hazel-tile, html.lineart .script-master [aria-pressed="true"] { background: #fff !important; color: #000 !important; outline: 1.5px solid #000; }

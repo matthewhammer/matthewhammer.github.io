@@ -2260,6 +2260,9 @@ function control(part, [kind, key, label, ...rest], opts = {}) {
     const themes = el("div", { class: "row theme-row" }, [el("span", { class: "hint" }, "light or dark:"), ...LOOKS.map(([t, label]) =>
       el("button", { "data-theme-choice": t, "aria-pressed": String(themeNow() === t), onclick: () => { themeSet(t); for (const b of themes.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.themeChoice === t)); } }, label))]);
     // (ticket 325, Matthew: "advanced panel links to matthewhammer.org/hazel/dress-up page") the game's own page: its music, pictures and reports
+    // (lines only, for printing: ticket 593)
+    const lineChip = el("button", { class: "lineart-chip", "aria-pressed": String(lineArtNow()), onclick: () => { lineArtSet(!lineArtNow()); lineChip.setAttribute("aria-pressed", String(lineArtNow())); } }, "🖍️ lines only (no fills, for printing)");
+    themes.append(lineChip);
     box.append(themes, el("div", { class: "row" }, [el("a", { href: "https://matthewhammer.org/hazel/dress-up/", target: "_blank", rel: "noopener" }, "🏠 this game's page: its music, pictures and reports ↗")]),
                el("div", { class: "row" }, [el("a", { href: "https://github.com/matthewhammer/kids-choice-games", target: "_blank", rel: "noopener" }, "💻 this game's code, on GitHub ↗")]),
                // (ticket 500, Matthew: "the two licences, credit 'Matthew Hammer and family (M and N)', whole repo.") who made it, and on what terms

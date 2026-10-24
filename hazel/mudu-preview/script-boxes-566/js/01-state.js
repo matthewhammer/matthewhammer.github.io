@@ -1350,6 +1350,16 @@ function themeSet(t) {
   try { if (t === "light" || t === "dark") localStorage.setItem("dress-up-theme", t); else localStorage.removeItem("dress-up-theme"); } catch (_) { /* (for this visit) */ }
 }
 themeSet(themeNow());
+// (Matthew, 2026-10-24: "a special config setting for messed up dressed up where all CSS and SVG drawings have no filling (only white with
+// black/grey lines and borders and text?)", for the guide's low-toner printed copy, with "real screenshots from the game") 🖍️ lines only:
+// every box white, its borders grey, its text black, and every shape of a drawing white with a black outline (style.css, html.lineart);
+// this browser's own, off to start
+function lineArtNow() { try { return localStorage.getItem("dress-up-lineart") === "1"; } catch (_) { return false; } }
+function lineArtSet(on) {
+  document.documentElement.classList.toggle("lineart", !!on);
+  try { if (on) localStorage.setItem("dress-up-lineart", "1"); else localStorage.removeItem("dress-up-lineart"); } catch (_) { /* (for this visit) */ }
+}
+lineArtSet(lineArtNow());
 const VERSION = { number: "0.0.411", released: "2026-10-22" };
 const newerVersion = (a, b) => {
   const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
