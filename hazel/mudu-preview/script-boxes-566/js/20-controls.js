@@ -2312,6 +2312,25 @@ function control(part, [kind, key, label, ...rest], opts = {}) {
     const tripSend = el("button", { title: "Sends the line to Matthew's log, where he reads it", onclick: () => sendSpeedLine("trip", tripOut.value, tripSend) }, "📮 send it to Matthew");
     box.append(el("div", { class: "perfrow" }, [el("div", { class: "row" }, [tripBtn, tripCopy, ...(SPEED_LOG ? [tripSend] : []), tripPad]), tripOut,
       el("div", { class: "hint" }, "Press it, then go through a doorway: click a castle door or a pit, press X or 🚪, or walk onto a pit. Every frame is timed from the start of the trip until the friend has arrived and stood still a moment; the line says which frames were long, in which part of the trip (walking, stepping in, falling, arriving, landing), and how much of each was the game's own work.")]));
+    // (ticket 568) 🔬 the scripts' cost: per event the scripts handle, its time in each engine against JS's own, from the calls made
+    // while playing (scriptCost); drawn again once a second while the tab is open, not on every frame
+    const costBody = el("tbody"), costNote = el("div", { class: "hint" });
+    const costCell = (x, js) => { if (!x) return el("td", { class: "n muted" }, "—");
+      const over = js && x !== js ? ` (${(x.median / Math.max(0.001, js.median)).toFixed(0)}×)` : "";
+      return el("td", { class: "n", title: `${x.n} calls; median ${x.median} ms, worst ${x.worst} ms; ${(100 * x.median / (1000 / 60)).toFixed(1)}% of a frame` }, `${x.median} / ${x.worst}${over}`); };
+    const costDraw = () => {
+      const C = typeof scriptCost === "function" ? scriptCost() : { rows: [], compile: {} };
+      costBody.replaceChildren(...(C.rows.length ? C.rows.map(r => el("tr", {}, [el("td", {}, `${r.tag}`), el("td", { class: "muted" }, r.room || ""),
+        costCell(r.js), costCell(r.hazel, r.js), costCell(r.hazelFn), costCell(r.fumola, r.js), costCell(r.fumolaFn)]))
+        : [el("tr", {}, el("td", { colspan: "7", class: "muted" }, "no calls yet: pull a lever, fall in a pit, take a way out, with 📜 Scripting's engine on JS, Hazel or Fumola"))]));
+      costNote.textContent = `set-up: Hazel ${C.compile.hazel == null ? "—" : C.compile.hazel + " ms"}, Fumola ${C.compile.fumola == null ? "—" : C.compile.fumola + " ms"} · a frame is 16.7 ms · ms median / worst; (n×) is the median over JS's own`;
+    };
+    const costBtn = el("button", { onclick: () => { if (typeof scriptCostClear === "function") scriptCostClear(); costDraw(); } }, "🧹 start again");
+    box.append(el("div", { class: "perfrow script-cost" }, [el("div", { class: "row" }, [el("span", { class: "cap" }, "🔬 the scripts' cost"), costBtn]),
+      el("div", { class: "scroll" }, el("table", { class: "cost" }, [el("thead", {}, el("tr", {}, ["event", "room", "JS", "Hazel", "Hazel's rule alone", "Fumola", "Fumola's rule alone"].map(h => el("th", {}, h)))), costBody])),
+      costNote,
+      el("div", { class: "hint" }, "Each event a room's script answers (a lever pulled, a pit fallen in, a way taken), timed in the game as you play: the whole event in each engine, from the game's call to the last command acted on, and for Hazel and Fumola the rule's function alone (the event in, the commands out). Switch 📜 Scripting's engine and play the same rooms to fill each column; 🧹 starts the counts again.")]));
+    costDraw(); { const t = setInterval(() => { if (!costBody.isConnected) { clearInterval(t); return; } costDraw(); }, 1000); }
     if (!perfMeter.loop) perfMeter.loop = requestAnimationFrame(perfMeterTick);
     const rows = PERF_FEATURES.map(f => {
       const chip = el("button", { onclick: () => perfSet(f.id, !PERF[f.id]) }), here = el("div", { class: "hint" }), result = el("div", { class: "hint" });

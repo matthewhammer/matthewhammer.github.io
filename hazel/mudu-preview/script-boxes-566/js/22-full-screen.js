@@ -156,7 +156,7 @@ function advLayout(panel) {
     box("🏠 this game", pick(c => c.classList.contains("row") && (/^(\u{1F3E0}|\u{1F4BB})/u.test(txt(c)) || !!c.querySelector("button.newer") || c.classList.contains("see-also") || c.classList.contains("licence")))),   // (the version's row by its button: its words come after; ticket 474's See also, near the top, between the code and the version; ticket 500's licence, under the code)
     box("✈️ without the Internet", pick(c => c.classList.contains("offline-help"))),   // (ticket 486: adding the game to a device, for airplane mode, near the top where a parent looks)
     box("🎮 playing", pick(c => (c.classList.contains("row") && /^(🔔|🎚️)/.test(txt(c))) || (c.classList.contains("hint") && !/^🚀/.test(txt(c))))),   // (and its note, filled as it is used)
-    box("🧪 tests and timing", pick(c => c.classList.contains("perfrow") && /^(🧪|⏱️)/.test(txt(c)))),
+    box("🧪 tests and timing", pick(c => c.classList.contains("perfrow") && (/^(🧪|⏱️)/.test(txt(c)) || c.classList.contains("script-cost")))),
     box("🚀 kept off till they are fast", pick(c => c.classList.contains("perfrow")), note ? txt(note).replace(/^🚀\s*/, "") : ""),
     box("📰 what's new", pick(c => /news/.test(c.className)).filter(c => !c.classList.contains("news-cap"))),
   ].filter(Boolean);

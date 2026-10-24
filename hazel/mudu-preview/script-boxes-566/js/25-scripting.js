@@ -406,6 +406,28 @@ function scriptCompile() {
   return scriptCompiled;
 }
 
+// (ticket 568, Matthew 2026-10-23: "we extend the advanced 'measurement' tools with one specifically for measuring the script overhead,
+// in each case") what each room's script costs, from the calls made while playing: per event, the whole event's ms in each engine
+// (JS's own handler, Hazel, Fumola: from the guard to the last command acted on), median and worst, and Hazel's and Fumola's function
+// alone (the event in, the commands out); each engine's set-up (its last compile); a frame being 1000/60 ms. For 🔬 the scripts' cost
+// in ⚙️ Advanced, and for the speed runs (scriptCost(), JSON-ready)
+const SCRIPT_TAG_ROOMS = { Pull: "TrapRoom", PullBoulder: "TrapRoom", PullHatch: "TreeRoom", PullThing: "Square", FallPit: "Castle", WayOut: "Castle", Way: "World" };
+function scriptCost() {
+  const Z = hzCounters(), F = Z.fn || { hazel: {}, fumola: {} };
+  const stat = a => { if (!a || !a.length) return null; const s = [...a].sort((x, y) => x - y);
+    return { n: s.length, median: +s[Math.floor(s.length / 2)].toFixed(3), worst: +s[s.length - 1].toFixed(3) }; };
+  const tags = [...new Set([...Object.keys(Z.js || {}), ...Object.keys(Z.hazel || {}), ...Object.keys(Z.fumola || {})])]
+    .sort((a, b) => Object.keys(SCRIPT_TAG_ROOMS).indexOf(a) - Object.keys(SCRIPT_TAG_ROOMS).indexOf(b));
+  return {
+    frameMs: +(1000 / 60).toFixed(2),
+    compile: { hazel: scriptCompiled && scriptCompiled.ready ? +scriptCompiled.ms.toFixed(1) : null,
+      fumola: typeof fumolaCompiled !== "undefined" && fumolaCompiled && fumolaCompiled.ready ? +fumolaCompiled.ms.toFixed(1) : null },
+    rows: tags.map(tag => ({ tag, room: SCRIPT_TAG_ROOMS[tag] || null, js: stat(Z.js && Z.js[tag]), hazel: stat(Z.hazel && Z.hazel[tag]),
+      fumola: stat(Z.fumola && Z.fumola[tag]), hazelFn: stat(F.hazel[tag]), fumolaFn: stat(F.fumola[tag]) })),
+  };
+}
+function scriptCostClear() { const Z = hzCounters(); Z.js = {}; Z.hazel = {}; Z.fumola = {}; Z.fn = { hazel: {}, fumola: {} }; Z.ms = []; Z.runMs = []; Z.calls = 0; }
+
 // a few words over the picture, for a script's Say
 function scriptSay(text) {
   let b = document.getElementById("script-say");
@@ -552,6 +574,7 @@ function scriptEvent(room, ev) {
   const t3 = performance.now();
   const side = fum ? Z.fumola || (Z.fumola = {}) : Z.hazel;
   Z.calls++; hzPush(Z.ms, t2 - t1); hzPush(Z.runMs, t3 - t2); hzPush(side[ev.tag] || (side[ev.tag] = []), t3 - t0);
+  { const F = Z.fn || (Z.fn = { hazel: {}, fumola: {} }), e = fum ? F.fumola : F.hazel; hzPush(e[ev.tag] || (e[ev.tag] = []), t2 - t1); }   // (ticket 568: the function alone, per engine)
   return true;
 }
 
@@ -694,7 +717,7 @@ function scriptTilesEdit(F, text) {
   let any = false;
   if (mods.Common != null && mods.Common !== S.common) { S.common = mods.Common; any = true; }
   for (const r of SCRIPT_ROOMS) if (mods[r.name] != null && mods[r.name] !== S.rooms[r.name]) { S.rooms[r.name] = mods[r.name]; any = true; }
-  F.sent = JSON.stringify(scriptSpec());   // (the frame has this one: not posted back)
+  F.sent = JSON.stringify(F.mod ? scriptTileSpec(F) : scriptSpec());   // (the frame has this one: not posted back, so its caret stays)
   if (any && scriptTilesEdited) scriptTilesEdited();
 }
 // (ticket 578, Matthew 2026-10-23: "each Hazel box (Common and each room) shows Hazel's tiles in place of its text box, with a chip to
@@ -741,13 +764,33 @@ function scriptTileFrame(mod) {
   setTimeout(scriptTilesPump, 0);
   T.post = () => {
     if (!T.ready || !T.iframe || !T.iframe.isConnected) return;
-    const spec = scriptSpec(), key = JSON.stringify(spec);
+    const spec = scriptTileSpec(T), key = JSON.stringify(spec);
     if (key === T.sent) return;
     T.sent = key;
     T.iframe.contentWindow.postMessage({ type: "set", ...spec }, SCRIPT_HAZEL_ORIGIN);
   };
   return T;
 }
+// (Matthew, 2026-10-24: "is the hazel editor respecting the edge of the code window (wrapping) or the line-col limit we set of 77? ...
+// as I change that limit, it does not respond. Does not respond to window size changes either.") A box's tiles get its program with
+// each line broken to fit (579's flow: only spaces and breaks change) at the narrower of ⚙️'s wrap and the box's own width in Hazel's
+// characters, less the line numbers' gutter; a copy for the tiles, not written into the stored text, so a wider box or a bigger wrap
+// gets the long lines back. Sent again when ⚙️ changes (scriptEditorApply) and when the window or the ⛶ view's divider changes the
+// box's width. A frame being typed in keeps its text and caret until then (its edit is noted as sent: scriptTilesEdit)
+function scriptTileCols(T) {
+  const E = scriptEditorSettings(), w = T.holder ? T.holder.clientWidth : 0;
+  const ch = 0.71 * E.size;   // (Hazel's tiles: about 12.8 px a character at 18 px, measured in its frame, 2026-10-23)
+  const fit = w > 0 ? Math.floor(w / ch) - (E.lines ? 5 : 1) - 2 : Infinity;
+  return Math.max(20, Math.min(E.wrap, fit));
+}
+function scriptTileSpec(T) {
+  const spec = scriptSpec(), cols = scriptTileCols(T);
+  return { ...spec, preamble: scriptFlow("hazel", spec.preamble, cols), modules: spec.modules.map(m => ({ ...m, text: scriptFlow("hazel", m.text, cols) })) };
+}
+var scriptTilesReflowT = null;   // (var: scriptEditorApply may run before this line)
+function scriptTilesReflowSoon() { clearTimeout(scriptTilesReflowT); scriptTilesReflowT = setTimeout(scriptTilesPost, 300); }
+window.addEventListener("resize", scriptTilesReflowSoon);
+
 // The queue of tiles not made yet, and the pump that makes them: the first at once; each next one when the one before says ready, or
 // after 2 s, then 3 s, 4 s and so on, whichever comes first (a slow one does not hold up the rest for long). One in view jumps the
 // queue: made at once, looked for every 0.4 s, as is the box opened at max size (scriptTilesFirst)
@@ -837,19 +880,7 @@ function scriptTileMessage(e) {
     T.ready = true; T.sent = null; T.holder.dataset.ready = "1"; scriptMaxNavSoon();
     if (scriptTilesWaiting === T) { scriptTilesWaiting = null; setTimeout(scriptTilesPump, 0); }   // (the next one, now)
     const w = T.iframe.contentWindow;
-    // (Matthew, 2026-10-23: "indentation in tiles panel is a regression --- we should respect the viewport, and enforce that line
-    // limit, like we already have elsewhere") the module's stored text broken to the box's width, at most ⚙️'s wrap, as the text
-    // box shows it (579: only spaces and breaks change), before the tiles get it; not again while it is edited in them, so the
-    // caret stays where it is. Hazel's tiles: about 12.8 px a character (measured in its frame, 2026-10-23)
-    {
-      // (at ⚙️'s wrap alone, not the box's width: a break cannot be taken back, and a box first seen narrow broke Common to 30
-      // columns for good (Matthew's screenshot, 16:05))
-      const S = scriptsState(), cols = scriptEditorSettings().wrap;
-      if (cols > 20) {
-        if (T.mod === "Common") S.common = scriptFlow("hazel", S.common, cols);
-        else if (S.rooms[T.mod] != null) S.rooms[T.mod] = scriptFlow("hazel", S.rooms[T.mod], cols);
-      }
-    }
+    // (the module's text, broken to fit, is sent by T.post: scriptTileSpec, not written into the stored text)
     scriptTileTheme(T);
     w.postMessage({ type: "editable", on: true }, SCRIPT_HAZEL_ORIGIN);
     w.postMessage({ type: "lines", on: scriptEditorSettings().lines }, SCRIPT_HAZEL_ORIGIN);   // (Hazel's own line numbers, as ⚙️ says)
@@ -964,7 +995,9 @@ function scriptHighlight(pre, lang, text, under = false) {
 // Each piece goes on 2 deeper than the line, 2 more for each bracket open there; a closing bracket back at its opener's depth.
 // Only spaces and line breaks change, never inside a string or a comment (one token each), so a rule means what it meant; lines
 // already narrow enough are left as they are
-const SCRIPT_BREAKS = [[["|"], []], [["+"], []], [["then", "else"], []], [["}"], [";"]], [[], [",", "{", "in"]], [[], ["=>", "->"]]];
+// (Matthew, 2026-10-24, the tiles at a narrow wrap: a long condition, a || b || c, had no place to break; last, so it is used only in a
+// piece nothing else breaks)
+const SCRIPT_BREAKS = [[["|"], []], [["+"], []], [["then", "else"], []], [["}"], [";"]], [[], [",", "{", "in"]], [[], ["=>", "->"]], [["||", "&&"], []]];
 function scriptFlowPieces(lang, toks, indent, cols, out) {
   const text = toks.map(([, w]) => w).join("").trim();
   if (indent + text.length <= cols) { out.push(" ".repeat(indent) + text); return; }
@@ -1040,6 +1073,7 @@ function scriptEditorSettings() {
 }
 function scriptEditorApply() {
   const E = scriptEditorSettings(), R = document.documentElement.style;
+  if (typeof scriptTilesReflowSoon === "function") scriptTilesReflowSoon();   // (wrap, size or line numbers: the tiles broken to fit again)
   R.setProperty("--script-size", E.size + "px");
   R.setProperty("--script-font", SCRIPT_FONTS.find(([n]) => n === E.font)[1]);
   document.body.classList.toggle("script-plain", !E.colours);
@@ -1368,6 +1402,7 @@ function scriptMaxSettings(on) {
 // the pinned box set over the main area: its place and size
 function scriptMaxPlace() {
   const M = scriptMax; if (!M || !M.sec) return;
+  scriptTilesReflowSoon();   // (the box's width may have changed: its tiles broken to fit again)
   const r = M.main.getBoundingClientRect(), st = M.sec.style;
   st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
 }

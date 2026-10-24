@@ -1125,3 +1125,8 @@ body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { di
 /* (ticket 491) in one column, under the picture's stage, which sticks at the top (its height, --stage-h, kept by
    21-size-and-divider.js), not across the picture */
 @media (max-width: 760px) { .crumbs { top: var(--stage-h, 0px); } }
+/* (ticket 568) 🔬 the scripts' cost, in ⚙️ Advanced */
+.script-cost table.cost { border-collapse: collapse; font-size: 0.85em; }
+.script-cost th, .script-cost td { padding: 2px 6px; text-align: left; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+.script-cost td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.script-cost .muted { opacity: 0.6; }
