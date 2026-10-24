@@ -633,6 +633,7 @@ function scriptFrameMessage(e) {
     F.build = m.build || null; F.sent = null;
     if (SCRIPT_TILES_EDIT) F.iframe.contentWindow.postMessage({ type: "editable", on: true }, SCRIPT_HAZEL_ORIGIN);
     { const dark = scriptPageDark(); F.iframe.contentWindow.postMessage({ type: "theme", dark, contrast: dark }, SCRIPT_HAZEL_ORIGIN); }   // (578: the page's theme)
+    scriptTileFont({ ready: true, iframe: F.iframe });   // (587: ⚙️'s font)
     scriptFramePost();
     // (a frame that takes no program says nothing back: it takes programs only from the pages it knows, EmbedProtocol.re's
     // site_origins and dev_hosts, so a copy of the game served from elsewhere, or from disk, has no tiles; said, after a while)
@@ -813,6 +814,13 @@ function scriptCaretTo(iframe, top) {
   if (!view || view === document.body) { window.scrollBy(0, iframe.getBoundingClientRect().top + top - 80); return; }
   view.scrollTop += iframe.getBoundingClientRect().top + top - view.getBoundingClientRect().top - 80;
 }
+// (^ticket(587), Matthew 2026-10-23: "font size chips don't affect hazel tile editor yet?") ⚙️'s size and font, sent to a box's tiles
+// ({type: "font", size, family}: Hazel's own code font set, and measured again), at start and on change
+function scriptTileFont(T) {
+  if (!T.ready || !T.iframe || !T.iframe.contentWindow) return;
+  const E = scriptEditorSettings(), fam = (SCRIPT_FONTS.find(([n]) => n === E.font) || [])[1];
+  T.iframe.contentWindow.postMessage({ type: "font", size: E.size, family: fam }, SCRIPT_HAZEL_ORIGIN);
+}
 function scriptTilesPost() { for (const T of [...scriptTileFrames]) { if (!T.iframe || !T.iframe.isConnected) { scriptTileFrames.delete(T); continue; } T.post(); } }
 function scriptTileMessage(e) {
   if (e.origin !== SCRIPT_HAZEL_ORIGIN) return;
@@ -839,6 +847,7 @@ function scriptTileMessage(e) {
     scriptTileTheme(T);
     w.postMessage({ type: "editable", on: true }, SCRIPT_HAZEL_ORIGIN);
     w.postMessage({ type: "lines", on: scriptEditorSettings().lines }, SCRIPT_HAZEL_ORIGIN);   // (Hazel's own line numbers, as ⚙️ says)
+    scriptTileFont(T);   // (587: ⚙️'s size and font, Hazel's too)
     w.postMessage({ type: "focus", module: T.mod }, SCRIPT_HAZEL_ORIGIN);
     T.post();
     if (T.reveal) { const n = T.reveal; T.reveal = null; setTimeout(() => w.postMessage({ type: "reveal", name: n }, SCRIPT_HAZEL_ORIGIN), 300); }
@@ -1031,6 +1040,8 @@ function scriptEditorApply() {
   document.body.classList.toggle("script-tiles-on", E.hazel === "tiles");
   // (Matthew, 2026-10-23: "line numbers vanished" in the tiles: Hazel draws its own, told by ⚙️'s lines, as every box's tiles are)
   for (const T of scriptTileFrames) if (T.ready && T.iframe && T.iframe.contentWindow) T.iframe.contentWindow.postMessage({ type: "lines", on: E.lines }, SCRIPT_HAZEL_ORIGIN);
+  for (const T of scriptTileFrames) scriptTileFont(T);
+  if (scriptFrame && scriptFrame.phase === "ready") scriptTileFont({ ready: true, iframe: scriptFrame.iframe });
   for (const ta of document.querySelectorAll("textarea.script-editor, pre.script-js")) if (ta.reflow) ta.reflow();
 }
 // how many characters of the code's font fit across a text box, its padding and scroll bar taken off
