@@ -1238,6 +1238,17 @@ function scriptFumolaSig(head) {
 let scriptTypesCache = { key: null, types: new Map() };
 function scriptHazelTypes() {
   if (!window.Hazel || typeof window.Hazel.analyze !== "function") return null;
+  // (^ticket(587), Matthew 2026-10-23: "maybe we need to re-architect the JS library to expose more of modular editors?") from
+  // Hazel itself, where the library has it (Hazel.outlineProgram, the branch lib-outline-587): each member's type as Hazel infers
+  // it, the program's sums and products by their names; else the probe below
+  if (typeof window.Hazel.outlineProgram === "function") {
+    const spec = scriptSpec(), key = "outline:" + JSON.stringify(spec);
+    if (scriptTypesCache.key === key) return scriptTypesCache.types;
+    const types = new Map();
+    try { const o = window.Hazel.outlineProgram(spec); for (const m of o.modules || []) for (const x of m.members || []) if (x.type) types.set(m.name + "." + x.name, x.type); } catch (e) {}
+    scriptTypesCache = { key, types };
+    return types;
+  }
   const S = scriptsState(), mods = [{ name: "Common", text: scriptBody(S.common) }, ...SCRIPT_ROOMS.map(r => ({ name: r.name, text: scriptBody(S.rooms[r.name]) }))];
   const probes = mods.flatMap(m => scriptOutline(m.text, "hazel").filter(o => o.kind === "fn").map(o => `${m.name}.${o.name}`));
   const prog = scriptProgram().split("\n").slice(0, -1).join("\n") + "\n" + probes.map((p, i) => `let probe${i} : () = ${p} in`).join("\n") + "\n0";
