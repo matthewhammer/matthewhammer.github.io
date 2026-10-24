@@ -261,22 +261,34 @@ const scriptsOn = () => SCRIPT_ROOMS.some(r => scriptEngine(r.name) !== "js");
 const SCRIPT_FUMOLA_DEFAULTS = () => typeof FUMOLA_COMMON === "undefined" ? { common: "", rooms: {} }
   : { common: FUMOLA_COMMON, rooms: { ...FUMOLA_ROOM_TEXTS } };
 
+// (Matthew, 2026-10-24: "i set the line limit to under 30, then raised it, but hazel tiles did[n't] expand") breaks written into a
+// saved script (the tiles' first version flowed the stored text itself; 9298738 stopped that) are not the script's: a saved text that
+// is the shipped one but for spaces, line breaks and comments split in two (a # ... # into # ... # # ... #, a // into two //) is the
+// shipped one again, unbroken, so a wider wrap gets its long lines back. A text someone changed keeps what they wrote. Each saved
+// text is looked at once (a set of the ones seen)
+const scriptPristineSeen = new Set();
+const scriptNorm = (t, hz) => String(t || "").replace(/\s+/g, "").replace(hz ? /##/g : /\/\//g, "");
+const scriptPristine = (t, shipped, hz) => {
+  if (t == null || t === shipped || !shipped) return t;
+  const k = (hz ? "h" : "f") + t; if (scriptPristineSeen.has(k)) return t;
+  if (scriptNorm(t, hz) === scriptNorm(shipped, hz)) return shipped;
+  scriptPristineSeen.add(k); return t;
+};
 function scriptsState() {
   const S = state.scripts || (state.scripts = { on: false, common: null, rooms: {} });
   if (S.common == null) S.common = SCRIPT_COMMON;
+  S.common = scriptPristine(S.common, SCRIPT_COMMON, true);
   S.rooms = S.rooms || {};
   for (const r of SCRIPT_ROOMS) if (S.rooms[r.name] == null) S.rooms[r.name] = SCRIPT_TEXTS[r.kind] || "";
+  for (const r of SCRIPT_ROOMS) S.rooms[r.name] = scriptPristine(S.rooms[r.name], SCRIPT_TEXTS[r.kind], true);
   S.engines = S.engines || {};
   const FD = SCRIPT_FUMOLA_DEFAULTS(), F = S.fumola || (S.fumola = { common: null, rooms: {} });
   if (F.common == null && FD.common) F.common = FD.common;
   F.rooms = F.rooms || {};
   for (const r of SCRIPT_ROOMS) if (F.rooms[r.name] == null && FD.rooms[r.name] != null) F.rooms[r.name] = FD.rooms[r.name];
-  // (2026-10-23) a Hazel module whose text is the shipped one but for spaces and line breaks (broken narrow for tiles seen in a
-  // small box, an hour's bug): the shipped one again, broken at ⚙️'s wrap
-  const bare = t => String(t || "").replace(/\s+/g, "");
-  const wrapAt = (S.editor && S.editor.wrap >= 20) ? S.editor.wrap : 77;
-  if (S.common !== SCRIPT_COMMON && bare(S.common) === bare(SCRIPT_COMMON)) S.common = scriptFlow("hazel", SCRIPT_COMMON, wrapAt);
-  for (const r of SCRIPT_ROOMS) { const d = SCRIPT_TEXTS[r.kind]; if (d && S.rooms[r.name] !== d && bare(S.rooms[r.name]) === bare(d)) S.rooms[r.name] = scriptFlow("hazel", d, wrapAt); }
+  // (a Hazel module the shipped one but for breaks: scriptPristine, above, gives the shipped text back unbroken. Until 2026-10-24 this
+  // place broke it again at ⚙️'s wrap, into the saved text, on every call: at a wrap of 24 its comments split, and from then on it
+  // no longer matched, so a wider wrap could not widen it, Matthew's 06:07 screenshot)
   // (2026-10-23) a save holding the texts as shipped before their types, unchanged: the typed ones in their place (FUMOLA_UNTYPED)
   if (typeof FUMOLA_UNTYPED === "function") {
     if (FD.common && F.common !== FD.common && F.common === FUMOLA_UNTYPED(FD.common)) F.common = FD.common;
@@ -406,6 +418,69 @@ function scriptCompile() {
   return scriptCompiled;
 }
 
+// (ticket 592, Matthew 2026-10-24: "If it's possible to use a representation of Globals that permits many copies with lots of internal
+// sharing of common components --- let's do that now on the JS side, so our log table is not expensive, in terms of space.") Globals
+// hash-consed: each object and array read into one frozen node per distinct value, built from its parts' nodes, so two equal parts,
+// in one globals or in a hundred, are one object. One event's globals after are mostly the next one's before, and both are mostly
+// the last event's: a log of a hundred costs about one copy plus what changed. Nodes are found by a key made of their parts' ids; the
+// table of them is rebuilt from what the log still holds whenever the log has dropped as many entries as it keeps, so it does not
+// grow without the log. Equal parts being the same object, a diff skips them at once (===)
+let scriptHC = new Map(), scriptHCn = 0;
+const scriptHCkey = new WeakMap();
+const scriptKeyOf = x => x !== null && typeof x === "object" ? "#" + scriptHCkey.get(x).id : (typeof x) [0] + JSON.stringify(x);
+function scriptHash(v) {
+  if (v === null || typeof v !== "object") return v;
+  if (scriptHCkey.has(v)) return v;
+  let key, node;
+  if (Array.isArray(v)) { node = v.map(scriptHash); key = "[" + node.map(scriptKeyOf).join(","); }
+  else { const ks = Object.keys(v); node = {}; for (const k of ks) node[k] = scriptHash(v[k]); key = "{" + ks.map(k => JSON.stringify(k) + ":" + scriptKeyOf(node[k])).join(","); }
+  const hit = scriptHC.get(key); if (hit) return hit;
+  Object.freeze(node); scriptHCkey.set(node, { id: ++scriptHCn, key }); scriptHC.set(key, node);
+  return node;
+}
+function scriptHCRebuild() {
+  const T = new Map(), walk = x => { if (x === null || typeof x !== "object") return; const k = scriptHCkey.get(x); if (!k || T.has(k.key)) return; T.set(k.key, x); for (const y of Object.values(x)) walk(y); };
+  for (const e of scriptLog) { walk(e.before); walk(e.after); walk(e.ev); }
+  scriptHC = T;
+}
+// 🪵 the event log: the most recent 100 calls (⚙️ keep: all, for every one), each the engine that answered (js, hazel, fumola), when,
+// how long it took in all (the game's call to the last command acted on; for JS its handler), the rule's function alone, the room,
+// the event, and the globals before and after (hash-consed); a rule that stopped, its error
+const scriptLog = [];
+let scriptLogN = 0, scriptLogDropped = 0, scriptLogDrawSoon = null;
+const scriptLogOn = () => { try { return scriptEditorSettings().log !== false; } catch (e) { return true; } };
+function scriptLogPush(L, engine, ms, ruleMs, error) {
+  const e = { n: ++scriptLogN, engine, room: L.room, call: L.room + ".on_event", at: L.at, ms: +ms.toFixed(3), ruleMs: ruleMs == null ? null : +ruleMs.toFixed(3), compileMs: L.compileMs > 1 ? +L.compileMs.toFixed(1) : null,
+    ev: scriptHash(L.ev), before: L.before, after: scriptHash(L.A.globals(L.ev)), ...(error ? { error } : {}) };
+  scriptLog.push(e);
+  const keep = scriptEditorSettings().logAll ? Infinity : 100;
+  while (scriptLog.length > keep) { scriptLog.shift(); scriptLogDropped++; }
+  if (scriptLogDropped >= 100) { scriptLogDropped = 0; scriptHCRebuild(); }
+  if (scriptLogDrawSoon) scriptLogDrawSoon();
+  return e;
+}
+// the parts of the globals an event changed: each path (lever_L, pits_on[0], things[3].open) with its value before and after; a part
+// the same object before and after is skipped whole
+function scriptDiff(a, b, path = "", out = []) {
+  if (a === b) return out;
+  const obj = x => x !== null && typeof x === "object";
+  if (obj(a) && obj(b) && Array.isArray(a) === Array.isArray(b)) {
+    const ks = Array.isArray(a) ? [...Array(Math.max(a.length, b.length)).keys()] : [...new Set([...Object.keys(a), ...Object.keys(b)])];
+    for (const k of ks) scriptDiff(a[k], b[k], Array.isArray(a) ? `${path}[${k}]` : path ? `${path}.${k}` : k, out);
+    return out;
+  }
+  out.push({ path: path || "(all)", from: a, to: b });
+  return out;
+}
+// how much sharing saves: the nodes the log holds, against what plain copies of every globals would hold
+function scriptLogSize() {
+  const seen = new Set(); let copies = 0;
+  const walk = (x, count) => { if (x === null || typeof x !== "object") return; if (count) copies++; if (!seen.has(x)) { seen.add(x); for (const y of Object.values(x)) walk(y, false); } else return; };
+  const all = x => { if (x === null || typeof x !== "object") return 0; let n = 1; for (const y of Object.values(x)) n += all(y); return n; };
+  let plain = 0; for (const e of scriptLog) { walk(e.before); walk(e.after); plain += all(e.before) + all(e.after); }
+  return { entries: scriptLog.length, nodes: seen.size, plain };
+}
+
 // (ticket 568, Matthew 2026-10-23: "we extend the advanced 'measurement' tools with one specifically for measuring the script overhead,
 // in each case") what each room's script costs, from the calls made while playing: per event, the whole event's ms in each engine
 // (JS's own handler, Hazel, Fumola: from the guard to the last command acted on), median and worst, and Hazel's and Fumola's function
@@ -444,7 +519,8 @@ const HZ_KEEP = 5000;
 const hzCounters = () => window.__hz || (window.__hz = { calls: 0, ms: [], runMs: [], compileMs: [], unknown: 0, unknownTags: [], mismatch: 0, hazel: {}, fumola: {}, js: {} });
 const hzPush = (a, v) => { if (a.length < HZ_KEEP) a.push(Math.round(v * 1000) / 1000); };
 // (the plain JS's own handler, timed the same way: the whole event)
-function hzJs(tag, f) { const t0 = performance.now(); try { return f(); } finally { const Z = hzCounters(); hzPush(Z.js[tag] || (Z.js[tag] = []), performance.now() - t0); } }
+function hzJs(tag, f) { const t0 = performance.now(); try { return f(); } finally { const ms = performance.now() - t0, Z = hzCounters(); hzPush(Z.js[tag] || (Z.js[tag] = []), ms);
+  const L = scriptLogJs; if (L && L.ev.tag === tag) { scriptLogJs = null; scriptLogPush(L, "js", ms, null); } } }   // (ticket 592: 🪵 the game's own JS, logged)
 
 // the commands a rule gave, run in order, each by the room's act (its tag's method, with the command's fields before the rest);
 // Wait(ms, rest) runs the rest later. A tag the room does not know ends the walk, counted (__hz.unknown) and said once.
@@ -553,10 +629,23 @@ function scriptGo(door) {
 // commands are acted on, and true. Otherwise false, and the caller's own JS runs as it always has: 📜 off, Hazel not loaded yet,
 // not ready (errors, a hole to fill, a bracket left open), no handler for the room, or not in that room. (ticket 542) Under
 // ?logic=fumola and fumola-list, the rule is Fumola's (fumolaCompile, 25-fumola.js), with the same handler shape: the rest is the same
+// (ticket 592, Matthew 2026-10-24: "it's also any other call from game engine --calls-into--> game script") every call from the game
+// into a room's script comes here, and, when that room's script does not answer it, goes to the game's own JS through hzJs: the two
+// places 🪵 the event log listens. An entry begun here (the globals before, the event) is finished when the rule's commands have been
+// acted on (scriptRun's end, so after a Wait too), or, for the game's JS, when its handler returns (hzJs)
+let scriptLogJs = null;
 function scriptEvent(room, ev) {
+  scriptLogJs = null;
+  const R = SCRIPT_ROOMS.find(r => r.name === room), A = R && SCRIPT_ACTS[R.kind];
+  const log = A && A.here(ev) && scriptLogOn() ? { room, ev, A, raw: A.globals(ev), at: Date.now(), t0: performance.now() } : null;
+  if (log) log.before = scriptHash(log.raw);
+  const took = scriptEventRun(room, ev, R, A, log);
+  if (!took && log) scriptLogJs = log;   // (the game's JS answers it: hzJs finishes the entry)
+  return took;
+}
+function scriptEventRun(room, ev, R, A, log) {
   scriptEvent.act = null;
   if (!scriptsOn()) return false;
-  const R = SCRIPT_ROOMS.find(r => r.name === room), A = R && SCRIPT_ACTS[R.kind];
   if (!A || !A.here(ev)) return false;
   // (ticket 566: the room's own engine; JS, the caller's own code)
   const eng = scriptEngine(room), fum = eng === "fumola";
@@ -567,10 +656,12 @@ function scriptEvent(room, ev) {
   if (!f) return false;
   let cmd;
   const t1 = performance.now();
-  try { cmd = f(A.globals(ev), ev); } catch (e) { scriptSay("the rule stopped: " + (e && e.message || e)); Z.stopped = (Z.stopped || 0) + 1; return true; }
+  if (log) log.compileMs = t1 - t0;   // (ticket 592: a first call compiles the program: said apart from the call's own time)
+  try { cmd = f(log ? log.raw : A.globals(ev), ev); } catch (e) { scriptSay("the rule stopped: " + (e && e.message || e)); Z.stopped = (Z.stopped || 0) + 1;
+    if (log) scriptLogPush(log, eng, performance.now() - t1, performance.now() - t1, String(e && e.message || e)); return true; }
   const t2 = performance.now();
   const act = scriptEvent.act = A.act(ev);   // (kept, for a caller that reads what the walk gathered: scriptGo)
-  scriptRun(cmd, act, 0, () => { if (A.done) A.done(ev, act); });
+  scriptRun(cmd, act, 0, () => { if (A.done) A.done(ev, act); if (log) scriptLogPush(log, eng, performance.now() - log.t0, t2 - t1); });
   const t3 = performance.now();
   const side = fum ? Z.fumola || (Z.fumola = {}) : Z.hazel;
   Z.calls++; hzPush(Z.ms, t2 - t1); hzPush(Z.runMs, t3 - t2); hzPush(side[ev.tag] || (side[ev.tag] = []), t3 - t0);
@@ -996,8 +1087,8 @@ function scriptHighlight(pre, lang, text, under = false) {
 // Only spaces and line breaks change, never inside a string or a comment (one token each), so a rule means what it meant; lines
 // already narrow enough are left as they are
 // (Matthew, 2026-10-24, the tiles at a narrow wrap: a long condition, a || b || c, had no place to break; last, so it is used only in a
-// piece nothing else breaks)
-const SCRIPT_BREAKS = [[["|"], []], [["+"], []], [["then", "else"], []], [["}"], [";"]], [[], [",", "{", "in"]], [[], ["=>", "->"]], [["||", "&&"], []]];
+// piece nothing else breaks; and after a let's =, last of all)
+const SCRIPT_BREAKS = [[["|"], []], [["+"], []], [["then", "else"], []], [["}"], [";"]], [[], [",", "{", "in"]], [[], ["=>", "->"]], [["||", "&&"], []], [[], ["="]]];
 function scriptFlowPieces(lang, toks, indent, cols, out) {
   const text = toks.map(([, w]) => w).join("").trim();
   if (indent + text.length <= cols) { out.push(" ".repeat(indent) + text); return; }
@@ -1069,6 +1160,8 @@ function scriptEditorSettings() {
   if (!(E.wrap >= 20 && E.wrap <= 400)) E.wrap = 77;
   if (typeof E.lines !== "boolean") E.lines = true;   // (ticket 581)
   if (E.hazel !== "text") E.hazel = "tiles";   // (ticket 578: Hazel's boxes in tiles, or text)
+  if (typeof E.log !== "boolean") E.log = true;   // (ticket 592: 🪵 the event log, on to start)
+  if (typeof E.logAll !== "boolean") E.logAll = false;   // (and the most recent 100 only, unless every one is kept)
   return E;
 }
 function scriptEditorApply() {
@@ -1420,6 +1513,51 @@ function scriptMaxClose() {
   scriptMax = null;
 }
 
+// (ticket 592, Matthew 2026-10-24: "new sub-panel and nav node on LHS, after editor settings: event log (picture of a log?)") 🪵 the
+// event log's box: newest first, a line a call (when, the engine, the call and its event, how long, how much changed), opened for
+// what changed (each path, before and after) and the globals whole; the count, and what sharing saves. Drawn again a moment after
+// each call while it is in the page, and never more than 100 lines (kept: all of them, with ⚙️ keep: all)
+function scriptLogBox(maxBtn) {
+  const list = el("div", { class: "script-log-list" }), count = el("span", { class: "hint script-log-count" });
+  const clear = el("button", { onclick: () => { scriptLog.length = 0; scriptHCRebuild(); draw(); } }, "🧹 clear");
+  const sec = el("section", { class: "box script-box script-log" }, [
+    el("div", { class: "box-name" }, ["🪵 event log", maxBtn(() => sec)]),
+    el("div", { class: "row" }, [count, clear]),
+    list]);
+  sec.shown = () => null;
+  const two = n => String(n).padStart(2, "0"), clock = t => { const d = new Date(t); return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, "0")}`; };
+  const short = v => { const t = JSON.stringify(v); return t === undefined ? "—" : t.length > 60 ? t.slice(0, 57) + "…" : t; };
+  const evText = ev => { const v = ev.value; return ev.tag + (v === undefined ? "" : "(" + (v && v.tag ? v.tag : short(v)) + ")"); };
+  const ENG = { js: "JS", hazel: "Hazel", fumola: "🍄 Fumola" }, opened = new Set();
+  const draw = () => {
+    if (!sec.isConnected) return;
+    const S = scriptLogSize();
+    count.textContent = !scriptLogOn() ? "off (⚙️ log: on to keep calls)" : `${S.entries} call${S.entries === 1 ? "" : "s"}${scriptEditorSettings().logAll ? "" : " (the most recent 100)"} · globals kept in ${S.nodes} shared parts, ${S.plain} as plain copies`;
+    const shown = scriptLog.slice(-100).reverse();
+    list.replaceChildren(...(shown.length ? shown.map(e => {
+      const d = scriptDiff(e.before, e.after);
+      const head = el("summary", {}, [el("span", { class: "log-n" }, "#" + e.n), " ", el("span", { class: "log-at" }, clock(e.at)), " ",
+        el("span", { class: "log-eng log-" + e.engine }, ENG[e.engine] || e.engine), " ", el("code", {}, `${e.call}(${evText(e.ev)})`), " ",
+        el("span", { class: "log-ms" }, `${e.ms} ms${e.compileMs ? ` (${e.compileMs} compiling)` : ""}`), " ", el("span", { class: "log-diff" }, e.error ? "stopped: " + e.error : d.length ? `${d.length} changed` : "no change")]);
+      const body = () => [
+        el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms`),
+        d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to)]))) : el("div", { class: "hint" }, "the globals the same after"),
+        el("div", { class: "cap" }, "event"), el("pre", {}, JSON.stringify(e.ev)),
+        el("div", { class: "cap" }, "globals before"), el("pre", {}, JSON.stringify(e.before, null, 1)),
+        el("div", { class: "cap" }, "globals after"), el("pre", {}, JSON.stringify(e.after, null, 1))];
+      const det = el("details", { class: "log-entry" }, [head]);
+      det.addEventListener("toggle", () => { if (det.open) { opened.add(e.n); if (det.children.length === 1) det.append(...body()); } else opened.delete(e.n); });
+      if (opened.has(e.n)) { det.append(...body()); det.open = true; }   // (an entry opened stays open as new ones come in)
+      return det;
+    }) : [el("div", { class: "hint" }, "no calls yet: pull a lever, fall in a pit, take a way out; every call the game makes into a script is kept here, whichever engine answers it (JS, Hazel or Fumola)")]));
+  };
+  let t = null;
+  scriptLogDrawSoon = () => { clearTimeout(t); t = setTimeout(draw, 250); };
+  sec.refresh = draw;
+  setTimeout(draw, 0);   // (once it is in the page: built, it is not yet)
+  return sec;
+}
+
 function scriptingPanel(box) {
   const S = scriptsState();
   const status = el("div", { class: "hint script-status" }, "Hazel: loading…");
@@ -1529,7 +1667,7 @@ function scriptingPanel(box) {
   };
   // (ticket 577) ⛶: this box at full size, with the outline of them all (scriptMaxOpen)
   // (the 📜 tiles first in its outline: Matthew, 2026-10-23, maxed 📚 Common's text box looking for them, "doesn't look like tiles")
-  const maxBtn = sec => el("button", { class: "script-max-btn", title: "full size, with every box listed beside it", onclick: () => scriptMaxOpen([tiles, ...boxes], sec()) }, "⛶ max size");
+  const maxBtn = sec => el("button", { class: "script-max-btn", title: "full size, with every box listed beside it", onclick: () => scriptMaxOpen([logBox, tiles, ...boxes], sec()) }, "⛶ max size");
   // a room's box: its chip, then its code in that engine. JS: the game's own functions, to read; Hazel and Fumola: to edit
   const roomBox = r => {
     const body = el("div", { class: "script-body" });
@@ -1607,11 +1745,15 @@ function scriptingPanel(box) {
       ...pickRow("colour", [[true, "on"], [false, "off"]], () => scriptEditorSettings().colours, v => { scriptEditorSettings().colours = v; }),
       ...pickRow("hazel", [["tiles", scriptHazelTile("tiles")], ["text", "✏️ text"]], () => scriptEditorSettings().hazel, v => { scriptEditorSettings().hazel = v; }),
       ...pickRow("lines", [[true, "on"], [false, "off"]], () => scriptEditorSettings().lines, v => { scriptEditorSettings().lines = v; }),
+      // (ticket 592: 🪵 the event log on or off, and the most recent 100 or every one)
+      ...pickRow("log", [[true, "on"], [false, "off"]], () => scriptEditorSettings().log, v => { scriptEditorSettings().log = v; }),
+      ...pickRow("keep", [[false, "100"], [true, "all"]], () => scriptEditorSettings().logAll, v => { scriptEditorSettings().logAll = v; }),
       el("span", { class: "cap" }, "wrap"), el("div", { class: "row" }, [wrapIn]),
     ]),
   ]);
   scriptEditorApply();
   const boxes = [commonBox(), ...SCRIPT_ROOMS.map(roomBox)];
+  const logBox = scriptLogBox(maxBtn);
   const refresh = () => { master.refresh(); mixed.textContent = allNow() === "mixed" ? "mixed" : ""; for (const b of boxes) b.refresh(); scriptMaxNav(); };
   // (ticket 520) Hazel's tiles: made once the tab is laid out (scriptFrameMount)
   const tiles = el("section", { class: "box script-box script-tiles" }, [
@@ -1629,6 +1771,7 @@ function scriptingPanel(box) {
       : SCRIPT_FUMOLA ? `This page was opened with ?logic=${SCRIPT_LOGIC}: every room runs the shipped Fumola rules, in Fumola's wasm build, whatever the chips or the boxes say.`
       : "This page was opened with ?logic=js: every room runs the game's own code, whatever the chips say.")] : []),
     settings,
+    logBox,
     status, errs, fstatus, ferrs,
     ...boxes,
     tiles,

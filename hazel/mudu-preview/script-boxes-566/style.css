@@ -1130,3 +1130,12 @@ body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { di
 .script-cost th, .script-cost td { padding: 2px 6px; text-align: left; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
 .script-cost td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .script-cost .muted { opacity: 0.6; }
+/* (ticket 592) 🪵 the event log */
+.script-log-list { display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow: auto; }
+.script-max-pinned .script-log-list { max-height: none; }
+.script-log .log-entry > summary { cursor: pointer; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.script-log .log-n, .script-log .log-at, .script-log .log-ms, .script-log .log-diff { color: var(--muted, #888); font-variant-numeric: tabular-nums; }
+.script-log .log-eng { padding: 0 5px; border-radius: 4px; font-size: 0.85em; background: color-mix(in srgb, currentColor 12%, transparent); }
+.script-log .log-hazel { color: #7c3aed; } .script-log .log-fumola { color: #0e7490; } .script-log .log-js { color: #b45309; }
+.script-log .log-entry pre { max-height: 14em; overflow: auto; font-size: 0.8em; margin: 2px 0 6px; }
+.script-log .log-changes { margin: 2px 0; padding-left: 1.2em; font-size: 0.9em; }
