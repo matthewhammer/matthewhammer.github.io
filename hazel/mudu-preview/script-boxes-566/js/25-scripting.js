@@ -1332,6 +1332,9 @@ function scriptMaxNav() {
       return el("button", { class: "script-max-sub script-max-" + o.kind + (sig ? " script-max-sig" : ""), title: (o.kind === "type" ? "type " : "") + o.name + ", lines " + (o.line + 1) + "-" + (end + 1), onclick: () => scriptMaxJump(b, node, o.line, end, o.name) },
         o.kind === "type" ? [el("span", { class: "script-max-kind" }, "type"), el("span", { class: "script-max-tname" }, o.name), ...cases(lines.slice(o.line, end + 1).join(" "))]
           : [el("span", { class: "script-max-fname" }, [o.name, fnTail(lang, sig, lines.slice(o.line, end + 1))]), ...(sig ? [el("span", { class: "script-max-type-sig", title: o.name + " : " + sig }, ": " + sig)] : [])]); }); });
+    // (Matthew, 2026-10-23: "the order of the LHS seems wrong --- types come after functions that use them") the types first, then the
+    // functions, whatever order the box shows its listings in (Common shows its module above its read-only types)
+    subs.sort((x, y) => (y.classList.contains("script-max-type") ? 1 : 0) - (x.classList.contains("script-max-type") ? 1 : 0));
     return el("div", { class: "script-max-group" }, [a, ...(subs.length ? [el("div", { class: "script-max-subs" }, subs)] : [])]);
   }));
 }
