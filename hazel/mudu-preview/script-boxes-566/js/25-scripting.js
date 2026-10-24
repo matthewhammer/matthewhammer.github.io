@@ -1332,9 +1332,6 @@ function scriptMaxNav() {
       return el("button", { class: "script-max-sub script-max-" + o.kind + (sig ? " script-max-sig" : ""), title: (o.kind === "type" ? "type " : "") + o.name + ", lines " + (o.line + 1) + "-" + (end + 1), onclick: () => scriptMaxJump(b, node, o.line, end, o.name) },
         o.kind === "type" ? [el("span", { class: "script-max-kind" }, "type"), el("span", { class: "script-max-tname" }, o.name), ...cases(lines.slice(o.line, end + 1).join(" "))]
           : [el("span", { class: "script-max-fname" }, [o.name, fnTail(lang, sig, lines.slice(o.line, end + 1))]), ...(sig ? [el("span", { class: "script-max-type-sig", title: o.name + " : " + sig }, ": " + sig)] : [])]); }); });
-    // (Matthew, 2026-10-23: "the order of the LHS seems wrong --- types come after functions that use them") the types first, then the
-    // functions, whatever order the box shows its listings in (Common shows its module above its read-only types)
-    subs.sort((x, y) => (y.classList.contains("script-max-type") ? 1 : 0) - (x.classList.contains("script-max-type") ? 1 : 0));
     return el("div", { class: "script-max-group" }, [a, ...(subs.length ? [el("div", { class: "script-max-subs" }, subs)] : [])]);
   }));
 }
@@ -1513,10 +1510,13 @@ function scriptingPanel(box) {
         // (Matthew, 2026-10-23: "we still show plain text first, before tiles") the module first, in tiles or text; then the sums
         // every room names, read-only (they are declared at the program's start, since the game's Hazel does not yet put a
         // module's constructors in scope outside it: hazelgrove/hazel#2729 does, on dev; once it does, they move into Common)
-        el("div", { class: "hint" }, "module Common, in Hazel: in scope in every Hazel room, as Common.name"),
-        hazelBody("Common", editor("Common", () => scriptsState().common, t => { scriptsState().common = t; }, "hazel")),
+        // (Matthew, 2026-10-23: "the LHS should be ordered by the line number ordering of the RHS": the types first, as the program
+        // has them, then the module; the outline follows the box from top to bottom. In tiles the types' text is hidden, and the
+        // outline's type rows open the whole program's tiles)
         el("div", { class: "hint script-types-hint" }, "the types every Hazel room can name (read-only: at the program's start until the game's Hazel has hazelgrove/hazel#2729)"),
-        typesPre());
+        typesPre(),
+        el("div", { class: "hint" }, "module Common, in Hazel: in scope in every Hazel room, as Common.name"),
+        hazelBody("Common", editor("Common", () => scriptsState().common, t => { scriptsState().common = t; }, "hazel")));
       else body.replaceChildren(el("div", { class: "hint" }, "module Common, in Fumola: in scope in every Fumola room, as Common.name (as text: ⚙️'s tiles are Hazel's; Fumola has none in the game yet)"),
         editor("Common", () => scriptsState().fumola.common || "", t => { scriptsState().fumola.common = t; }, "fumola"));
     };
