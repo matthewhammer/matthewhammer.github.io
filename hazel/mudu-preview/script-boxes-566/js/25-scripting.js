@@ -364,8 +364,18 @@ function scriptProgram() {
 // each module's holes and its brackets or keywords without their partner; and whether it is ready to run (Hazel's ok, and nothing
 // in those lines)
 const scriptPlural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+// (ticket 594) Hazel's message for a type error, said as a person reads it: the term, the type wanted, the type it has, each type by the
+// program's own names (Hazel writes a sum out in full: + L + R for Side, rec Cmd -> ... for Cmd); any other message as it is
+function scriptErrorText(msg) {
+  const m = String(msg).match(/^Error in term:\s*\n\s*([\s\S]*?)\nNature of error: Expecting type ([\s\S]*?) but got inconsistent type ([\s\S]*)$/);
+  if (!m) return String(msg);
+  const name = t => typeof scriptTypeNames === "function" ? scriptTypeNames(t.trim()) : t.trim();
+  const term = m[1].trim().replace(/\s+/g, " ");
+  const a = t => (/^[AEIOU]/.test(t) ? "an " : "a ") + t;
+  return `${term.length > 70 ? term.slice(0, 67) + "…" : term}: ${a(name(m[2]))} is wanted here, but this is ${a(name(m[3]))}`;
+}
 function scriptReport(r) {
-  const errors = Array.from((r && r.errors) || []).map(e => e && typeof e === "object" ? `${e.module || "the program"}: ${e.message}` : String(e));
+  const errors = Array.from((r && r.errors) || []).map(e => e && typeof e === "object" ? `${e.module || "the program"}: ${scriptErrorText(e.message)}` : scriptErrorText(e));
   const unfinished = [], put = (who, holes, open) => {
     const bits = [];
     if (holes > 0) bits.push(scriptPlural(holes, "hole to fill", "holes to fill"));
@@ -375,7 +385,11 @@ function scriptReport(r) {
   const H = (r && r.holes) || {}, I = (r && r.incomplete) || {};
   for (const m of new Set([...Object.keys(H), ...Object.keys(I)])) put(m, +H[m] || 0, +I[m] || 0);
   put("the program", +(r && r.programHoles) || 0, +(r && r.programIncomplete) || 0);
-  return { errors, unfinished, ok: !!(r && r.ok === true) && !errors.length && !unfinished.length };
+  // (ticket 594: each module's own, for its box and its outline node)
+  const byModule = {};
+  for (const e of Array.from((r && r.errors) || [])) { const m = e && typeof e === "object" && e.module ? e.module : "the program"; (byModule[m] = byModule[m] || []).push(scriptErrorText(e && typeof e === "object" ? e.message : e)); }
+  for (const m of new Set([...Object.keys(H), ...Object.keys(I)])) { const h = +H[m] || 0, o = +I[m] || 0; if (h || o) (byModule[m] = byModule[m] || []).push([h ? scriptPlural(h, "hole to fill", "holes to fill") : "", o ? scriptPlural(o, "bracket or keyword without its partner", "brackets or keywords without their partners") : ""].filter(Boolean).join(", ")); }
+  return { errors, unfinished, byModule, ok: !!(r && r.ok === true) && !errors.length && !unfinished.length };
 }
 
 let hazelLoading = null;
@@ -403,17 +417,22 @@ function scriptCompile() {
   const key = viaProgram ? "program:" + JSON.stringify(spec) : "text:" + scriptProgram();
   if (scriptCompiled.key === key) return scriptCompiled;
   const t0 = performance.now();
-  let errors = [], unfinished = [], ready = false, handlers = {};
+  let errors = [], unfinished = [], ready = false, handlers = {}, byModule = {};
   try {
     const r = viaProgram ? H.runProgram(spec) : H.run(key.slice(5));
-    if (viaProgram) ({ errors, unfinished, ok: ready } = scriptReport(r));
+    if (viaProgram) ({ errors, unfinished, byModule, ok: ready } = scriptReport(r));
     else { errors = Array.from(r.errors || []).map(String); ready = !errors.length; }
     const v = r.value || {};
     for (const room of SCRIPT_ROOMS) { const f = v[room.name.toLowerCase()]; if (typeof f === "function") handlers[room.name] = scriptTyped(f); }   // (ticket 566: text to sums and back)
     // (fine by Hazel, yet a room's rule not a function here: said, and not ready)
     if (ready) for (const room of SCRIPT_ROOMS) if (!handlers[room.name]) { errors.push(`${room.name}: its on_event did not come back as a function`); ready = false; }
   } catch (e) { errors = [String(e && e.message || e)]; ready = false; }
-  scriptCompiled = { key, via: viaProgram ? "runProgram" : "run", errors, unfinished, ready, handlers, ms: performance.now() - t0 };
+  scriptCompiled = { key, via: viaProgram ? "runProgram" : "run", errors, unfinished, byModule, ready, handlers, ms: performance.now() - t0 };
+  // (ticket 594, Matthew 2026-10-24: "type errors from hazel get reported somewhere, before running the script") a check entry in 🪵
+  // the event log whenever what Hazel says of the program changes: its errors and what is unfinished, module by module, or fine again
+  { const said = JSON.stringify([errors, unfinished]);
+    if (said !== scriptCompile.said && typeof scriptLogCheck === "function" && (errors.length || unfinished.length || scriptCompile.said)) scriptLogCheck(scriptCompiled);
+    scriptCompile.said = said; }
   hzPush(hzCounters().compileMs, scriptCompiled.ms);   // (ticket 531)
   return scriptCompiled;
 }
@@ -440,24 +459,43 @@ function scriptHash(v) {
 }
 function scriptHCRebuild() {
   const T = new Map(), walk = x => { if (x === null || typeof x !== "object") return; const k = scriptHCkey.get(x); if (!k || T.has(k.key)) return; T.set(k.key, x); for (const y of Object.values(x)) walk(y); };
-  for (const e of scriptLog) { walk(e.before); walk(e.after); walk(e.ev); }
+  for (const e of scriptLog) { walk(e.before); walk(e.after); walk(e.settled); walk(e.ev); walk(e.answer); if (e.dry) walk(e.dry.answer); }
   scriptHC = T;
 }
 // 🪵 the event log: the most recent 100 calls (⚙️ keep: all, for every one), each the engine that answered (js, hazel, fumola), when,
 // how long it took in all (the game's call to the last command acted on; for JS its handler), the rule's function alone, the room,
 // the event, and the globals before and after (hash-consed); a rule that stopped, its error
-const scriptLog = [];
+const scriptLog = [], SCRIPT_SETTLE_MS = 2000;
 let scriptLogN = 0, scriptLogDropped = 0, scriptLogDrawSoon = null;
 const scriptLogOn = () => { try { return scriptEditorSettings().log !== false; } catch (e) { return true; } };
 function scriptLogPush(L, engine, ms, ruleMs, error) {
   const e = { n: ++scriptLogN, engine, room: L.room, call: L.room + ".on_event", at: L.at, ms: +ms.toFixed(3), ruleMs: ruleMs == null ? null : +ruleMs.toFixed(3), compileMs: L.compileMs > 1 ? +L.compileMs.toFixed(1) : null,
-    ev: scriptHash(L.ev), before: L.before, after: scriptHash(L.A.globals(L.ev)), ...(error ? { error } : {}) };
+    ev: scriptHash(L.ev), before: L.before, after: scriptHash(L.A.globals(L.ev)), ...(error ? { error } : {}),
+    ...(L.answer !== undefined ? { answer: L.answer } : {}), ...(L.unknown && L.unknown.length ? { unknown: L.unknown } : {}), ...(L.dry ? { dry: L.dry } : {}) };
   scriptLog.push(e);
   const keep = scriptEditorSettings().logAll ? Infinity : 100;
   while (scriptLog.length > keep) { scriptLog.shift(); scriptLogDropped++; }
   if (scriptLogDropped >= 100) { scriptLogDropped = 0; scriptHCRebuild(); }
   if (scriptLogDrawSoon) scriptLogDrawSoon();
+  // (Matthew, 2026-10-24: "why does it say that pulling the boulder up has no change to global state?") a command may finish later
+  // than the call: a boulder falls or rises for BOULDER_FALL ms (1.3 s), and the game writes where it is (covered) when it lands. So
+  // the globals are read once more when that is over, and kept as the entry's settled state, if no other call came in meanwhile
+  // (whose changes would be mixed in)
+  setTimeout(() => {
+    if (scriptLog[scriptLog.length - 1] !== e) return;
+    const later = scriptHash(L.A.globals(L.ev));
+    if (later !== e.after) { e.settled = later; e.settleMs = SCRIPT_SETTLE_MS; if (scriptLogDrawSoon) scriptLogDrawSoon(); }
+  }, SCRIPT_SETTLE_MS);
   return e;
+}
+// (ticket 594) what Hazel says of the program, when it changes: its errors and unfinished parts module by module, or fine again
+function scriptLogCheck(C) {
+  if (!scriptLogOn()) return;
+  scriptLog.push({ n: ++scriptLogN, engine: "hazel", call: "check", at: Date.now(), ms: +C.ms.toFixed(1), check: true, ok: !!C.ready,
+    byModule: C.byModule || {}, errors: C.errors.slice(0, 40), unfinished: C.unfinished.slice(0, 40) });
+  const keep = scriptEditorSettings().logAll ? Infinity : 100;
+  while (scriptLog.length > keep) { scriptLog.shift(); scriptLogDropped++; }
+  if (scriptLogDrawSoon) scriptLogDrawSoon();
 }
 // the parts of the globals an event changed: each path (lever_L, pits_on[0], things[3].open) with its value before and after; a part
 // the same object before and after is skipped whole
@@ -556,6 +594,7 @@ function scriptRun(cmd, act, depth = 0, end = () => {}) {
   if (cmd.tag === "Wait") { setTimeout(() => scriptRun(k, act, depth + 1, end), Math.max(0, +args[0] || 0)); return; }
   if (typeof act[cmd.tag] === "function" && act[cmd.tag](...args) !== false) return scriptRun(k, act, depth + 1, end);
   const Z = hzCounters(); Z.unknown++; if (Z.unknownTags.length < 20) Z.unknownTags.push(String(cmd.tag));
+  if (act.__unknown) act.__unknown.push(String(cmd.tag));   // (ticket 594: for this event's log entry)
   if (Z.unknown === 1) scriptSay(`a command this room does not know: ${cmd.tag}`);
   end();
 }
@@ -677,6 +716,17 @@ function scriptEventRun(room, ev, R, A, log) {
   if (fum ? !fumolaReady() : !window.Hazel) { (fum ? fumolaLoad() : hazelLoad()).catch(() => {}); return false; }
   const t0 = performance.now(), Z = hzCounters();
   const C = fum ? fumolaCompile() : scriptCompile(), f = C && C.ready && C.handlers[room];
+  // (ticket 594, Matthew 2026-10-24: "the log entry for hazel with type errors still runs (maybe only partially), and we see the
+  // results in the log entry details") a Hazel rule in a program with errors still runs, as Hazel runs such a program (up to its
+  // errors), and its answer goes in the log entry with the errors; the game's own JS acts on the event, so the game keeps working
+  if (!f && !fum && C && !C.ready && C.handlers && C.handlers[room] && log) {
+    const t = performance.now(); let answer, threw = null;
+    try { answer = C.handlers[room](log.raw, ev); } catch (e) { threw = String(e && e.message || e); }
+    // (where Hazel could not make a value, the boundary gives its term, { hazel: "..." }: said as such, not dumped)
+    const stuck = x => x && typeof x === "object" ? (typeof x.hazel === "string" && Object.keys(x).length === 1 ? "‹not a value: an error stopped it here›" : Array.isArray(x) ? x.map(stuck) : Object.fromEntries(Object.entries(x).map(([k, v]) => [k, stuck(v)]))) : x;
+    log.dry = { ms: +(performance.now() - t).toFixed(3), answer: threw ? null : scriptHash(stuck(answer === undefined ? null : answer)), threw,
+      errors: C.byModule ? C.byModule[room] || [] : [], others: C.byModule ? Object.keys(C.byModule).filter(m => m !== room) : [] };
+  }
   if (!f) return false;
   let cmd;
   const t1 = performance.now();
@@ -685,7 +735,8 @@ function scriptEventRun(room, ev, R, A, log) {
     if (log) scriptLogPush(log, eng, performance.now() - t1, performance.now() - t1, String(e && e.message || e)); return true; }
   const t2 = performance.now();
   const act = scriptEvent.act = A.act(ev);   // (kept, for a caller that reads what the walk gathered: scriptGo)
-  scriptRun(cmd, act, 0, () => { if (A.done) A.done(ev, act); if (log) scriptLogPush(log, eng, performance.now() - log.t0, t2 - t1); });
+  if (log) { act.__unknown = []; log.answer = scriptHash(cmd === undefined ? null : cmd); }   // (ticket 594: what the rule said, and any command the room did not know)
+  scriptRun(cmd, act, 0, () => { if (A.done) A.done(ev, act); if (log) { log.unknown = act.__unknown; scriptLogPush(log, eng, performance.now() - log.t0, t2 - t1); } });
   const t3 = performance.now();
   const side = fum ? Z.fumola || (Z.fumola = {}) : Z.hazel;
   Z.calls++; hzPush(Z.ms, t2 - t1); hzPush(Z.runMs, t3 - t2); hzPush(side[ev.tag] || (side[ev.tag] = []), t3 - t0);
@@ -1490,8 +1541,10 @@ function scriptMaxNav() {
     const tw = b.querySelector(".script-tile-wrap");
     if (lang && lang.classList && tw && !tw.closest("[hidden]") && tw.dataset.ready !== "1") lang.classList.add("loading");
     const name = [...b.querySelector(".box-name").childNodes].filter(n => n.tagName !== "BUTTON").map(n => n.textContent).join("");
+    // (ticket 594) a Hazel module with errors: ⚠️ and how many, beside its name
+    const bad = b.dataset && b.dataset.room && b.shown() === "hazel" && scriptCompiled && scriptCompiled.byModule ? (scriptCompiled.byModule[b.dataset.room] || []).length : 0;
     const a = el("button", { class: "script-max-item", "aria-current": String(b === M.sec), onclick: () => scriptMaxOpen(M.boxes, b) },
-      [el("span", {}, name), el("span", { class: "script-max-lang" }, lang)]);
+      [el("span", {}, name), ...(bad ? [el("span", { class: "script-max-bad", title: scriptCompiled.byModule[b.dataset.room].join("\n") }, `⚠️ ${bad}`)] : []), el("span", { class: "script-max-lang" }, lang)]);
     const subs = scriptListings(b).flatMap(({ node, text, lang }) => { const lines = text.split("\n"), os = scriptOutline(text, lang); return os.map((o, i) => {
       // (584) its lines: up to the next definition, less the comments and blank lines that lead into that one
       let end = (os[i + 1] ? os[i + 1].line : lines.length) - 1;
@@ -1559,10 +1612,21 @@ function scriptLogBox(maxBtn) {
     count.textContent = !scriptLogOn() ? "off (⚙️ log: on to keep calls)" : `${S.entries} call${S.entries === 1 ? "" : "s"}${scriptEditorSettings().logAll ? "" : " (the most recent 100)"} · globals kept in ${S.nodes} shared parts, ${S.plain} as plain copies`;
     const shown = scriptLog.slice(-100).reverse();
     list.replaceChildren(...(shown.length ? shown.map(e => {
-      const d = scriptDiff(e.before, e.after);
+      // (ticket 594) a check entry: what Hazel says of the program, module by module
+      if (e.check) {
+        const n = e.errors.length, u = e.unfinished.length;
+        const det = el("details", { class: "log-entry log-check" + (n || u ? " log-bad" : "") }, [el("summary", {}, [el("span", { class: "log-n" }, "#" + e.n), " ", el("span", { class: "log-at" }, clock(e.at)), " ",
+          el("span", { class: "log-eng log-hazel" }, "Hazel"), " ", el("code", {}, "check"), " ",
+          el("span", { class: "log-diff" }, n || u ? `⚠️ ${[n ? scriptPlural(n, "error", "errors") : "", u ? scriptPlural(u, "part unfinished", "parts unfinished") : ""].filter(Boolean).join(", ")}` : "✅ the program is fine again")])]);
+        det.append(el("div", { class: "hint" }, n || u ? "Before any rule runs, Hazel reads the whole program. A rule in a program with errors still runs, and its answer is shown in its event's entry, but the game's own JS makes the move." : "Every rule runs again as written."),
+          ...Object.entries(e.byModule).map(([m, list]) => el("div", {}, [el("div", { class: "cap" }, m), el("ul", { class: "log-changes" }, list.map(x => el("li", {}, x)))])));
+        return det;
+      }
+      const end = e.settled || e.after, d = scriptDiff(e.before, end), late = e.settled ? new Set(scriptDiff(e.after, e.settled).map(c => c.path)) : new Set();
       const head = el("summary", {}, [el("span", { class: "log-n" }, "#" + e.n), " ", el("span", { class: "log-at" }, clock(e.at)), " ",
         el("span", { class: "log-eng log-" + e.engine }, ENG[e.engine] || e.engine), " ", el("code", {}, `${e.call}(${evText(e.ev)})`), " ",
-        el("span", { class: "log-ms" }, `${e.ms} ms${e.compileMs ? ` (${e.compileMs} compiling)` : ""}`), " ", el("span", { class: "log-diff" }, e.error ? "stopped: " + e.error : d.length ? `${d.length} changed` : "no change")]);
+        el("span", { class: "log-ms" }, `${e.ms} ms${e.compileMs ? ` (${e.compileMs} compiling)` : ""}`), " ", el("span", { class: "log-diff" }, [e.error ? "⛔ stopped: " + e.error : d.length ? `${d.length} changed` : "no change",
+          e.unknown ? ` · ⚠️ ${scriptPlural(e.unknown.length, "command", "commands")} the room does not know` : "", e.dry ? " · ⚠️ Hazel's rule has errors: the JS moved" : ""].join(""))]);
       // (Matthew, 2026-10-24: "the order is: summary info you have now, and then reveal: event data, event effect (the diff you have
       // now), and another option to reveal the globals before/after, in full"; "put globals before/after side by side (when revealed),
       // and actually highlight the field that changed, if any")
@@ -1570,12 +1634,20 @@ function scriptLogBox(maxBtn) {
         const changed = new Set(d.map(c => c.path)), whole = el("details", { class: "log-globals" }, [el("summary", {}, "globals before and after, in full")]);
         whole.addEventListener("toggle", () => { if (whole.open && whole.children.length === 1) whole.append(el("div", { class: "log-sides" }, [
           el("div", {}, [el("div", { class: "cap" }, "before"), scriptJsonView(e.before, changed)]),
-          el("div", {}, [el("div", { class: "cap" }, "after"), scriptJsonView(e.after, changed)])])); }, { once: true });
+          el("div", {}, [el("div", { class: "cap" }, e.settled ? `after (its animations ended, ${e.settleMs / 1000} s later)` : "after"), scriptJsonView(end, changed)])])); }, { once: true });
         return [
           el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms${e.compileMs ? `, ${e.compileMs} ms of it compiling the program first` : ""}`),
           el("div", { class: "cap" }, "event"), scriptJsonView(e.ev, new Set()),
           el("div", { class: "cap" }, "what it changed"),
-          d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to)]))) : el("div", { class: "hint" }, "nothing: the globals the same after"),
+          d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to),
+            late.has(c.path) ? el("span", { class: "hint" }, ` (when its animation ended, ${e.settleMs / 1000} s later)`) : ""]))) : el("div", { class: "hint" }, "nothing: the globals the same after"),
+          // (ticket 594) what the rule answered; a command the room did not know; a rule run in a program with errors
+          ...(e.answer !== undefined ? [el("div", { class: "cap" }, "the rule's answer"), scriptJsonView(e.answer, new Set())] : []),
+          ...(e.unknown ? [el("div", { class: "log-bad" }, `⚠️ the room does not know ${e.unknown.join(", ")}: the commands from there on were not acted on`)] : []),
+          ...(e.error ? [el("div", { class: "log-bad" }, `⛔ the rule stopped: ${e.error}`)] : []),
+          ...(e.dry ? [el("div", { class: "cap" }, "Hazel's rule, run though the program has errors"),
+            el("div", { class: "hint log-bad" }, `${e.dry.errors.length ? e.dry.errors.join("; ") : "its own module is fine"}${e.dry.others.length ? `; errors also in ${e.dry.others.join(", ")}` : ""}. Its answer was not acted on: the game's own JS moved (the change above is the JS's).`),
+            e.dry.threw ? el("div", { class: "log-bad" }, `⛔ it stopped: ${e.dry.threw}`) : scriptJsonView(e.dry.answer, new Set())] : []),
           whole];
       };
       const det = el("details", { class: "log-entry" }, [head]);
@@ -1607,6 +1679,13 @@ function scriptingPanel(box) {
         : !C.ready ? "is not finished, so its rooms run their JS" : "is fine"} (analyzed and run in ${Math.round(C.ms)} ms)`;
       status.title = C.via === "runProgram" ? "built by Hazel from the modules (Hazel.runProgram)" : "joined by the game, run by Hazel.run (this Hazel has no runProgram)";
       errs.replaceChildren(...[...C.errors.slice(0, 8), ...C.unfinished].map(e => el("li", {}, e)));
+      // (ticket 594) each Hazel box its own module's errors, under its name, before anything runs
+      for (const b of boxes) {
+        const m = b.dataset.room, list = (b.shown() === "hazel" && C.byModule && C.byModule[m]) || [];
+        let u = b.querySelector(":scope > .script-box-errors");
+        if (!u) { u = el("ul", { class: "script-errors script-box-errors" }); b.querySelector(".box-name").after(u); }
+        const key = JSON.stringify(list); if (u.dataset.key !== key) { u.dataset.key = key; u.replaceChildren(...list.map(x => el("li", {}, "⚠️ " + x))); }
+      }
     }
     // (ticket 566) Fumola's, once a room uses it or its box is shown: loaded then, not before
     if (typeof fumolaReady !== "function") return;   // (a page without 25-fumola.js)
