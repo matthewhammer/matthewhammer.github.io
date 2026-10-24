@@ -1155,7 +1155,10 @@ body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { di
 .script-max-game { flex: none; border-radius: 8px; }
 .script-max-top { gap: 6px; flex-wrap: wrap; }
 .script-max-top > button { flex: 1 1 auto; }
-body.script-max-game-on .stage { z-index: 62; }
+body.script-max-game-on .stage { z-index: 62; pointer-events: none; }
+/* (Matthew 2026-10-24: "need the LHS / RHS drag to work when game view is shown"; "new events do not expand their details": the lifted
+   stage's empty area lay over the divider and the log, taking their clicks; now only the picture takes them) */
+body.script-max-game-on .stage .pic-box.script-max-game-pinned { pointer-events: auto; }
 body.script-max-game-on .stage .pic-area > :not(.pic-box) { visibility: hidden; }
 .pic-box.script-max-game-pinned { position: fixed !important; z-index: 62; margin: 0; border-radius: 8px; overflow: hidden; }
 .pic-box.script-max-game-pinned > #pic { width: 100% !important; height: 100% !important; }
