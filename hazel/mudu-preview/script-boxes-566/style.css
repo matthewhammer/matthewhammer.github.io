@@ -1139,3 +1139,7 @@ body.script-tiles-on .script-types, body.script-tiles-on .script-types-hint { di
 .script-log .log-hazel { color: #7c3aed; } .script-log .log-fumola { color: #0e7490; } .script-log .log-js { color: #b45309; }
 .script-log .log-entry pre { max-height: 14em; overflow: auto; font-size: 0.8em; margin: 2px 0 6px; }
 .script-log .log-changes { margin: 2px 0; padding-left: 1.2em; font-size: 0.9em; }
+.script-log .log-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.script-log .log-json { max-height: 24em; overflow: auto; font-size: 0.8em; margin: 2px 0; }
+.script-log .log-json mark { background: color-mix(in srgb, #f59e0b 45%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+.script-log .log-globals > summary { cursor: pointer; font-size: 0.9em; }

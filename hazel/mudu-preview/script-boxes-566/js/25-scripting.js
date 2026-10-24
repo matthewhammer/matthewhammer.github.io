@@ -472,6 +472,30 @@ function scriptDiff(a, b, path = "", out = []) {
   out.push({ path: path || "(all)", from: a, to: b });
   return out;
 }
+// (ticket 592) a globals value as indented JSON, each field whose path is in changed (scriptDiff's paths: lever_L, pits_on[0],
+// things[3].open) marked, so before and after side by side show what the event changed
+function scriptJsonView(v, changed) {
+  const pre = el("pre", { class: "log-json" });
+  const put = (node, x) => pre.append(node ? node : document.createTextNode(x));
+  const walk = (x, path, ind) => {
+    const mark = changed.has(path || "(all)");
+    // (Matthew: "if you can use some syntax highlighting for the JSON data, that would be nice too": the game's own colours)
+    if (x === null || typeof x !== "object") { const t = JSON.stringify(x), tk = el("span", { class: typeof x === "string" ? "tk-s" : typeof x === "number" ? "tk-n" : "tk-k" }, t);
+      put(mark ? el("mark", {}, [tk]) : tk); return; }
+    const arr = Array.isArray(x), ks = arr ? x.map((_, i) => i) : Object.keys(x);
+    if (!ks.length) { put(mark ? el("mark", {}, arr ? "[]" : "{}") : null, arr ? "[]" : "{}"); return; }
+    put(null, arr ? "[" : "{");
+    ks.forEach((k, i) => {
+      const p = arr ? `${path}[${k}]` : path ? `${path}.${k}` : String(k);
+      put(null, "\n" + " ".repeat(ind + 1)); if (!arr) { put(el("span", { class: "tk-C" }, JSON.stringify(k))); put(null, ": "); }
+      walk(x[k], p, ind + 1);
+      if (i < ks.length - 1) put(null, ",");
+    });
+    put(null, "\n" + " ".repeat(ind) + (arr ? "]" : "}"));
+  };
+  walk(v, "", 0);
+  return pre;
+}
 // how much sharing saves: the nodes the log holds, against what plain copies of every globals would hold
 function scriptLogSize() {
   const seen = new Set(); let copies = 0;
@@ -1539,12 +1563,21 @@ function scriptLogBox(maxBtn) {
       const head = el("summary", {}, [el("span", { class: "log-n" }, "#" + e.n), " ", el("span", { class: "log-at" }, clock(e.at)), " ",
         el("span", { class: "log-eng log-" + e.engine }, ENG[e.engine] || e.engine), " ", el("code", {}, `${e.call}(${evText(e.ev)})`), " ",
         el("span", { class: "log-ms" }, `${e.ms} ms${e.compileMs ? ` (${e.compileMs} compiling)` : ""}`), " ", el("span", { class: "log-diff" }, e.error ? "stopped: " + e.error : d.length ? `${d.length} changed` : "no change")]);
-      const body = () => [
-        el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms`),
-        d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to)]))) : el("div", { class: "hint" }, "the globals the same after"),
-        el("div", { class: "cap" }, "event"), el("pre", {}, JSON.stringify(e.ev)),
-        el("div", { class: "cap" }, "globals before"), el("pre", {}, JSON.stringify(e.before, null, 1)),
-        el("div", { class: "cap" }, "globals after"), el("pre", {}, JSON.stringify(e.after, null, 1))];
+      // (Matthew, 2026-10-24: "the order is: summary info you have now, and then reveal: event data, event effect (the diff you have
+      // now), and another option to reveal the globals before/after, in full"; "put globals before/after side by side (when revealed),
+      // and actually highlight the field that changed, if any")
+      const body = () => {
+        const changed = new Set(d.map(c => c.path)), whole = el("details", { class: "log-globals" }, [el("summary", {}, "globals before and after, in full")]);
+        whole.addEventListener("toggle", () => { if (whole.open && whole.children.length === 1) whole.append(el("div", { class: "log-sides" }, [
+          el("div", {}, [el("div", { class: "cap" }, "before"), scriptJsonView(e.before, changed)]),
+          el("div", {}, [el("div", { class: "cap" }, "after"), scriptJsonView(e.after, changed)])])); }, { once: true });
+        return [
+          el("div", { class: "hint" }, `${e.engine === "js" ? "the game's own JS handler" : "the rule's function alone " + e.ruleMs + " ms; the whole call, its commands acted on,"} ${e.ms} ms${e.compileMs ? `, ${e.compileMs} ms of it compiling the program first` : ""}`),
+          el("div", { class: "cap" }, "event"), scriptJsonView(e.ev, new Set()),
+          el("div", { class: "cap" }, "what it changed"),
+          d.length ? el("ul", { class: "log-changes" }, d.map(c => el("li", {}, [el("code", {}, c.path), ": ", short(c.from), " → ", short(c.to)]))) : el("div", { class: "hint" }, "nothing: the globals the same after"),
+          whole];
+      };
       const det = el("details", { class: "log-entry" }, [head]);
       det.addEventListener("toggle", () => { if (det.open) { opened.add(e.n); if (det.children.length === 1) det.append(...body()); } else opened.delete(e.n); });
       if (opened.has(e.n)) { det.append(...body()); det.open = true; }   // (an entry opened stays open as new ones come in)
