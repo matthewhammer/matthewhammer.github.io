@@ -128,6 +128,14 @@
   #cnav #outline > ul { border-left: 0 !important; margin: 0 0 0.4rem 0 !important; padding-left: 0.5rem !important; }
   #cnav #outline .outline-pages, #cnav #outline .outline-label { display: none !important; }
   #cnav #outline a { font-size: 12px !important; padding: 1px 4px !important; }
+  /* (2026-10-25, Matthew on ^report(33)'s outline here: "indentation on LHS is too extreme --- but let's keep some more minor
+     version") a page's own numbered outline: a small step in per level, not the browser's 40px, and its links inline, so a
+     line's subtitle and its "·" run on after the link rather than each on a line of its own */
+  #cnav #outline ol { margin: 0 !important; padding-left: 1.3em !important; }
+  #cnav #outline > ol { padding-left: 1.6em !important; }
+  #cnav #outline ol li { margin: 1px 0 !important; font-size: 12px !important; line-height: 1.35 !important; }
+  #cnav #outline ol li > a { display: inline !important; padding: 0 2px !important; }
+  #cnav #outline > p { margin: 0 0 2px 0.5rem !important; font-size: 13px !important; }
   html.cnav-on main, html.cnav-off main { margin-left: auto !important; }   /* (ticket 348: folded too, the page's own outline margin is not kept for a bar that is gone) */
   html.cnav-off.cnav-widen main { max-width: 54rem !important; }   /* (ticket 348, Matthew: "use that margin": a narrow column widens into the room the folded bar leaves) */
   html.cnav-on .theme-toggle, html.cnav-off .theme-toggle { display: none !important; }   /* (add_theme.py's pill: the bar's choice replaces it) */
