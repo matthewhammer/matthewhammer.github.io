@@ -39,6 +39,10 @@
     .now .meta { color: var(--dim); font-size: 0.84rem; }
     .bar { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
     .bar audio { flex: 1 1 16rem; min-width: 0; height: 2.4rem; }
+    /* (ticket 607) the volume, a small slider beside the player's own */
+    .vol { display: flex; align-items: center; gap: 0.3rem; flex: 0 1 8rem; min-width: 5.5rem; color: var(--dim); font-size: 1.05rem; }
+    .vol[hidden] { display: none; }
+    .vol input { width: 100%; min-width: 0; accent-color: var(--blue); }
     button.ctl { font: inherit; font-size: 1.05rem; min-width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--rule);
       background: var(--panel); color: var(--ink); cursor: pointer; }
     button.ctl.play { min-width: 3.2rem; height: 3.2rem; font-size: 1.25rem; }
@@ -81,6 +85,7 @@
         <button class="ctl play" id="play" type="button" aria-label="Play" title="Play">▶</button>
         <button class="ctl" id="next" type="button" aria-label="Next tune" title="Next tune">⏭</button>
         <audio id="audio" controls preload="none"></audio>
+        <label class="vol" id="volbox" title="Volume"><span id="volicon" aria-hidden="true">🔊</span><input type="range" id="vol" min="0" max="100" step="1" value="100" aria-label="Volume"></label>
       </div>
       <div class="modes" role="group" aria-label="How the list plays">
         <button type="button" data-mode="list" aria-pressed="true">▶️ play the list</button>
@@ -176,6 +181,17 @@ document.querySelectorAll(".modes button").forEach(b => b.addEventListener("clic
   if (mode === "shuffle") shuffle();
   document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
 }));
+// (ticket 607, Matthew: "volume control here, as a smaller slider next to time slider") the volume, kept for this site, from
+// one tune to the next; the player's own mute and volume move it too. An iPad's browser lets only its buttons set the volume
+// (an audio element's volume stays 1), so there it hides.
+const vol = $("vol"), volIcon = $("volicon");
+const volShow = () => { const v = audio.muted ? 0 : audio.volume; vol.value = Math.round(v * 100); volIcon.textContent = v === 0 ? "🔇" : v < 0.5 ? "🔉" : "🔊"; };
+vol.addEventListener("input", () => { audio.volume = vol.value / 100; audio.muted = +vol.value === 0;
+  try { localStorage.setItem("dress-up-music-volume", vol.value); } catch (_) {} volShow(); });
+audio.addEventListener("volumechange", volShow);
+{ const t = new Audio(); t.volume = 0.5; if (Math.abs(t.volume - 0.5) > 0.01) $("volbox").hidden = true; }
+try { const v = localStorage.getItem("dress-up-music-volume"); if (v !== null) { audio.volume = Math.min(1, Math.max(0, +v / 100)); audio.muted = +v === 0; } } catch (_) {}
+volShow();
 if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("previoustrack", () => step(-1));
   navigator.mediaSession.setActionHandler("nexttrack", () => step(1));
