@@ -53,6 +53,7 @@
     .card:hover, .card:focus-visible { border-color: var(--blue); }
     .card .pic { aspect-ratio: 480 / 356; background: #f7f5ef; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .card img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .card.panel .pic { align-items: flex-start; } .card.panel img { object-fit: cover; object-position: top; }   /* (a tab's panel: its top, as it opens) */
     .card figcaption { padding: 0.35rem 0.55rem 0.45rem; font-size: 0.8rem; line-height: 1.35; }
     .card .set { display: block; color: var(--dim); font-size: 0.72rem; }
     .card.none { cursor: default; }
@@ -131,9 +132,11 @@ const base = () => (run === runs[0] ? ARCHIVE : RAW + encodeURIComponent(run.tag
 // (a choice drawn the same as another picture has no file of its own: it
 // shows that one's, sameAsFile; one that shows only with other settings, or
 // looks like the default with none named, has no picture)
-const picOf = e => e.svg || e.sameAsFile || null;
-const thumbOf = e => base() + "thumbs/" + picOf(e).replace(/\.svg$/, ".webp");
-const looksDefault = e => !e.svg;
+// (2026-10-25, Matthew: "the point of these chips was the archive the set of panels, as they are in that build") a tab's
+// panel is a screenshot: image and thumb, no svg (runs from then on)
+const picOf = e => e.image || e.svg || e.sameAsFile || null;
+const thumbOf = e => e.image ? base() + e.thumb : base() + "thumbs/" + picOf(e).replace(/\.svg$/, ".webp");
+const looksDefault = e => !e.svg && !e.image;
 
 async function start() {
   try { runs = await (await fetch(ARCHIVE + "runs.json", { cache: "no-cache" })).json(); } catch (e) { return fail(); }
@@ -179,10 +182,10 @@ function render() {
     html += `<section class="group"><h2>${esc(groupName(f))}<small>${list.length}</small></h2><div class="grid${f.startsWith("backgrounds") && !f.endsWith("menus") ? " places" : ""}">`;
     for (const e of list) {
       const [set, val] = splitLabel(e.label), pic = picOf(e), i = pic ? shown.push(e) - 1 : -1;
-      html += (pic ? `<figure class="card" tabindex="0" data-i="${i}"><div class="pic"><img loading="lazy" decoding="async" src="${esc(thumbOf(e))}" alt="${esc(e.label)}" onerror="this.onerror=null;this.src='${esc(base() + pic)}'"></div>`
+      html += (pic ? `<figure class="card${e.image ? " panel" : ""}" tabindex="0" data-i="${i}"><div class="pic"><img loading="lazy" decoding="async" src="${esc(thumbOf(e))}" alt="${esc(e.label)}" onerror="this.onerror=null;this.src='${esc(base() + pic)}'"></div>`
                    : `<figure class="card none"><div class="pic"><span>${e.onlyWithOtherSettings ? "shows only with other settings" : "looks like the default"}</span></div>`) +
         `<figcaption>${set ? `<span class="set">${esc(set)}</span>` : ""}${esc(val)}` +
-        (!e.svg && pic ? `<br><span class="tag">looks like the default</span>` : "") + `</figcaption></figure>`;
+        (looksDefault(e) && pic ? `<br><span class="tag">looks like the default</span>` : "") + `</figcaption></figure>`;
     }
     html += `</div></section>`;
   }
@@ -218,8 +221,9 @@ const openAt = i => {
   $("vcount").textContent = `${at + 1} of ${shown.length} · ${groupName(e.folder)}`;
   const svg = base() + picOf(e);
   $("vcap").innerHTML = (set ? `<span class="set">${esc(set)}</span>` : "") + esc(val) + `<br>` +
-    (!e.svg ? `<span class="set">looks like the default</span>` : "") +
-    `<a href="${esc(svg)}" target="_blank" rel="noopener">SVG</a><a href="#" data-svg="${esc(svg)}" onclick="return png(this)">PNG</a>` +
+    (looksDefault(e) ? `<span class="set">looks like the default</span>` : "") +
+    (e.image ? `<a href="${esc(svg)}" target="_blank" rel="noopener">the panel, full size</a>`
+             : `<a href="${esc(svg)}" target="_blank" rel="noopener">SVG</a><a href="#" data-svg="${esc(svg)}" onclick="return png(this)">PNG</a>`) +
     (e.settings ? `<a href="${esc(base() + e.settings)}" target="_blank" rel="noopener">settings</a>` : "");
   if (!$("view").open) $("view").showModal();
 };
