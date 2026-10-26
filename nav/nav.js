@@ -62,7 +62,7 @@
           "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling",
           "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose",
           "A Cast of Friends", "The Foam, Not the Makers", "Dress Up's Hardest Parts for Hazel", "Posing the Body", "Seen Before It Was Built",
-          "The Space Between the Boxes", "Game Scripts: a Player's Guide", "Story Scripts: a Director's Guide", "Ready to Re-mix", "A Way In", "Dungeons, From Above"
+          "The Space Between the Boxes", "Game Scripts: a Player's Guide", "Story Scripts: a Director's Guide", "Ready to Re-mix", "A Way In", "Dungeons, From Above", "How Dress Up Is Made"
         ].map((t, i) => [i + 1, t]).filter(([, t]) => t)   // (null: a number whose report is not published yet)
           .map(([n, t]) => [`${n}. ${t}`, `${K}${String(n).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
