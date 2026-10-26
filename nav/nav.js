@@ -50,7 +50,7 @@
         "Merging the Performance PRs", "Why #2635 Fails CI", "Tiles Across the Hazel UI", "Agenda for October 21",
         "Correctness of the Performance PRs", "Week in Hazel's Credits", "#2635 Is Green", "Architecture Around #2651", "What a Call into Hazel Costs",
         "Does #2681 Need #2661?", "The World Rule in Hazel and in Fumola", "Hazel and Fumola, Side by Side", "Where the Gap Comes From",
-        "Game Scripts in Hazel, Two Days In", "Reviews Still Open", null, "Game Scripts in Hazel, a Case Study"
+        "Game Scripts in Hazel, Two Days In", "Reviews Still Open", null, "Game Scripts in Hazel, a Case Study", "An Official Hazel JS Library?"
       ].map((t, i) => [i + 1, t]).filter(([, t]) => t)   // (null: a number whose report is not published yet)
         .map(([n, t]) => [`${n}. ${t}`, `${H}/hazel/reports/${String(n).padStart(3, "0")}/`])],
       ["Hazel Work Dashboard", H + "/hazel/dashboard/", [["Closed tickets", H + "/hazel/dashboard/closed.html"]]],
