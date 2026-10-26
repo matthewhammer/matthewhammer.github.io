@@ -8,7 +8,7 @@ WebP file, or an SVG drawn in the card itself), draws it as og.png beside the re
 neither SVG nor, everywhere, WebP), and writes the report's Open Graph and Twitter tags between <!-- og: begin --> and
 <!-- og: end --> in its <head>: title, description, the picture, the address. Run again after every publish: a report
 copied over again (rsync --delete) loses both, and this puts them back. Idempotent: a report whose og.png is newer
-than its thumbnail is not drawn again.
+than its thumbnail is not drawn again. Each series index gets a picture too: its nine newest reports, as one.
 
   python3 tools/og_previews.py hazel        the Hazel reports (this site, hazel/reports/)
   python3 tools/og_previews.py dress-up     the Dress Up reports (~/kids-choice-games/dress-up/reports/)
@@ -103,6 +103,58 @@ def tags(page, url, img, card=""):
             f'<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:image" content="{a(img)}">\n'
             "<!-- og: end -->\n")
 
+def collage(pictures, out):
+    """Up to 9 report pictures, newest first, as a 3 x 3 grid at W x H on white (each 1200 x 630 picture is a ninth)."""
+    tw, th, gap = W // 3, H // 3, 6
+    ins = [a for p in pictures[:9] for a in ("-i", p)]
+    n = len(pictures[:9])
+    fil = "".join(f"[{i}:v]scale={tw - gap}:{th - gap},pad={tw}:{th}:{gap // 2}:{gap // 2}:white[t{i}];" for i in range(n))
+    fil += f"color=white:s={W}x{H}[bg0];"
+    for i in range(n):
+        fil += f"[bg{i}][t{i}]overlay={(i % 3) * tw}:{(i // 3) * th}[bg{i + 1}];"
+    fil += f"[bg{n}]format=rgb24"
+    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *ins, "-filter_complex", fil, "-frames:v", "1", out],
+                       capture_output=True, text=True)
+    return r.returncode == 0 and os.path.exists(out), r.stderr.strip()[:200]
+
+def put_tags(page_path, url, img, desc):
+    page = open(page_path).read()
+    if desc and '<meta name="description"' not in page:
+        page = re.sub(r"(</title>\n?)", lambda m: m.group(1) + f'<meta name="description" content="{html.escape(desc, quote=True)}">\n', page, count=1)
+    block = tags(page, url, img, desc)
+    page = re.sub(r"<!-- og: begin.*?<!-- og: end -->\n", "", page, flags=re.S)
+    page = re.sub(r"(</title>\n?)", lambda m: m.group(1) + ("" if m.group(1).endswith("\n") else "\n") + block, page, count=1)
+    open(page_path, "w").write(page)
+
+# (2026-10-26, Matthew: the preview in Signal/Slack/Messages had "the blurb but no thumbnail".) Every report had its
+# picture; the series' own index pages had none. Each index gets its nine newest reports' pictures as one, and a
+# description when it has none. The landing page for the Dress Up reports, on this site, shows the Dress Up index's.
+INDEX_DESC = {
+    "hazel": "Reports on Hazel, the live functional programming environment: livelits, performance, and Hazel as a game's script system.",
+    "dress-up": "Reports on Messed Up Dress Up, the game Matthew Hammer makes with his kids: how it plays, how fast, and what comes next.",
+}
+LANDING = (os.path.join(SITE, "hazel", "dress-up", "reports", "index.html"), "https://matthewhammer.org/hazel/dress-up/reports/")
+
+def run_index(series, index):
+    root, base = SERIES[series]
+    pics = [os.path.join(root, n, "og.png") for n, _ in cards(index)]
+    pics = [p for p in pics if os.path.exists(p)]
+    ok, err = collage(pics, os.path.join(root, "og.png"))
+    if not ok:
+        print(f"{series}: index picture not drawn ({err})"); return
+    # (some apps, WhatsApp among them, show no picture over about 300 KB: the game's scenes are, as a PNG)
+    name = "og.png"
+    if os.path.getsize(os.path.join(root, "og.png")) > 290_000:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", os.path.join(root, "og.png"), "-q:v", "3",
+                        os.path.join(root, "og.jpg")], check=True)
+        os.unlink(os.path.join(root, "og.png")); name = "og.jpg"
+    elif os.path.exists(os.path.join(root, "og.jpg")):
+        os.unlink(os.path.join(root, "og.jpg"))
+    put_tags(os.path.join(root, "index.html"), base, base + name, INDEX_DESC[series])
+    if series == "dress-up":
+        put_tags(LANDING[0], LANDING[1], base + name, INDEX_DESC[series])
+    print(f"{series}: index picture from {min(9, len(pics))} reports")
+
 def run(series):
     root, base = SERIES[series]
     index = open(os.path.join(root, "index.html")).read()
@@ -133,6 +185,7 @@ def run(series):
         open(page_path, "w").write(page)
         done += 1
     print(f"{series}: {done} reports with a preview picture" + ("; skipped: " + "; ".join(skipped) if skipped else ""))
+    run_index(series, index)
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
