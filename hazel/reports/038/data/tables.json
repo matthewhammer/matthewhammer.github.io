@@ -206,5 +206,111 @@
     "1.7"
    ]
   ]
+ },
+ {
+  "section": "With the sidebar, every edit pays for the outline",
+  "section_id": "sidebar",
+  "columns": [
+   "definitions",
+   "an edit, no sidebar",
+   "an edit, with the sidebar",
+   "its outline, asked after it",
+   "an undo, no sidebar",
+   "an undo, with the sidebar (the first three)",
+   "a redo, with the sidebar (the first three)"
+  ],
+  "rows": [
+   [
+    "400",
+    "11",
+    "10",
+    "8",
+    "19",
+    "12",
+    "10"
+   ],
+   [
+    "800",
+    "15",
+    "15",
+    "13.5",
+    "35",
+    "21",
+    "21"
+   ],
+   [
+    "1,600",
+    "25",
+    "27",
+    "22",
+    "66",
+    "40",
+    "38"
+   ],
+   [
+    "3,200",
+    "47",
+    "51",
+    "44",
+    "129",
+    "89",
+    "90"
+   ],
+   [
+    "6,400",
+    "115",
+    "113",
+    "84",
+    "330",
+    "178",
+    "194"
+   ]
+  ]
+ },
+ {
+  "section": "An undo rebuilt the syntax twice, and the fix",
+  "section_id": "twice",
+  "columns": [
+   "definitions",
+   "an edit",
+   "an undo, before",
+   "after",
+   "a redo, before",
+   "after",
+   "syntax passes in an undo, before",
+   "after"
+  ],
+  "rows": [
+   [
+    "1,600",
+    "28",
+    "69",
+    "50",
+    "44",
+    "22",
+    "2",
+    "1"
+   ],
+   [
+    "3,200",
+    "46",
+    "141",
+    "84",
+    "96",
+    "41",
+    "2",
+    "1"
+   ],
+   [
+    "6,400",
+    "148",
+    "263",
+    "184",
+    "182",
+    "96",
+    "2",
+    "1"
+   ]
+  ]
  }
 ]
