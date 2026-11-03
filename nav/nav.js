@@ -43,29 +43,16 @@
         ["Memory management for self-adjusting computation (ISMM 2008)", H + "/ismm08"]]],
       ["CV (PDF)", H + "/hammer-cv.pdf"]]],
     ["Hazel", H + "/hazel/", [
-      ["Hazel reports", H + "/hazel/reports/", [
-        "Slider Responsiveness", "Dress Up in Hazel", "Requests from M and N", "The Witch in Hazel", "Worker and Page", "Performance in CI",
-        "Five Minutes to a Picture", "One Slider, Three Ways", "Names and Reuse", "What a Slider Touches", "Naming What a Slider Leaves Alone",
-        "Moving a Group, Not Its Points", "Telling the Request What Changed", "What the Page Keeps", "Dress Up and Hazel Today", "Two Fixes for a Drag",
-        "Merging the Performance PRs", "Why #2635 Fails CI", "Tiles Across the Hazel UI", "Agenda for October 21",
-        "Correctness of the Performance PRs", "Week in Hazel's Credits", "#2635 Is Green", "Architecture Around #2651", "What a Call into Hazel Costs",
-        "Does #2681 Need #2661?", "The World Rule in Hazel and in Fumola", "Hazel and Fumola, Side by Side", "Where the Gap Comes From",
-        "Game Scripts in Hazel, Two Days In", "Reviews Still Open", null, "Game Scripts in Hazel, a Case Study", "An Official Hazel JS Library?", "Paying Only for What Is Watched"
-      ].map((t, i) => [i + 1, t]).filter(([, t]) => t)   // (null: a number whose report is not published yet)
-        .map(([n, t]) => [`${n}. ${t}`, `${H}/hazel/reports/${String(n).padStart(3, "0")}/`])],
+      // (Matthew, 2026-11-03: the reports are not listed one by one, since a hand-kept list was rarely up to date and too long to
+      // use; the series' own index lists them. A report page sits under its series here, by its address.)
+      ["Hazel reports", H + "/hazel/reports/"],
       ["Hazel Work Dashboard", H + "/hazel/dashboard/", [["Closed tickets", H + "/hazel/dashboard/closed.html"]]],
       ["Work notes", H + "/hazel/work-notes/"],
       ["Crash log", H + "/hazel-work-notes/crash-log.html"],
       ["Messed Up Dress Up", H + "/hazel/dress-up/", [
         ["▶ Play Messed Up Dress Up", H + "/kids-choice-games/dress-up/"],
-        ["Dress Up reports", H + "/hazel/dress-up/reports/", [
-          "60 Frames a Second", "The Kids' Computers", "Slow Until Reloaded", "One Folder, Every Run", "Always Be Knolling",
-          "Then and Now", "Stories and Stress", "Piece by Piece", "One Size, Every View", "Pose by Pose",
-          "A Cast of Friends", "The Foam, Not the Makers", "Dress Up's Hardest Parts for Hazel", "Posing the Body", "Seen Before It Was Built",
-          "The Space Between the Boxes", "Game Scripts: a Player's Guide", "Story Scripts: a Director's Guide", "Ready to Re-mix", "A Way In", "Dungeons, From Above", "How Dress Up Is Made", "Doing Things in Messed Up Dress Up",
-          "Night, Day and the Garden"
-        ].map((t, i) => [i + 1, t]).filter(([, t]) => t)   // (null: a number whose report is not published yet)
-          .map(([n, t]) => [`${n}. ${t}`, `${K}${String(n).padStart(3, "0")}/`]).concat([["The series' own index", K]])],
+        // (its reports live under the game's address, K: this one entry is what puts a report page under its series)
+        ["Dress Up reports", H + "/hazel/dress-up/reports/", [["The series' own index", K]]],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
           ["Every picture, run by run", H + "/dress-up-pictures/"], ["Every picture, by day (to 2026-10-18)", H + "/dress-up-pictures-2026-10-18/"]]],
         ["Dress Up music", H + "/hazel/dress-up/music.html", [["Every tune, run by run", H + "/dress-up-music/"]]]]]]],
