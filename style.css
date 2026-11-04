@@ -317,3 +317,30 @@ body.outline-open { overflow: hidden; }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
+
+/* ---- the fungi -------------------------------------------------
+   A border of strange fungi, bright on black, in the right-hand gutter of
+   wide windows (^ticket(686); tools/fungi.py draws it, after Cyrus Omar's
+   flora). The gutter is what main's 45rem column leaves of the width the
+   outline's 15rem leaves: (100vw - 60rem) / 2, in this page's growing rems.
+   The panel fills it, up to the drawing's 340px; where it is narrower, the
+   panel is a full-height slice of the forest rather than a smaller one.
+   Never over text, and it takes no clicks. (The media query is in px, as a
+   media query's rem is the browser's 16px, not this page's.) The drawing is
+   a background set only inside the media query, so a narrower window, a
+   phone say, never downloads it; an <img loading="lazy"> did not load at
+   all in a fixed panel when tested. */
+.fungi { display: none; }
+@media (min-width: 1440px) {
+  .fungi {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(340px, calc((100vw - 60rem) / 2 - 1rem));
+    height: 100vh;
+    background: #000 url(fungi/fungi-neon-1.svg) 50% 100% / cover no-repeat;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
