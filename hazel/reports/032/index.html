@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<!-- theme: head begin -->
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<!-- theme: head end -->
+<!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scripting, Three Ways, Timed</title>
+<!-- og: begin (tools/og_previews.py in matthewhammer.github.io: the link preview's text and picture) -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Scripting, Three Ways, Timed">
+<meta property="og:description" content="Messed Up Dress Up&#x27;s 📜 Scripting tab, timed with JS, Fumola and Hazel as every room&#x27;s default: the tab opened, each engine ready, Hazel&#x27;s tiles ready box by box, then each script scrolled into view and visited at max size, with the game&#x27;s frame times throughout; three rounds each, on GitHub&#x27;s…">
+<meta property="og:url" content="https://matthewhammer.org/hazel/reports/032/">
+<meta property="og:image" content="https://matthewhammer.org/hazel/reports/032/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://matthewhammer.org/hazel/reports/032/og.png">
+<!-- og: end -->
+<meta name="description" content="Messed Up Dress Up's 📜 Scripting tab, timed with JS, Fumola and Hazel as every room's default: the tab opened, each engine ready, Hazel's tiles ready box by box, then each script scrolled into view and visited at max size, with the game's frame times throughout; three rounds each, on GitHub's computers.">
+<style>  :root {
+    --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8;
+    --accent: #6d28d9; --good: #15803d; --warn: #b45309; --bad: #b91c1c; --link: #1d4ed8; --accent2: #0e7490; --cx: #d6d1c6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d;
+      --accent: #c4b5fd; --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --link: #93c5fd; --accent2: #67e8f9; --cx: #5d636b;
+    }
+  }
+  :root[data-theme="dark"] { --bg: #15171a; --paper: #1d2024; --ink: #e8e6e3; --muted: #a2a9b3; --line: #33373d;
+    --accent: #c4b5fd; --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --link: #93c5fd; --accent2: #67e8f9; --cx: #5d636b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1020px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2em; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 1.35em; margin: 48px 0 10px; padding-top: 8px; border-top: 2px solid var(--line); }
+  h3 { font-size: 1.05em; margin: 26px 0 6px; }
+  p, li { max-width: 76ch; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .series { color: var(--muted); margin: 0 0 6px; font-size: 0.92em; }
+  .headline { background: var(--paper); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 6px; }
+  .headline > p { margin: 6px 0; }
+  ol.ans { padding-left: 1.4em; margin: 8px 0; }
+  ol.ans > li { max-width: none; margin: 14px 0; }
+  ol.ans > li > .row { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: center; }
+  ol.ans > li p { margin: 0; }
+  figure.mini { margin: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  figure.mini figcaption { font-size: 0.8em; margin-top: 4px; }
+  @media (max-width: 760px) { ol.ans > li > .row { grid-template-columns: minmax(0, 1fr); } figure.mini { max-width: 340px; } }
+  a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+  a code { color: var(--link); }
+  a.cl { text-decoration: none; } a.cl:hover code { text-decoration: underline; }
+  sup.at { font-size: 0.68em; color: var(--muted); margin-left: 2px; font-weight: 600; }
+  .good { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  figure.fig { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 18px 0; }
+  .figscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  figcaption { color: var(--muted); font-size: 0.9em; margin-top: 6px; max-width: 80ch; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  code { font-size: 0.9em; background: color-mix(in srgb, var(--line) 50%, transparent); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
+  pre.code { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto;
+             font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 6px 0 4px; }
+  pre.code .rm { color: var(--bad); } pre.code .ad { color: var(--good); } pre.code .cm { color: var(--muted); }
+  .codepair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  @media (max-width: 760px) { .codepair { grid-template-columns: minmax(0, 1fr); } }
+  .codepair h4 { margin: 6px 0 0; font-size: 0.95em; }
+  .note { color: var(--muted); font-size: 0.9em; }
+  .callout { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--accent2); border-radius: 6px; padding: 8px 14px; margin: 14px 0; }
+  .callout.warn { border-left-color: var(--warn); }
+  section.q { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 6px 16px 10px; margin: 20px 0; }
+  section.q h3 { margin: 10px 0 6px; line-height: 1.4; }
+  section.q h3 .qn { color: var(--accent); margin-right: 6px; }
+  .tags { margin: 2px 0 8px; }
+  .tag { display: inline-block; font-size: 0.78em; font-weight: 600; padding: 1px 9px; border-radius: 999px; margin: 0 6px 4px 0; border: 1px solid; }
+  .tag.ans { color: var(--good); border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .tag.now { color: var(--accent2); border-color: var(--accent2); background: color-mix(in srgb, var(--accent2) 10%, transparent); }
+  .tag.cyrus { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .tag.block { color: var(--warn); border-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .tag.open { color: var(--muted); border-color: var(--line); }
+  .answer { background: color-mix(in srgb, var(--good) 9%, var(--paper)); border: 1px solid color-mix(in srgb, var(--good) 45%, var(--line)); border-radius: 6px; padding: 8px 12px; margin: 8px 0; max-width: 80ch; }
+  .after { max-width: 80ch; }
+  ul.ev { padding-left: 1.2em; } ul.ev li { margin: 5px 0; max-width: 84ch; }
+  ul.ev .refs { color: var(--muted); font-size: 0.92em; }
+  ol.opts li { margin: 6px 0; max-width: 82ch; }
+  .optnote { display: inline-block; font-size: 0.8em; font-weight: 600; color: var(--accent); margin-left: 4px; }
+  .optnote.out { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+  button.copylink { margin-left: 8px; font: 600 12px system-ui, sans-serif; padding: 1px 8px; border: 1px solid var(--line);
+    border-radius: 999px; background: var(--bg); color: var(--muted); cursor: pointer; vertical-align: 2px; }
+  button.copylink:hover { color: var(--ink); border-color: var(--muted); }
+  button.copylink.done { color: var(--good); border-color: var(--good); }
+  input.copyfield { display: block; width: 100%; max-width: 640px; margin: 4px 0; font: 13px ui-monospace, monospace;
+    background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; }
+  .cyrus { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 4px 16px; }
+  .cyrus li { margin: 8px 0; }
+  details.ev summary { cursor: pointer; color: var(--link); }
+  .wip { color: var(--warn); font-weight: 600; }
+
+td.n { text-align: right; white-space: nowrap; } .rng { color: var(--muted); font-size: 0.85em; }
+svg.chart { width: 100%; max-width: 760px; height: auto; } svg.chart .lab, svg.chart .val { font: 12px system-ui, sans-serif; fill: var(--ink, currentColor); }
+.pics { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; } .pics img { width: 100%; border-radius: 8px; border: 1px solid var(--line); } .pics figcaption { font-size: 0.85em; color: var(--muted); }
+.code3s { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; } .code3 pre { font-size: 0.78em; max-height: 34em; overflow: auto; margin: 0; padding: 8px; border-radius: 6px; background: var(--paper); white-space: pre-wrap; }
+.tk-k { color: #7c3aed; font-weight: 600; } .tk-C { color: #0e7490; } .tk-s { color: #b45309; } .tk-n { color: #15803d; } .tk-c { color: #6b7280; font-style: italic; } .tk-o { color: #be185d; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tk-k { color: #c4b5fd; } :root:not([data-theme="light"]) .tk-C { color: #67e8f9; } :root:not([data-theme="light"]) .tk-s { color: #fcd34d; } :root:not([data-theme="light"]) .tk-n { color: #86efac; } :root:not([data-theme="light"]) .tk-c { color: #9ca3af; } :root:not([data-theme="light"]) .tk-o { color: #f9a8d4; } }
+:root[data-theme="dark"] .tk-k { color: #c4b5fd; } :root[data-theme="dark"] .tk-C { color: #67e8f9; } :root[data-theme="dark"] .tk-s { color: #fcd34d; } :root[data-theme="dark"] .tk-n { color: #86efac; } :root[data-theme="dark"] .tk-c { color: #9ca3af; } :root[data-theme="dark"] .tk-o { color: #f9a8d4; }
+.code3-h { font-weight: 700; margin: 4px 0; } tr.total td { border-top: 2px solid var(--line); } .code3.js .code3-h { color: #b45309; } .code3.hazel .code3-h { color: #7c3aed; } .code3.fumola .code3-h { color: #0e7490; }
+svg.chart .bar.js { fill: #b45309; } svg.chart .bar.fumola { fill: #0e7490; } svg.chart .bar.hazel { fill: #7c3aed; }
+</style><style id="anchors-css">
+h2 .anchor, h3 .anchor, .lh .anchor { margin-left: 8px; color: var(--muted); text-decoration: none; font-weight: 400; opacity: 0.35; }
+h2:hover .anchor, h3:hover .anchor, .lh:hover .anchor, .anchor:focus { opacity: 1; }
+.copyanchor { margin-left: 6px; font: 400 0.62em system-ui, sans-serif; vertical-align: middle; padding: 1px 6px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--muted); cursor: pointer; opacity: 0.45; }
+h2:hover .copyanchor, h3:hover .copyanchor, .lh:hover .copyanchor, .copyanchor:focus { opacity: 1; }
+.copyanchor.done { color: var(--good); border-color: var(--good); opacity: 1; }
+:target { scroll-margin-top: 12px; }
+</style>
+</head>
+<body><main>
+<p class="series"><a href="../">Hazel reports</a> · <code class="ref"><b>^report(</b>32<b>)</b></code> · Messed Up Dress Up's scripts · 2026-10-23 · <span class="wip">work in progress</span></p>
+<!-- listen: begin -->
+<style>
+  .listen { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 10px; font: 13px system-ui, sans-serif; color: var(--muted, GrayText); }
+  .listen[hidden] { display: none; }
+  .listen button { font: inherit; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line, #ccc); background: var(--paper, Canvas); color: var(--ink, CanvasText); cursor: pointer; }
+  .listen button[aria-pressed="true"] { border-color: var(--accent, #6d28d9); color: var(--accent, #6d28d9); }
+  .listen select { font: inherit; max-width: 16em; border-radius: 6px; border: 1px solid var(--line, #ccc); background: var(--paper, Canvas); color: var(--ink, CanvasText); }
+  .listen input[type=range] { width: 8em; vertical-align: middle; accent-color: var(--accent, #6d28d9); }
+  .listen .speed { min-width: 3.2em; display: inline-block; font-variant-numeric: tabular-nums; }
+  .listen-now { outline: 2px solid color-mix(in srgb, var(--accent, #6d28d9) 55%, transparent); outline-offset: 3px; border-radius: 4px;
+    background: color-mix(in srgb, var(--accent, #6d28d9) 8%, transparent); }
+  @media print { .listen { display: none; } }
+</style>
+<div class="listen" hidden role="group" aria-label="Listen to this report">
+  <button type="button" class="listen-play" aria-pressed="false">🔊 Listen</button>
+  <button type="button" class="listen-stop">⏹ Stop</button>
+  <label>speed <input type="range" class="listen-rate" min="0.5" max="2" step="0.1" value="1"> <span class="speed">1.0×</span></label>
+  <select class="listen-voice" aria-label="voice"></select>
+  <span class="listen-time"></span>
+</div>
+<script>
+/* (^ticket(573)) Listen: the report read aloud by this browser's own voices; nothing leaves the page. */
+// (once the whole page is parsed: this runs where the bar is, near the top, before the report's sections exist)
+document.addEventListener("DOMContentLoaded", () => {
+  const S = window.speechSynthesis, bar = document.querySelector(".listen");
+  if (!S || !bar || typeof SpeechSynthesisUtterance === "undefined") return;
+  bar.hidden = false;
+  const main = document.querySelector("main") || document.body;
+  const play = bar.querySelector(".listen-play"), stop = bar.querySelector(".listen-stop"), rate = bar.querySelector(".listen-rate"),
+        speed = bar.querySelector(".speed"), voiceSel = bar.querySelector(".listen-voice"), timeEl = bar.querySelector(".listen-time");
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (_) { return null; } };
+  // the blocks to read, in order: prose only, each once (a point holding paragraphs is read as its paragraphs)
+  const SKIP = "table, pre, svg, script, style, .listen, .theme-toggle, details:not([open]), [aria-hidden=true], button, nav, #report-data";
+  const blocks = [...main.querySelectorAll("h1, .sub, h2, h3, h4, p, li, blockquote, figcaption, summary")]
+    .filter(el => !el.closest(SKIP) && !el.querySelector("p, li, blockquote") && !el.matches(".series"));
+  const textOf = el => { const c = el.cloneNode(true); c.querySelectorAll(".anchor, .copyanchor, button, sup").forEach(x => x.remove()); return c.textContent.replace(/\s+/g, " ").trim(); };
+  const texts = blocks.map(textOf), words = texts.reduce((n, t) => n + (t ? t.split(" ").length : 0), 0);
+  const WPM = 160;
+  let i = 0, playing = false, voices = [];
+  const r = () => +rate.value;
+  const showTime = () => {
+    speed.textContent = r().toFixed(1) + "×";
+    const left = texts.slice(playing || i ? i : 0).reduce((n, t) => n + (t ? t.split(" ").length : 0), 0);
+    const min = Math.max(1, Math.round(left / (WPM * r())));
+    timeEl.textContent = (i && left < words ? "about " + min + " min left" : "about " + min + " min to listen") + " at " + r().toFixed(1) + "×";
+  };
+  const fill = () => {
+    voices = S.getVoices().filter(v => !document.documentElement.lang || v.lang.slice(0, 2) === document.documentElement.lang.slice(0, 2) || v.lang.startsWith("en"));
+    const want = store("listen-voice");
+    voiceSel.replaceChildren(...voices.map(v => { const o = document.createElement("option"); o.value = v.name; o.textContent = v.name + (v.localService ? "" : " (online)"); return o; }));
+    voiceSel.hidden = !voices.length;
+    if (want && voices.some(v => v.name === want)) voiceSel.value = want;
+    else { const d = voices.find(v => v.default) || voices[0]; if (d) voiceSel.value = d.name; }
+  };
+  fill(); if ("onvoiceschanged" in S) S.onvoiceschanged = fill;
+  const saved = parseFloat(store("listen-rate")); if (saved >= 0.5 && saved <= 2) rate.value = saved;
+  const mark = el => { document.querySelectorAll(".listen-now").forEach(x => x.classList.remove("listen-now")); if (el) { el.classList.add("listen-now"); el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } };
+  // one block at a time (a long utterance is cut short in some browsers); the next when it ends
+  const speak = () => {
+    while (i < blocks.length && !texts[i]) i++;
+    if (i >= blocks.length) { end(); return; }
+    const u = new SpeechSynthesisUtterance(texts[i]), v = voices.find(v => v.name === voiceSel.value);
+    if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = r();
+    u.onend = () => { if (!playing) return; i++; showTime(); speak(); };
+    u.onerror = e => { if (e.error === "interrupted" || e.error === "canceled") return; i++; if (playing) speak(); };
+    mark(blocks[i]); S.speak(u);
+  };
+  const end = () => { playing = false; S.cancel(); i = 0; mark(null); play.textContent = "🔊 Listen"; play.setAttribute("aria-pressed", "false"); showTime(); };
+  play.onclick = () => {
+    if (playing && !S.paused) { S.pause(); play.textContent = "▶ Resume"; return; }
+    if (playing && S.paused) { S.resume(); play.textContent = "⏸ Pause"; return; }
+    playing = true; play.textContent = "⏸ Pause"; play.setAttribute("aria-pressed", "true"); S.cancel(); speak();
+  };
+  stop.onclick = end;
+  // a new speed or voice takes effect from the block being read, said again from its start
+  const again = () => { if (playing) { S.cancel(); setTimeout(speak, 0); } };
+  rate.oninput = () => { store("listen-rate", rate.value); showTime(); };
+  rate.onchange = again;
+  voiceSel.onchange = () => { store("listen-voice", voiceSel.value); again(); };
+  addEventListener("pagehide", () => S.cancel());
+  showTime();
+});
+</script>
+<!-- listen: end -->
+<h1>Scripting, Three Ways, Timed</h1>
+<p class="sub">Matthew: <q>please do a report about loading the game with fumola as default, scrolling to check each script as a speed run; hazel, same speed run</q>, and <q>Oh, and JS as default too.</q> (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-588"><code class="ref"><b>^ticket(</b>588<b>)</b></code></a>)</p>
+<div class="headline"><p><b>Short answers.</b></p><ol class="ans"><li><b>Opening the tab costs nothing for any of the three:</b> Common's box is there 50–70 ms after the tab opens (JS 51, Fumola 67, Hazel 68 ms in the first round; about the same after).</li><li><b>Fumola is ready in 0.7 s the first time, under 0.1 s after</b> (695 ms, then 92 and 69 ms): the first round fetches and compiles its wasm; later rounds find it in the browser's cache. Hazel's library was already loaded when the tab opened (54–72 ms), as the game loads it at the start when the saved scripts use it.</li><li><b>Hazel's tiles take about 3.7 s for all six boxes</b> (median; 3.0 to 4.5 s), Common's first at about 2.9 s, then one box after another, as they are now made one at a time. The page keeps drawing while they load: about 58 frames a second.</li><li><b>The game calling into a script: Fumola's rule answers in about 1.6 ms, Hazel's in about 3.5 ms</b> (medians of 60 lever pulls each). The commands the rule gives then take the game about 9 ms with either, the same work the game's own JS does: a whole pull is 9.7 ms with JS, 10.7 ms with Fumola, 13.7 ms with Hazel. So a rule adds about 1 ms in Fumola and 4 ms in Hazel to an event, under a quarter of a 60 Hz frame.</li><li><b>But Hazel has one slow event in every round: 0.5 to 0.7 s</b> (502, 692, 519 ms), the first pull after the state is reset, which compiles the program; Fumola's slowest pull is 12–21 ms. That one pause is the thing a player would feel.</li><li><b>Scrolling through the scripts and visiting each at max size runs at about 58 frames a second in all three</b>, with two or three frames over 50 ms each run; the longest single frames (0.4–1.5 s) come in the first round or the first visit, cold, in every mode, JS included.</li><li><b>As the code grows, Fumola does not slow down, and Hazel does, then stops.</b> An edit (a definition added to Common) is ready again after about 125 ms in Fumola at every size, up to 16 times Common (728 lines). In Hazel it takes about 360 ms at Common's size, 435 ms at twice, 745 ms at four times; at eight times (184 lines of Common) the game's Hazel build runs out of stack (<code>Stack_overflow</code>) compiling it, and the rooms go back to their JS. The event itself barely moves with size: about 1.1 ms in Fumola and 3 ms in Hazel at every size that runs.</li></ol></div>
+<h2 id="try">Try it<a class="anchor" href="#try" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="try" title="copy this section's address">copy link</button></h2>
+<ul>
+<li><b>Play the branch measured here:</b> <a href="https://matthewhammer.org/hazel/mudu-preview/script-boxes-566/">a preview of Messed Up Dress Up's <code>script-boxes-566</code></a> (kids-choice-games at <code>2c93e37</code>). Open the 📜 Scripting tab, choose JS, Hazel or Fumola for every room (or room by room), open ⛶ max size, and walk into the trap room to pull its levers: the rule you chose runs them. Hazel's boxes show Hazel's tiles, which take edits.</li>
+<li><b>The game:</b> <a href="https://matthewhammer.org/kids-choice-games/dress-up/">Messed Up Dress Up</a>, as published (its <code>main</code>). The 📜 Scripting tab measured here is not in it yet: it is on the pull requests below.</li>
+<li><b>The game's pull requests,</b> stacked, in <a href="https://github.com/matthewhammer/kids-choice-games">matthewhammer/kids-choice-games</a>: <a href="https://github.com/matthewhammer/kids-choice-games/pull/1">#1</a> (the Scripting panel, the trap room's levers through a Hazel rule), <a href="https://github.com/matthewhammer/kids-choice-games/pull/2">#2</a> (more of the rooms' rules in Hazel, against plain JS), <a href="https://github.com/matthewhammer/kids-choice-games/pull/4">#4</a> (the same rules in Fumola, wasm); the three-way boxes, the outline and the tiles in each box are on the branch <a href="https://github.com/matthewhammer/kids-choice-games/tree/script-boxes-566"><code>script-boxes-566</code></a>, on top of them.</li>
+<li><b>Hazel's side:</b> <a href="https://github.com/hazelgrove/hazel/pull/2711">hazelgrove/hazel#2711</a> (Hazel as a JS library: analyze and run programs from any page) and <a href="https://github.com/hazelgrove/hazel/pull/2719">#2719</a> (Hazel in another page's frame, stacked on it); the tiles that take edits, one module each, are the branch <code>embed-editable</code>, built at <a href="https://hazel.org/build/embed-editable/">hazel.org/build/embed-editable/</a> (its <code>#embed</code> page takes a program only from a page that frames it).</li>
+<li><b>Fumola:</b> <a href="https://fumola.org">fumola.org</a>; the game pins a build of <a href="https://github.com/Adapton/fumola">Adapton/fumola</a> with the semantics fixes of <a href="https://github.com/Adapton/fumola/pull/151">Adapton/fumola#151</a>.</li>
+</ul>
+<h2 id="ready">From the tab opened to ready<a class="anchor" href="#ready" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="ready" title="copy this section's address">copy link</button></h2>
+<p>The median of 3 rounds, each from a fresh page. JS has nothing to load: its boxes show the game's own code at once. Fumola loads its wasm build and defines the rules; Hazel loads its JS library and compiles the program, and then, with the boxes in tiles (the default), makes one frame of Hazel's own app per box, one at a time.</p>
+<svg class="chart" viewBox="0 0 640 264" role="img" aria-label="Time from the tab opened to each engine, and each of Hazel's tiles, ready (median of the rounds)"><text x="182" y="25" text-anchor="end" class="lab">JS: tab open</text><rect x="190" y="13" width="5.1" height="16" rx="3" class="bar js"/><text x="201.1" y="25" class="val">51 ms</text><text x="182" y="51" text-anchor="end" class="lab">Fumola: engine ready</text><rect x="190" y="39" width="9.3" height="16" rx="3" class="bar fumola"/><text x="205.3" y="51" class="val">92 ms</text><text x="182" y="77" text-anchor="end" class="lab">Hazel: engine ready</text><rect x="190" y="65" width="6.8" height="16" rx="3" class="bar hazel"/><text x="202.8" y="77" class="val">68 ms</text><text x="182" y="103" text-anchor="end" class="lab">Hazel: Common&#x27;s tiles</text><rect x="190" y="91" width="296.7" height="16" rx="3" class="bar hazel"/><text x="492.7" y="103" class="val">2.9 s</text><text x="182" y="129" text-anchor="end" class="lab">Hazel: TrapRoom&#x27;s tiles</text><rect x="190" y="117" width="370.0" height="16" rx="3" class="bar hazel"/><text x="566.0" y="129" class="val">3.7 s</text><text x="182" y="155" text-anchor="end" class="lab">Hazel: TreeRoom&#x27;s tiles</text><rect x="190" y="143" width="370.0" height="16" rx="3" class="bar hazel"/><text x="566.0" y="155" class="val">3.7 s</text><text x="182" y="181" text-anchor="end" class="lab">Hazel: Square&#x27;s tiles</text><rect x="190" y="169" width="370.0" height="16" rx="3" class="bar hazel"/><text x="566.0" y="181" class="val">3.7 s</text><text x="182" y="207" text-anchor="end" class="lab">Hazel: World&#x27;s tiles</text><rect x="190" y="195" width="370.0" height="16" rx="3" class="bar hazel"/><text x="566.0" y="207" class="val">3.7 s</text><text x="182" y="233" text-anchor="end" class="lab">Hazel: Castle&#x27;s tiles</text><rect x="190" y="221" width="370.0" height="16" rx="3" class="bar hazel"/><text x="566.0" y="233" class="val">3.7 s</text></svg>
+<h2 id="table">Every measure<a class="anchor" href="#table" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="table" title="copy this section's address">copy link</button></h2>
+<p>Each a median over the rounds, with the rounds' range in brackets. Times from the tab opened; frame times are the game's own (the gaps between its animation frames), so a frame over 50 ms is one a player can feel.</p>
+<div class="scroll"><table><tr><th>measure</th><th>JS as default</th><th>Fumola as default</th><th>Hazel as default</th></tr><tr><td>tab open to Common&#x27;s box</td><td class=n>51 ms <span class=rng>(44–60)</span></td><td class=n>69 ms <span class=rng>(67–91)</span></td><td class=n>67 ms <span class=rng>(54–71)</span></td></tr><tr><td>engine ready</td><td class=n>–</td><td class=n>92 ms <span class=rng>(69–695)</span></td><td class=n>68 ms <span class=rng>(54–72)</span></td></tr><tr><td>Common&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>2,948 ms <span class=rng>(2,772–3,688)</span></td></tr><tr><td>TrapRoom&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>3,676 ms <span class=rng>(2,948–3,688)</span></td></tr><tr><td>TreeRoom&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>3,676 ms <span class=rng>(2,998–3,739)</span></td></tr><tr><td>Square&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>3,676 ms <span class=rng>(2,998–4,541)</span></td></tr><tr><td>World&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>3,676 ms <span class=rng>(2,998–4,541)</span></td></tr><tr><td>Castle&#x27;s tiles ready</td><td class=n>–</td><td class=n>–</td><td class=n>3,676 ms <span class=rng>(2,998–4,541)</span></td></tr><tr><td>loading: median frame</td><td class=n>–</td><td class=n>16.7 ms</td><td class=n>16.7 ms</td></tr><tr><td>loading: 95th percentile frame</td><td class=n>–</td><td class=n>166.6 ms</td><td class=n>16.8 ms <span class=rng>(16.7–16.8)</span></td></tr><tr><td>loading: longest frame</td><td class=n>–</td><td class=n>167 ms</td><td class=n>67 ms <span class=rng>(50–67)</span></td></tr><tr><td>loading: frames over 50 ms</td><td class=n>0</td><td class=n>0 <span class=rng>(0–2)</span></td><td class=n>1 <span class=rng>(1–2)</span></td></tr><tr><td>loading: frames a second</td><td class=n>–</td><td class=n>22.1</td><td class=n>58.3 <span class=rng>(58.3–59.1)</span></td></tr><tr><td>scrolling each box into view: median frame</td><td class=n>16.7 ms</td><td class=n>16.7 ms</td><td class=n>16.7 ms</td></tr><tr><td>scrolling: 95th percentile</td><td class=n>16.8 ms <span class=rng>(16.7–16.8)</span></td><td class=n>16.8 ms <span class=rng>(16.7–16.8)</span></td><td class=n>16.8 ms</td></tr><tr><td>scrolling: longest frame</td><td class=n>67 ms <span class=rng>(67–1,483)</span></td><td class=n>83 ms <span class=rng>(67–367)</span></td><td class=n>67 ms <span class=rng>(67–67)</span></td></tr><tr><td>scrolling: frames over 50 ms</td><td class=n>2 <span class=rng>(2–3)</span></td><td class=n>2 <span class=rng>(1–2)</span></td><td class=n>3 <span class=rng>(2–3)</span></td></tr><tr><td>scrolling: frames a second</td><td class=n>57.4 <span class=rng>(42.3–57.6)</span></td><td class=n>58.3 <span class=rng>(54.8–58.8)</span></td><td class=n>57.9 <span class=rng>(57.9–58.1)</span></td></tr><tr><td>visiting each box at max size: median frame</td><td class=n>16.7 ms</td><td class=n>16.7 ms</td><td class=n>16.7 ms</td></tr><tr><td>visiting: 95th percentile</td><td class=n>16.8 ms</td><td class=n>16.7 ms <span class=rng>(16.7–16.8)</span></td><td class=n>16.8 ms</td></tr><tr><td>visiting: longest frame</td><td class=n>467 ms <span class=rng>(67–533)</span></td><td class=n>33 ms <span class=rng>(17–433)</span></td><td class=n>100 ms <span class=rng>(67–683)</span></td></tr><tr><td>visiting: frames over 50 ms</td><td class=n>3 <span class=rng>(2–4)</span></td><td class=n>0 <span class=rng>(0–1)</span></td><td class=n>8 <span class=rng>(7–9)</span></td></tr><tr><td>visiting: frames a second</td><td class=n>52.4 <span class=rng>(51.9–57.9)</span></td><td class=n>59.8 <span class=rng>(54.7–60.0)</span></td><td class=n>54.4 <span class=rng>(47.0–54.6)</span></td></tr><tr><td>events: the game&#x27;s call into the script function (median)</td><td class=n>–</td><td class=n>1.600 ms <span class=rng>(1.600–1.700)</span></td><td class=n>3.500 ms <span class=rng>(3.500–4.000)</span></td></tr><tr><td>events: the script function, 95th percentile</td><td class=n>–</td><td class=n>2.600 ms <span class=rng>(2.300–4.100)</span></td><td class=n>6.200 ms <span class=rng>(4.700–10.000)</span></td></tr><tr><td>events: the script function, longest</td><td class=n>–</td><td class=n>2.600 ms <span class=rng>(2.300–4.100)</span></td><td class=n>6.200 ms <span class=rng>(4.700–10.000)</span></td></tr><tr><td>events: the commands it gave, run by the game (median)</td><td class=n>–</td><td class=n>9.100 ms <span class=rng>(8.900–9.200)</span></td><td class=n>9.100 ms <span class=rng>(9.000–10.300)</span></td></tr><tr><td>events: the whole event, engine to commands done (median)</td><td class=n>9.700 ms <span class=rng>(9.100–10.000)</span></td><td class=n>10.700 ms <span class=rng>(10.700–11.300)</span></td><td class=n>13.700 ms <span class=rng>(13.300–14.300)</span></td></tr><tr><td>events: the whole event, longest</td><td class=n>11.000 ms <span class=rng>(10.600–17.100)</span></td><td class=n>17.300 ms <span class=rng>(12.000–21.100)</span></td><td class=n>519.200 ms <span class=rng>(502.000–691.400)</span></td></tr><tr><td>events: a lever pull, at the game&#x27;s entry point (median)</td><td class=n>9.700 ms <span class=rng>(9.100–10.100)</span></td><td class=n>11.000 ms <span class=rng>(10.900–11.600)</span></td><td class=n>13.900 ms <span class=rng>(13.600–14.500)</span></td></tr><tr><td>events: a lever pull, longest</td><td class=n>11.200 ms <span class=rng>(10.600–17.400)</span></td><td class=n>17.700 ms <span class=rng>(12.200–21.500)</span></td><td class=n>519.400 ms <span class=rng>(502.300–691.600)</span></td></tr><tr><td>long tasks (over 50 ms), all phases</td><td class=n>3 <span class=rng>(1–3)</span></td><td class=n>3 <span class=rng>(3–4)</span></td><td class=n>3</td></tr><tr><td>long tasks&#x27; total time</td><td class=n>534 ms <span class=rng>(472–2,007)</span></td><td class=n>630 ms <span class=rng>(562–959)</span></td><td class=n>1,277 ms <span class=rng>(1,248–1,720)</span></td></tr><tr><td>the whole run, tab to end</td><td class=n>13,055 ms <span class=rng>(12,930–14,226)</span></td><td class=n>13,112 ms <span class=rng>(13,056–13,701)</span></td><td class=n>17,419 ms <span class=rng>(17,295–18,333)</span></td></tr></table></div>
+<h2 id="events">The game calling into a script<a class="anchor" href="#events" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="events" title="copy this section's address">copy link</button></h2>
+<p>Matthew: <q>let's include timing for event "event handler", or Game Engine ---calls-into-script---&gt; Script Function</q>. In each round, after the tab's runs, the trap room's red levers are pulled 20 times, left and right in turn, each through the game's own entry point (<code>roomLeverPull</code>), which hands the event to the room's rule when one runs it (<code>scriptEvent</code>), and to the game's JS when not. The game times each hop itself (<code>hzCounters</code>, 25-scripting.js): the script function alone (the event in, the commands out), the commands then run by the game, the whole event; and, for JS, its own handler. The table's rows starting "events" are these, in milliseconds to the thousandth.</p>
+<svg class="chart" viewBox="0 0 640 144" role="img" aria-label="One lever pull: the script function and the whole event, by engine (median)"><text x="62" y="26" text-anchor="end" class="lab">JS</text><rect x="70" y="12" width="240.7" height="11" rx="2" class="bar js" opacity="0.4"/><rect x="70" y="25" width="240.7" height="11" rx="2" class="bar js"/><text x="318.7" y="22" class="val">event 9.7 ms</text><text x="318.7" y="36" class="val">the game's own</text><text x="62" y="64" text-anchor="end" class="lab">Fumola</text><rect x="70" y="50" width="265.5" height="11" rx="2" class="bar fumola" opacity="0.4"/><rect x="70" y="63" width="39.7" height="11" rx="2" class="bar fumola"/><text x="343.5" y="60" class="val">event 10.7 ms</text><text x="343.5" y="74" class="val">script 1.6 ms</text><text x="62" y="102" text-anchor="end" class="lab">Hazel</text><rect x="70" y="88" width="340.0" height="11" rx="2" class="bar hazel" opacity="0.4"/><rect x="70" y="101" width="86.9" height="11" rx="2" class="bar hazel"/><text x="418.0" y="98" class="val">event 13.7 ms</text><text x="418.0" y="112" class="val">script 3.5 ms</text></svg>
+<p class="note">Each engine: the pale bar the whole event (the game's call to the commands done), the dark bar the script function alone (the event in, the rule's answer out). JS's handler is the game's own code, so it has the whole event only. Medians of 60 pulls (three rounds of 20).</p>
+<h2 id="notes">What the numbers say<a class="anchor" href="#notes" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="notes" title="copy this section's address">copy link</button></h2>
+<ul><li>One runner, three rounds each, the modes in turn: the range in brackets is the noise between rounds, and the first round is a cold start (empty caches) in every mode. Nothing here is the laptop or a phone; both are slower.</li><li>Hazel's whole run is about 4 s longer (17.4 s against 13.1 s), and its long tasks about twice as long in total (1.3 s against 0.5–0.6 s): the six frames of Hazel's app, each a whole Hazel, loading one after another, and the first event's compile.</li><li>The script function is the hop Matthew asked about (Game Engine → Script Function): the event and the room's state turned into the engine's values, the rule run, its answer turned back into commands (scriptTyped, both ways). The commands themselves (the lever turning, the pits' lids) are the game's, and cost the same whichever engine chose them.</li><li>JS shows no script function: its handler is the game's own code, timed whole (9.7 ms median), which is the baseline for the other two.</li></ul>
+<h2 id="scale">As the code grows, and as we edit<a class="anchor" href="#scale" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="scale" title="copy this section's address">copy link</button></h2>
+<p>Matthew: <q>Can we project what will happen if the code gets bigger? ... what happens as we edit? Let's measure and plot response to edits that are valid logic edits (how long does the program take to complete the edit and be ready to be responsive)?</q> Common, made 1, 2, 4, 8 and 16 times its size with renamed copies of its functions, in Hazel and in Fumola. At each size, five edits, each a definition added to Common (a valid logic edit: the program changes, and stays fine), each timed from the change to the rules compiled and ready to answer the next event (the game waits 600 ms after typing stops before it starts this); Hazel's analysis of the whole program, the work its tiles redo after an edit; and one event's script function.</p>
+<svg class="chart" viewBox="0 0 680 450" role="img" aria-label="Time against the program's size, for an edit until ready, Hazel's analysis, and one event"><line x1="60" x2="660" y1="300.0" y2="300.0" stroke="currentColor" opacity="0.12"/><text x="54" y="304.0" text-anchor="end" class="val">0</text><line x1="60" x2="660" y1="242.8" y2="242.8" stroke="currentColor" opacity="0.12"/><text x="54" y="246.8" text-anchor="end" class="val">164</text><line x1="60" x2="660" y1="185.6" y2="185.6" stroke="currentColor" opacity="0.12"/><text x="54" y="189.6" text-anchor="end" class="val">327</text><line x1="60" x2="660" y1="128.4" y2="128.4" stroke="currentColor" opacity="0.12"/><text x="54" y="132.4" text-anchor="end" class="val">491</text><line x1="60" x2="660" y1="71.2" y2="71.2" stroke="currentColor" opacity="0.12"/><text x="54" y="75.2" text-anchor="end" class="val">655</text><line x1="60" x2="660" y1="14.0" y2="14.0" stroke="currentColor" opacity="0.12"/><text x="54" y="18.0" text-anchor="end" class="val">818</text><text x="78.1" y="316" text-anchor="middle" class="val">23</text><text x="96.1" y="316" text-anchor="middle" class="val">46</text><text x="114.2" y="316" text-anchor="middle" class="val">69</text><text x="132.2" y="316" text-anchor="middle" class="val">92</text><text x="147.9" y="316" text-anchor="middle" class="val">112</text><text x="217.0" y="316" text-anchor="middle" class="val">200</text><text x="355.1" y="316" text-anchor="middle" class="val">376</text><text x="631.4" y="316" text-anchor="middle" class="val">728</text><text x="360.0" y="336" text-anchor="middle" class="lab">the program's lines (Common at 1, 2, 4, 8, 16 times its size)</text><text x="12" y="18" class="lab">ms</text><polyline fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="" points="78.1,175.1 96.1,147.8 132.2,40.0"/><circle cx="78.1" cy="175.1" r="3" fill="#7c3aed"/><circle cx="96.1" cy="147.8" r="3" fill="#7c3aed"/><circle cx="132.2" cy="40.0" r="3" fill="#7c3aed"/><line x1="60" x2="90" y1="350" y2="350" stroke="#7c3aed" stroke-width="2" stroke-dasharray=""/><text x="98" y="354" class="lab">Hazel: an edit, until ready</text><polyline fill="none" stroke="#0e7490" stroke-width="2" stroke-dasharray="" points="114.2,254.8 147.9,256.3 217.0,257.8 355.1,254.0 631.4,256.6"/><circle cx="114.2" cy="254.8" r="3" fill="#0e7490"/><circle cx="147.9" cy="256.3" r="3" fill="#0e7490"/><circle cx="217.0" cy="257.8" r="3" fill="#0e7490"/><circle cx="355.1" cy="254.0" r="3" fill="#0e7490"/><circle cx="631.4" cy="256.6" r="3" fill="#0e7490"/><line x1="60" x2="90" y1="372" y2="372" stroke="#0e7490" stroke-width="2" stroke-dasharray=""/><text x="98" y="376" class="lab">Fumola: an edit, until ready</text><polyline fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6 4" points="78.1,209.2 96.1,194.4 132.2,150.5"/><circle cx="78.1" cy="209.2" r="3" fill="#a78bfa"/><circle cx="96.1" cy="194.4" r="3" fill="#a78bfa"/><circle cx="132.2" cy="150.5" r="3" fill="#a78bfa"/><line x1="60" x2="90" y1="394" y2="394" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6 4"/><text x="98" y="398" class="lab">Hazel: the whole program analyzed (the tiles&#x27; work)</text><polyline fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="2 3" points="78.1,299.0 96.1,299.1 132.2,298.9"/><circle cx="78.1" cy="299.0" r="3" fill="#7c3aed"/><circle cx="96.1" cy="299.1" r="3" fill="#7c3aed"/><circle cx="132.2" cy="298.9" r="3" fill="#7c3aed"/><line x1="60" x2="90" y1="416" y2="416" stroke="#7c3aed" stroke-width="2" stroke-dasharray="2 3"/><text x="98" y="420" class="lab">Hazel: the script function, one event</text><polyline fill="none" stroke="#0e7490" stroke-width="2" stroke-dasharray="2 3" points="114.2,299.6 147.9,299.6 217.0,299.6 355.1,299.6 631.4,299.6"/><circle cx="114.2" cy="299.6" r="3" fill="#0e7490"/><circle cx="147.9" cy="299.6" r="3" fill="#0e7490"/><circle cx="217.0" cy="299.6" r="3" fill="#0e7490"/><circle cx="355.1" cy="299.6" r="3" fill="#0e7490"/><circle cx="631.4" cy="299.6" r="3" fill="#0e7490"/><line x1="60" x2="90" y1="438" y2="438" stroke="#0e7490" stroke-width="2" stroke-dasharray="2 3"/><text x="98" y="442" class="lab">Fumola: the script function, one event</text></svg>
+<div class=scroll><table><tr><th>engine</th><th>size</th><th>lines</th><th>first compile</th><th>an edit, until ready (median of 5)</th><th>Hazel's analysis</th><th>script function, one event</th></tr><tr><td>hazel</td><td class=n>1×</td><td class=n>23</td><td class=n>0.1 ms</td><td class=n>357.5 ms <span class=rng>(326.5–476.6)</span></td><td class=n>260 ms</td><td class=n>3 ms</td></tr><tr><td>hazel</td><td class=n>2×</td><td class=n>46</td><td class=n>575.2 ms</td><td class=n>435.4 ms <span class=rng>(412.4–566.3)</span></td><td class=n>302 ms</td><td class=n>2.7 ms</td></tr><tr><td>hazel</td><td class=n>4×</td><td class=n>92</td><td class=n>649.1 ms</td><td class=n>744 ms <span class=rng>(650.9–952.9)</span></td><td class=n>428 ms</td><td class=n>3.2 ms</td></tr><tr><td>hazel</td><td class=n>8×</td><td class=n>184</td><td colspan=4><b>not ready after an edit</b>: <code>248,Stack_overflow,-9</code></td></tr><tr><td>hazel</td><td class=n>16×</td><td class=n>368</td><td colspan=4><b>not ready at first</b>: <code>248,Stack_overflow,-9</code></td></tr><tr><td>fumola</td><td class=n>1×</td><td class=n>69</td><td class=n>208 ms</td><td class=n>129.3 ms <span class=rng>(114.6–134.5)</span></td><td class=n>–</td><td class=n>1.2 ms</td></tr><tr><td>fumola</td><td class=n>2×</td><td class=n>112</td><td class=n>119 ms</td><td class=n>125 ms <span class=rng>(119.2–137.3)</span></td><td class=n>–</td><td class=n>1.2 ms</td></tr><tr><td>fumola</td><td class=n>4×</td><td class=n>200</td><td class=n>122.4 ms</td><td class=n>120.9 ms <span class=rng>(115.4–144)</span></td><td class=n>–</td><td class=n>1.1 ms</td></tr><tr><td>fumola</td><td class=n>8×</td><td class=n>376</td><td class=n>122.8 ms</td><td class=n>131.7 ms <span class=rng>(119.2–149.7)</span></td><td class=n>–</td><td class=n>1.1 ms</td></tr><tr><td>fumola</td><td class=n>16×</td><td class=n>728</td><td class=n>124.8 ms</td><td class=n>124.2 ms <span class=rng>(121.4–146)</span></td><td class=n>–</td><td class=n>1.1 ms</td></tr></table></div>
+<ul><li><b>Hazel's edit time grows with Common</b> (357, 435, 744 ms at 1, 2 and 4 times; one run, five edits each, so the range shown is within a run): roughly linear in the program's length, about 4 ms a line on this runner, before the game's 600 ms typing pause is added. Its whole-program analysis, the work Hazel's tiles redo after an edit, grows the same way (about 250, 300, 430 ms).</li><li><b>At 8 times (184 lines of Common, 23 functions copied 8 times) Hazel's compile overflows the stack</b> in the library's build (js_of_ocaml), the program reported broken and every room left to its JS; at 16 times it overflows at the first compile. The shape that does it: a long chain of definitions in one module, each a let in the one before's scope. A real script would reach it at a few hundred lines. This is worth a test in the library's own suite (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-591"><code class="ref"><b>^ticket(</b>591<b>)</b></code></a>) and a look at where the recursion is (statics over a let chain), not a game workaround.</li><li><b>Fumola's edit time is flat</b> (125 to 132 ms medians from 69 to 728 lines): its rules are defined from the whole text each time, and the text's length does not show at this size; the cost is the instance's fixed work, not the program.</li><li><b>The script function does not depend on the program's size</b> in either engine (Hazel 2.7 to 3.2 ms, Fumola 1.1 to 1.2 ms): an event runs one room's rule, and the copies are never called. What a bigger program costs is the edit and the load, not the play.</li><li><b>Projection:</b> at Hazel's rate, a script twice today's whole program (about 300 lines) would take about a second and a half to be ready after each edit on this runner, more on the laptop, and would sit near the stack limit; Fumola would stay near an eighth of a second. These are one run's numbers on GitHub's computers: the shape, not the exact values, is the finding.</li><li><b>A second run agrees on the shape</b> (run 40038452290, a slower runner throughout): Hazel's edits 492, 583, 953 ms at 1, 2 and 4 times, the same stack overflow at 8 and 16 times; Fumola's 158 to 169 ms at every size. The values move with the runner by a third; the shape does not.</li></ul>
+<h2 id="room">The pit room's rule, three ways<a class="anchor" href="#room" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="room" title="copy this section's address">copy link</button></h2>
+<p>Matthew: <q>let's also show each room with an interesting script, and an example of the three scripts for that room: pit room? include screenshot in report.</q> The trap room over the castle's dungeons, whose rule has the most to it: a red lever flips, and the pits wired to it open or shut; a blue lever gives a pit its boulder or takes it away.</p>
+<div class="pics"><figure><img src="img/trap-game.jpg" alt="The trap room in the game: its two red levers, the pits they open, the boulders&#x27; blue levers." loading="lazy"><figcaption>The trap room in the game: its two red levers, the pits they open, the boulders&#x27; blue levers.</figcaption></figure><figure><img src="img/trap-tiles.jpg" alt="Its rule at max size, in Hazel&#x27;s tiles, with the outline of every box at the left." loading="lazy"><figcaption>Its rule at max size, in Hazel&#x27;s tiles, with the outline of every box at the left.</figcaption></figure><figure><img src="img/common-tiles.jpg" alt="📚 Common at max size, in its tiles: the definitions every room calls, each function&#x27;s type at the left as Hazel infers it, then the program&#x27;s types with their kinds and cases." loading="lazy"><figcaption>📚 Common at max size, in its tiles: the definitions every room calls, each function&#x27;s type at the left as Hazel infers it, then the program&#x27;s types with their kinds and cases.</figcaption></figure></div><p>Its rule, three ways: the game's own JS (the functions the game runs, shown read-only), the Hazel rule and the Fumola rule, each from the run's page, as the game ships them. The Hazel and Fumola rules call Common's helpers (<code>Common.wire</code>, <code>Common.pits_open</code>, <code>Common.pit_moves</code>), and give back commands (<code>Flip</code>, <code>SetPit</code>, <code>LiftBoulder</code>, <code>DropBoulder</code>), which the game then runs, as its JS does directly.</p><div class="code3s"><div class="code3 js"><div class="code3-h">JS (the game&#39;s own)</div><pre><span class="tk-k">function</span> roomLeverPull(side) {
+  <span class="tk-k">if</span> (side[<span class="tk-n">0</span>] <span class="tk-o">===</span> <span class="tk-s">&quot;B&quot;</span>) <span class="tk-k">return</span> roomBoulderPull(side.slice(<span class="tk-n">1</span>));   <span class="tk-c">// (ticket 323: a blue one)</span>
+  <span class="tk-k">if</span> (side <span class="tk-o">===</span> <span class="tk-s">&quot;H&quot;</span>) <span class="tk-k">return</span> hatchLeverPull();   <span class="tk-c">// (ticket 334: a tree room&#x27;s trap door&#x27;s)</span>
+  <span class="tk-k">if</span> (scriptEvent(<span class="tk-s">&quot;TrapRoom&quot;</span>, { tag<span class="tk-o">:</span> <span class="tk-s">&quot;Pull&quot;</span>, value<span class="tk-o">:</span> side })) <span class="tk-k">return</span>;   <span class="tk-c">// (ticket 482: 📜 Scripting&#x27;s rule for the trap room, when it is on)</span>
+  hzJs(<span class="tk-s">&quot;Pull&quot;</span>, () <span class="tk-o">=&gt;</span> roomLeverFlip(side));   <span class="tk-c">// (ticket 531: timed as the rule is)</span>
+}
+
+<span class="tk-k">function</span> roomLeverFlip(side, lids <span class="tk-o">=</span> <span class="tk-k">true</span>) {
+  <span class="tk-k">const</span> <span class="tk-C">B</span> <span class="tk-o">=</span> state.background;
+  <span class="tk-k">if</span> (<span class="tk-C">B</span>.kind <span class="tk-o">!==</span> <span class="tk-s">&quot;castleroom&quot;</span>) <span class="tk-k">return</span>;
+  <span class="tk-k">const</span> <span class="tk-C">K</span> <span class="tk-o">=</span> castleOf(<span class="tk-C">B</span>), n <span class="tk-o">=</span> <span class="tk-C">Math</span>.max(<span class="tk-n">1</span>, <span class="tk-C">Math</span>.min(<span class="tk-C">K</span>.rooms.length, <span class="tk-C">Math</span>.round(<span class="tk-C">B</span>.castleRoom <span class="tk-o">??</span> <span class="tk-n">1</span>))), key <span class="tk-o">=</span> leverKey(side, n, <span class="tk-C">K</span>.id);
+  <span class="tk-k">const</span> was <span class="tk-o">=</span> trapState(<span class="tk-C">B</span>, n, <span class="tk-C">K</span>.id).open;
+  <span class="tk-C">B</span>[key] <span class="tk-o">=</span> <span class="tk-o">!</span>leverDown(<span class="tk-C">B</span>, side, n, <span class="tk-C">K</span>.id);   <span class="tk-c">// (ticket 307: never touched, it was down)</span>
+  changed();
+  <span class="tk-k">const</span> up <span class="tk-o">=</span> <span class="tk-o">!</span><span class="tk-C">B</span>[key], sd <span class="tk-o">=</span> side <span class="tk-o">===</span> <span class="tk-s">&quot;L&quot;</span> <span class="tk-o">?</span> <span class="tk-o">-</span><span class="tk-n">1</span> <span class="tk-o">:</span> <span class="tk-n">1</span>, <span class="tk-C">T</span> <span class="tk-o">=</span> trapState(<span class="tk-C">B</span>, n, <span class="tk-C">K</span>.id), now <span class="tk-o">=</span> <span class="tk-C">T</span>.open;
+  turnArm(`[data<span class="tk-o">-</span>lever<span class="tk-o">=</span><span class="tk-s">&quot;${side}&quot;</span>] .lever<span class="tk-o">-</span>arm`, (up <span class="tk-o">?</span> <span class="tk-n">1</span> <span class="tk-o">:</span> <span class="tk-o">-</span><span class="tk-n">1</span>) <span class="tk-o">*</span> sd <span class="tk-o">*</span> <span class="tk-C">LEVER_TILT</span>, <span class="tk-C">LEVER_TURN</span> <span class="tk-o">*</span> <span class="tk-n">100</span> <span class="tk-o">/</span> <span class="tk-C">T</span>.speed.lever);   <span class="tk-c">// (ticket 328: the room&#x27;s speeds)</span>
+  <span class="tk-k">if</span> (<span class="tk-o">!</span>lids) <span class="tk-k">return</span>;
+  <span class="tk-k">for</span> (<span class="tk-k">const</span> j <span class="tk-k">of</span> [<span class="tk-n">0</span>, <span class="tk-n">1</span>]) <span class="tk-k">if</span> (now[j] <span class="tk-o">!==</span> was[j]) lidSwing(`.pit<span class="tk-o">-</span>lid[data<span class="tk-o">-</span>pit<span class="tk-o">-</span>i<span class="tk-o">=</span><span class="tk-s">&quot;${j}&quot;</span>]`, now[j], <span class="tk-C">PIT_SWING</span> <span class="tk-o">*</span> <span class="tk-n">100</span> <span class="tk-o">/</span> <span class="tk-C">T</span>.speed.lid);   <span class="tk-c">// (ticket 307)</span>
+  <span class="tk-c">// (Matthew: &quot;opened by the red lever (trap door) while standing on it, and no falling sequence was triggered&quot;) a pit opened</span>
+  <span class="tk-c">// under the friend: in they fall, as walking onto it does, once its lid has swung most of the way</span>
+  <span class="tk-k">if</span> (now.some((o, j) <span class="tk-o">=&gt;</span> o <span class="tk-o">&amp;&amp;</span> <span class="tk-o">!</span>was[j])) setTimeout(fallIfOverPit, <span class="tk-n">0.6</span> <span class="tk-o">*</span> <span class="tk-C">PIT_SWING</span> <span class="tk-o">*</span> <span class="tk-n">100</span> <span class="tk-o">/</span> <span class="tk-C">T</span>.speed.lid);
+}
+
+<span class="tk-k">function</span> roomBoulderPull(side) {
+  <span class="tk-k">if</span> (scriptEvent(<span class="tk-s">&quot;TrapRoom&quot;</span>, { tag<span class="tk-o">:</span> <span class="tk-s">&quot;PullBoulder&quot;</span>, value<span class="tk-o">:</span> side })) <span class="tk-k">return</span>;   <span class="tk-c">// (ticket 531: 📜 TrapRoom&#x27;s rule, when it is on)</span>
+  hzJs(<span class="tk-s">&quot;PullBoulder&quot;</span>, () <span class="tk-o">=&gt;</span> {
+    <span class="tk-k">const</span> <span class="tk-C">B</span> <span class="tk-o">=</span> state.background;
+    <span class="tk-k">if</span> (<span class="tk-C">B</span>.kind <span class="tk-o">!==</span> <span class="tk-s">&quot;castleroom&quot;</span>) <span class="tk-k">return</span>;
+    <span class="tk-k">const</span> <span class="tk-C">K</span> <span class="tk-o">=</span> castleOf(<span class="tk-C">B</span>), n <span class="tk-o">=</span> <span class="tk-C">Math</span>.max(<span class="tk-n">1</span>, <span class="tk-C">Math</span>.min(<span class="tk-C">K</span>.rooms.length, <span class="tk-C">Math</span>.round(<span class="tk-C">B</span>.castleRoom <span class="tk-o">??</span> <span class="tk-n">1</span>)));
+    <span class="tk-c">// (ticket 338) the pits this lever works: a fallen rock still on any, lifted away (each rising, and gone from the place&#x27;s</span>
+    <span class="tk-c">// things); else into each a new rock falls, which once landed is a placed rock, &quot;fallen N&quot;, dragged where one likes</span>
+    <span class="tk-k">const</span> <span class="tk-C">T0</span> <span class="tk-o">=</span> trapState(<span class="tk-C">B</span>, n, <span class="tk-C">K</span>.id), mine <span class="tk-o">=</span> [<span class="tk-n">0</span>, <span class="tk-n">1</span>].filter(j <span class="tk-o">=&gt;</span> <span class="tk-C">T0</span>.wire[j] <span class="tk-o">===</span> side <span class="tk-o">&amp;&amp;</span> <span class="tk-C">T0</span>.on[j]), lift <span class="tk-o">=</span> mine.some(j <span class="tk-o">=&gt;</span> <span class="tk-C">T0</span>.covered[j]);
+    roomBoulderAct(side, mine, lift);
+  });
+}</pre></div><div class="code3 hazel"><div class="code3-h">Hazel</div><pre><span class="tk-c"># A red lever pulled: flip it, and each pit wired to it opens or shuts. #</span>
+<span class="tk-c"># A blue lever pulled: each of its pits gets a boulder, or loses one. #</span>
+<span class="tk-k">let</span> on_event <span class="tk-o">=</span> <span class="tk-k">fun</span> (g, e) <span class="tk-o">:</span> (<span class="tk-C">Globals</span>, <span class="tk-C">Event</span>) <span class="tk-o">-&gt;</span>
+  <span class="tk-k">let</span> w <span class="tk-o">=</span> <span class="tk-C">Common</span>.wire(g.wiring, g.draws) <span class="tk-k">in</span>
+  <span class="tk-k">let</span> (w0, w1) <span class="tk-o">=</span> w <span class="tk-k">in</span>
+  <span class="tk-k">case</span> e
+  <span class="tk-o">|</span> <span class="tk-C">Pull</span>(side) <span class="tk-o">=&gt;</span>
+    <span class="tk-k">let</span> (was0, was1) <span class="tk-o">=</span> <span class="tk-C">Common</span>.pits_open(g.lever_L, g.lever_R, w) <span class="tk-k">in</span>
+    <span class="tk-k">let</span> l <span class="tk-o">=</span> <span class="tk-k">if</span> side <span class="tk-o">==</span> <span class="tk-C">L</span> <span class="tk-k">then</span> <span class="tk-o">!</span>g.lever_L <span class="tk-k">else</span> g.lever_L <span class="tk-k">in</span>
+    <span class="tk-k">let</span> r <span class="tk-o">=</span> <span class="tk-k">if</span> side <span class="tk-o">==</span> <span class="tk-C">R</span> <span class="tk-k">then</span> <span class="tk-o">!</span>g.lever_R <span class="tk-k">else</span> g.lever_R <span class="tk-k">in</span>
+    <span class="tk-k">let</span> (now0, now1) <span class="tk-o">=</span> <span class="tk-C">Common</span>.pits_open(l, r, w) <span class="tk-k">in</span>
+    <span class="tk-C">Flip</span>(side, <span class="tk-C">Common</span>.pit_moves(<span class="tk-n">0</span>, was0, now0, <span class="tk-C">Common</span>.pit_moves(<span class="tk-n">1</span>, was1, now1, <span class="tk-C">Done</span>)))
+  <span class="tk-o">|</span> <span class="tk-C">PullBoulder</span>(side) <span class="tk-o">=&gt;</span>
+    <span class="tk-k">let</span> mine0 <span class="tk-o">=</span> w0 <span class="tk-o">==</span> side <span class="tk-o">&amp;&amp;</span> <span class="tk-C">Common</span>.nth(g.pits_on, <span class="tk-n">0</span>) <span class="tk-k">in</span>
+    <span class="tk-k">let</span> mine1 <span class="tk-o">=</span> w1 <span class="tk-o">==</span> side <span class="tk-o">&amp;&amp;</span> <span class="tk-C">Common</span>.nth(g.pits_on, <span class="tk-n">1</span>) <span class="tk-k">in</span>
+    <span class="tk-k">let</span> lift <span class="tk-o">=</span> (mine0 <span class="tk-o">&amp;&amp;</span> <span class="tk-C">Common</span>.nth(g.covered, <span class="tk-n">0</span>)) <span class="tk-o">||</span> (mine1 <span class="tk-o">&amp;&amp;</span> <span class="tk-C">Common</span>.nth(g.covered, <span class="tk-n">1</span>)) <span class="tk-k">in</span>
+    <span class="tk-k">let</span> one <span class="tk-o">=</span> <span class="tk-k">fun</span> (i, mine, k) <span class="tk-o">:</span> (<span class="tk-C">Int</span>, <span class="tk-C">Bool</span>, <span class="tk-C">Cmd</span>) <span class="tk-o">-&gt;</span> <span class="tk-k">if</span> <span class="tk-o">!</span>mine <span class="tk-k">then</span> k <span class="tk-k">else</span> <span class="tk-k">if</span> lift <span class="tk-k">then</span> <span class="tk-C">LiftBoulder</span>(i, k) <span class="tk-k">else</span> <span class="tk-C">DropBoulder</span>(i, k) <span class="tk-k">in</span>
+    one(<span class="tk-n">0</span>, mine0, one(<span class="tk-n">1</span>, mine1, <span class="tk-C">Done</span>))
+  <span class="tk-o">|</span> _ <span class="tk-o">=&gt;</span> <span class="tk-C">Done</span>
+  <span class="tk-k">end</span></pre></div><div class="code3 fumola"><div class="code3-h">Fumola</div><pre><span class="tk-k">module</span> <span class="tk-C">TrapRoom</span> {
+  <span class="tk-c">// a blue lever&#x27;s pit i: nothing if not its own, else its rock lifted or a rock dropped</span>
+  <span class="tk-k">func</span> one(i <span class="tk-o">:</span> <span class="tk-C">Int</span>, mine <span class="tk-o">:</span> <span class="tk-C">Bool</span>, lift <span class="tk-o">:</span> <span class="tk-C">Bool</span>, k <span class="tk-o">:</span> <span class="tk-C">Common</span>.<span class="tk-C">Cmd</span>) <span class="tk-o">:</span> <span class="tk-C">Common</span>.<span class="tk-C">Cmd</span> { <span class="tk-k">if</span> (not mine) { k } <span class="tk-k">else</span> <span class="tk-k">if</span> (lift) { <span class="tk-C">#LiftBoulder</span>(i, k) } <span class="tk-k">else</span> { <span class="tk-C">#DropBoulder</span>(i, k) } };
+  <span class="tk-c">// A red lever pulled: flip it, and each pit wired to it opens or shuts.</span>
+  <span class="tk-c">// A blue lever pulled: each of its pits gets a boulder, or loses one.</span>
+  <span class="tk-k">public</span> <span class="tk-k">func</span> on_event(g <span class="tk-o">:</span> <span class="tk-C">Common</span>.<span class="tk-C">Globals</span>, e <span class="tk-o">:</span> <span class="tk-C">Common</span>.<span class="tk-C">Event</span>) <span class="tk-o">:</span> <span class="tk-C">Common</span>.<span class="tk-C">Cmd</span> {
+    <span class="tk-k">let</span> w <span class="tk-o">=</span> <span class="tk-C">Common</span>.wire(g.wiring, g.draws);
+    <span class="tk-k">let</span> (w0, w1) <span class="tk-o">=</span> w;
+    <span class="tk-k">switch</span> (e) {
+      <span class="tk-k">case</span> (<span class="tk-C">#Pull</span>(side)) {
+        <span class="tk-k">let</span> (was0, was1) <span class="tk-o">=</span> <span class="tk-C">Common</span>.pits_open(g.lever_L, g.lever_R, w);
+        <span class="tk-k">let</span> l <span class="tk-o">=</span> <span class="tk-k">if</span> (side <span class="tk-o">==</span> <span class="tk-C">#L</span>) { not g.lever_L } <span class="tk-k">else</span> { g.lever_L };
+        <span class="tk-k">let</span> r <span class="tk-o">=</span> <span class="tk-k">if</span> (side <span class="tk-o">==</span> <span class="tk-C">#R</span>) { not g.lever_R } <span class="tk-k">else</span> { g.lever_R };
+        <span class="tk-k">let</span> (now0, now1) <span class="tk-o">=</span> <span class="tk-C">Common</span>.pits_open(l, r, w);
+        <span class="tk-C">#Flip</span>(side, <span class="tk-C">Common</span>.pit_moves(<span class="tk-n">0</span>, was0, now0, <span class="tk-C">Common</span>.pit_moves(<span class="tk-n">1</span>, was1, now1, <span class="tk-C">#Done</span>)))
+      };
+      <span class="tk-k">case</span> (<span class="tk-C">#PullBoulder</span>(side)) {
+        <span class="tk-k">let</span> mine0 <span class="tk-o">=</span> (w0 <span class="tk-o">==</span> side) and <span class="tk-C">Common</span>.nth(g.pits_on, <span class="tk-n">0</span>);
+        <span class="tk-k">let</span> mine1 <span class="tk-o">=</span> (w1 <span class="tk-o">==</span> side) and <span class="tk-C">Common</span>.nth(g.pits_on, <span class="tk-n">1</span>);
+        <span class="tk-k">let</span> lift <span class="tk-o">=</span> (mine0 and <span class="tk-C">Common</span>.nth(g.covered, <span class="tk-n">0</span>)) or (mine1 and <span class="tk-C">Common</span>.nth(g.covered, <span class="tk-n">1</span>));
+        one(<span class="tk-n">0</span>, mine0, lift, one(<span class="tk-n">1</span>, mine1, lift, <span class="tk-C">#Done</span>))
+      };
+      <span class="tk-k">case</span> _ { <span class="tk-C">#Done</span> }
+    }
+  }
+}</pre></div></div>
+<h2 id="correct">The same answers, three ways<a class="anchor" href="#correct" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="correct" title="copy this section's address">copy link</button></h2>
+<p>Matthew: <q>what can we say about our CI tests for 3-way functional correctness in this doc?</q> Speed means nothing if the
+rules disagree, so the game holds Hazel's and Fumola's rules to its own JS on every push. Its test workflow has a step
+<i>The rules three ways, JS = Hazel = Fumola</i> (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-567"><code class="ref"><b>^ticket(</b>567<b>)</b></code></a>), with no browser, node
+only, and two checks:</p>
+<ul>
+<li><b>Hazel against the JS:</b> <code>tools/hazelrules531.mjs</code> loads the Hazel library the game loads
+(<a href="https://hazel.org/build/js-library-embed/hazel-lib.js">js-library-embed</a>, build <code>0d66c36618</code>) and the game's own
+<code>25-scripting.js</code>, and builds the program as the page does. It gives every room's <code>on_event</code> every case the
+game can give that room, and compares the commands that come back with what the game's JS does in the same case:
+<b>32,761 comparisons</b>.</li>
+<li><b>Fumola against the same expectations:</b> <code>tools/fumola_rules_check.mjs</code> loads the game's pinned Fumola wasm
+build (<code>877b155851</code>, the one the page loads) and the page's own <code>25-fumola.js</code>. It feeds the
+handlers the cases from the same case makers, and holds the answers to the expectations Hazel is held to, so Fumola must also give
+Hazel's answers. It runs in both of the page's Fumola modes (the World map held in Fumola, and passed in), adds edge cases written
+out one by one, and calls Common's helpers alone: <b>20,649 comparisons</b>.</li>
+</ul>
+<p><b>Reading the table.</b> A case is one situation a room can be in (its globals) and one event; a comparison is one answer
+checked against the JS's answer for that case. Each Hazel case is one call, so its cases and its comparisons are the same number.
+Fumola's page has two modes (the World map held in Fumola, or passed in with each event), and every Fumola case is asked in both, so
+it makes two comparisons; Common's helpers are called once, outside either mode. A few checks are not calls at all (the program
+compiles; the boundary refuses what it cannot write), and count one each. The last row adds each column up to the totals in the
+text above.</p>
+<table><thead><tr><th>what is compared</th><th>Hazel: cases (= comparisons)</th><th>Fumola: cases</th><th>Fumola: comparisons (cases &times; modes)</th><th>the JS's answer comes from</th></tr></thead><tbody><tr><td>the trap room&#x27;s red and blue levers</td><td class=n>2,304</td><td class=n>2,304</td><td class=n>&times; 2 = 4,608</td><td>trapWiring, the game&#x27;s own (01-state.js), with its seeded draws (10-nature.js); the levers&#x27; outcomes restated from their few lines of JS</td></tr><tr><td>the tree houses&#x27; and round room&#x27;s hatches</td><td class=n>14</td><td class=n>14</td><td class=n>&times; 2 = 28</td><td>restated from the hatch lever&#x27;s JS</td></tr><tr><td>placed levers and their trap doors</td><td class=n>108</td><td class=n>108</td><td class=n>&times; 2 = 216</td><td>the game&#x27;s own leverPull and leverPullApply (26-drags-and-start.js), on a stand-in square</td></tr><tr><td>the castle&#x27;s pits, where a fall lands</td><td class=n>1,560</td><td class=n>1,560</td><td class=n>&times; 2 = 3,120</td><td>the pits line as castleroomScene draws it</td></tr><tr><td>ways out of a room</td><td class=n>26,478</td><td class=n>3,978</td><td class=n>&times; 2 = 7,956</td><td>the game&#x27;s own wayOutOf, the 12 room kinds read from ROOM_KINDS</td></tr><tr><td>the world&#x27;s ways, square to square</td><td class=n>2,296</td><td class=n>2,296</td><td class=n>&times; 2 = 4,592</td><td>the game&#x27;s own worldMeets</td></tr><tr><td>edges named one by one, commands written out</td><td class=n>&mdash;</td><td class=n>41</td><td class=n>&times; 2 = 82</td><td>written in the check</td></tr><tr><td>Common&#x27;s helpers called alone</td><td class=n>&mdash;</td><td class=n>42</td><td class=n>&times; 1 = 42</td><td>written in the check</td></tr><tr><td>the program is ready (compiled, no errors)</td><td class=n>1</td><td class=n></td><td></td><td>not a call: checked once</td></tr><tr><td>the Fumola source is ASCII; the list mode holds no map; a text with a quote is refused; literals written as the page writes them</td><td class=n></td><td class=n></td><td class=n>5</td><td>not a call: checked once</td></tr><tr class=total><td><b>comparisons in all</b></td><td class=n><b>32,761</b></td><td></td><td class=n><b>20,649</b></td><td></td></tr></tbody></table>
+<p>Where the game's JS can run in node, the expected answer is that code itself, not a copy of it: the wiring
+(<code>trapWiring</code>), the placed levers (<code>leverPull</code>), the ways out (<code>wayOutOf</code>), the world's ways
+(<code>worldMeets</code>). Only the red, blue and hatch levers' outcomes are restated in the check, from their few lines of JS.
+The step is allowed to fail so that the rest of the run still goes ahead, and a last step then fails the run if the rules
+disagreed. A difference shows as a red run on the branch, after the pictures and the other checks have run.</p>
+<p>In the browser, two more checks play the same events in real pages and compare the game's state afterwards:
+<code>tools/checks/hazellogic531.mjs</code> (<code>?logic=js</code> against <code>?logic=hazel</code>) and
+<code>tools/checks/fumola542.mjs</code> (against <code>?logic=fumola</code> and <code>?logic=fumola-list</code>). They cover the
+trap room wired at random, the hatches, a room of placed levers, the pits under four lever settings, the dungeons' ladders, and a
+world walked as a player walks it. They run with the branch's other checks on GitHub.</p>
+<p><b>Where it stands:</b> at the game's <code>370f532</code>, the three-way step passed on GitHub
+(run <a href="https://github.com/matthewhammer/kids-choice-games/actions/runs/40053184542">40053184542</a>), and both checks print <i>all ok</i> when run in node on the laptop at
+the same commit (their output beside this report: <a href="data/rules-hazel.txt">Hazel</a>, <a href="data/rules-fumola.txt">Fumola</a>).
+Earlier runs on the branch were cancelled by the pushes that followed them, so this is the first one to reach that step since the
+outline work.</p>
+<p><b>What it does not cover:</b></p>
+<ul>
+<li>It checks the rules as the game ships them, not a box someone has edited. An edit is checked only by the game running it.</li>
+<li>Fumola's check has fewer ways-out cases than Hazel's (3,978 against 26,478), on purpose. The Fumola check leaves out the castles of 4 rooms that Hazel&#x27;s takes (it covers every castle of 1 to 3 rooms, and two long ones): with them it made about 25,000 more calls and ran a minute longer, and the rule reads a castle only through two helpers (index_of and nth_s) that the shorter castles already reach. A choice for speed, written in the check (tools/fumola_rules_check.mjs), not a gap found by it.</li>
+<li>Its times are node's, kept only to show the order of things; the speeds in this report are the browser runs above.</li>
+<li>It does not reach the sizes where Hazel overflows its stack (<a href="#scale">As the code grows</a>).</li>
+</ul>
+<p>The same cases are the seed for unit tests in Hazel's library itself (<a href="https://github.com/hazelgrove/hazel/pull/2711">hazelgrove/hazel#2711</a>,
+<a href="https://matthewhammer.org/hazel/dashboard/#ticket-591"><code class="ref"><b>^ticket(</b>591<b>)</b></code></a>), so that the library keeps giving these answers, not just this game.</p>
+<h2 id="next">What next<a class="anchor" href="#next" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="next" title="copy this section's address">copy link</button></h2>
+<ol><li>Find the recursion behind Hazel's stack overflow on a long module (statics over a chain of lets, in the js_of_ocaml build), fix it on the library's branch (<a href="https://github.com/hazelgrove/hazel/pull/2711">#2711</a>), and add the 8x program as a test (<a href="https://matthewhammer.org/hazel/dashboard/#ticket-591"><code class="ref"><b>^ticket(</b>591<b>)</b></code></a>).</li><li>Find and remove Hazel's first-event pause: compile the program when the tab opens or the scripts change (the game already compiles ahead under ?logic=hazel), not on the first lever pulled; then measure the first pull again.</li><li>Measure the same on the laptop and on the iPad, by hand from the game's 🔬 timings once <a href="https://matthewhammer.org/hazel/dashboard/#ticket-568"><code class="ref"><b>^ticket(</b>568<b>)</b></code></a> shows them, against these runner numbers.</li><li>Time the other rooms' events (the world's ways, the castle's pits, placed levers), whose rules do more than the trap room's; the World rule on a big map is where <a href="../030/"><code class="ref"><b>^report(</b>30<b>)</b></code></a> found Hazel slow.</li><li>Re-run after <a href="https://matthewhammer.org/hazel/dashboard/#ticket-587"><code class="ref"><b>^ticket(</b>587<b>)</b></code></a> (the outline from Hazel) and with Hazel's tiles loaded on demand only, to see what the tiles cost the tab.</li></ol>
+<h2 id="method">How this was put together<a class="anchor" href="#method" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="method" title="copy this section's address">copy link</button></h2>
+<p>The check <code>tools/checks/scriptspeed588.mjs</code> (kids-choice-games), run on GitHub's computers (no test browsers run on the laptop) on a branch carrying only it: <code>diag-588</code>, the game at <code>d2ccd0a (diag-588, on script-boxes-566 430fc14)</code> (the script-boxes-566 branch, with the tiles made one at a time), run <a href="https://github.com/matthewhammer/kids-choice-games/actions/runs/40034928882">40034928882</a>, GitHub&#x27;s ubuntu-latest runner, Chrome headless. Hazel's tiles came from <code>hazel.org/build/embed-editable/</code> as it was then (<code>embed-editable, b029bbd1de or cb77919b10 (published 16:20)</code>); the levers' Hazel from <code>js-library-embed</code>.</p>
+<p>Each round: a fresh page; the game's state reset; every room's default set to one engine (Hazel's boxes in tiles); the 📜 Scripting tab opened; the time until Common's box is there, until the engine is ready, and, with Hazel, until each box's tiles say ready; then each script box scrolled into view in turn, 600 ms each; then each box opened at max size from the outline, 600 ms each. The game's animation-frame gaps are recorded for each phase, and the long tasks (over 50 ms) throughout. Rounds in the order JS, Fumola, Hazel, three times. A single runner, so the noise between rounds is the range shown; the runner is not the laptop, and a phone is slower again.</p>
+
+<!-- data-line: begin -->
+<h2 id="data">The data<a class="anchor" href="#data" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="data" title="copy this section's address">copy link</button></h2>
+<ul>
+  <li><b>The numbers, for programs too:</b> every table in this report, and what its numbers measure, is also in this page as JSON, in its <code>&lt;script type="application/json" id="report-data"&gt;</code> element, so a reader or an agent that fetches the page alone has the dataset. The same, with any raw files that survive, is in <a href="https://github.com/matthewhammer/hazel-performance-analysis/tree/main/032/data"><code>032/data/</code></a>.</li>
+</ul>
+<!-- data-line: end -->
+
+</main><!-- refs: begin -->
+<style>
+  code.ref { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; white-space: nowrap; }
+  code.ref b { font-weight: 800; }
+</style>
+<!-- refs: end -->
+<!-- ref-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .ref-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .ref-card .rc-head { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-title { font-weight: 600; margin: 3px 0 4px; }
+  .ref-card .rc-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .ref-card .rc-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .rc-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    vertical-align: 1px; background: #6e7781; }
+  .rc-state.current { background: #1f883d; } .rc-state.queued { background: #9a6700; } .rc-state.open { background: #0969da; }
+  .rc-state.done { background: #8250df; }
+</style>
+<script>
+/* A card for each ^ticket(N) and ^report(N) link, on hover or focus: a
+   ticket from the work dashboard's data (its area, its status, its first
+   line), carried by the dashboard's own pages and read live from the
+   published data anywhere else; a report from its own page, live (its
+   title, date and opening). Once per page load each. */
+(() => {
+  const PUBLIC = "https://matthewhammer.org/hazel-work-notes/dashboard-data/data.json";
+  const DATA = location.port === "8000" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "/data.json" : PUBLIC;
+  /* the dashboard itself carries its tickets (made with the page, changed
+     with it); any other page asks the published data */
+  const EMBED = null;
+  let data = EMBED ? Promise.resolve(EMBED) : null;
+  const loadData = () => data || (data = fetch(DATA, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null));
+  const pages = new Map();
+  const loadReport = url => {
+    if (!pages.has(url)) pages.set(url, fetch(url).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+      const doc = new DOMParser().parseFromString(t, "text/html"), h1 = doc.querySelector("h1");
+      let p = h1 && h1.nextElementSibling;
+      while (p && p.tagName !== "P") p = p.nextElementSibling;
+      const label = (doc.querySelector(".series") || {}).textContent || "";
+      return { title: h1 ? h1.textContent.trim() : doc.title, date: (label.match(/\d{4}-\d{2}-\d{2}/) || [""])[0],
+               lead: p ? p.textContent.replace(/\s+/g, " ").trim() : "" };
+    }).catch(() => null));
+    return pages.get(url);
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, "") + "…";
+  const plain = h => new DOMParser().parseFromString("<div>" + (h || "") + "</div>", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  const lead = h => { const m = /^\s*<b>([\s\S]*?)<\/b>/.exec(h || ""); return m ? plain(m[1]) : cut(plain(h), 200); };
+  const ticketCard = (n, d) => {
+    const open = (d.tickets || []).find(t => t.id === n), closed = (d.closed_tickets || []).find(t => t.id === n), t = open || closed;
+    if (!t) return `<div class="rc-head">^ticket(${n})</div><div class="rc-note">Not on the dashboard.</div>`;
+    const q = (d.queue || []).indexOf(n);
+    const [cls, state] = closed ? ["done", `${t.status || "closed"}, ${t.closed || ""}`]
+      : d.current_ticket === n ? ["current", "current" + (d.current_waiting ? " · ✋❔ waiting on Matthew" : "")]
+      : q >= 0 ? ["queued", `queued, ${q + 1} in line`] : ["open", "open"];
+    return `<div class="rc-head">^ticket(${n}) · ${esc(t.area || "")}<span class="rc-state ${cls}">${esc(state)}</span></div>` +
+      `<div class="rc-title">${esc(lead(t.text))}</div>` +
+      `<div class="rc-meta">${t.added ? "added " + esc(t.added) + " · " : ""}from ${esc(plain(t.source || "") || "?")}</div>` +
+      (closed && t.outcome ? `<div class="rc-meta">${esc(cut(plain(t.outcome), 180))}</div>` : "");
+  };
+  const reportCard = (n, r) => r
+    ? `<div class="rc-head">^report(${n}) · Hazel reports${r.date ? " · " + esc(r.date) : ""}</div>` +
+      `<div class="rc-title">${esc(r.title)}</div>` + (r.lead ? `<div class="rc-meta">${esc(cut(r.lead, 240))}</div>` : "")
+    : `<div class="rc-head">^report(${n})</div><div class="rc-note">The report's page didn't load just now.</div>`;
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = (Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16)) + scrollX) + "px";
+    card.style.top = ((r.bottom + 6 + h < innerHeight ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const refOf = a => { const c = a.querySelector("code.ref"); const m = c && /^\^(ticket|report)\((\d+)\)$/.exec(c.textContent.trim()); return m && { kind: m[1], n: Number(m[2]) }; };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = (a, ref) => {
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "ref-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      card.innerHTML = `<div class="rc-head">^${ref.kind}(${ref.n})</div><div class="rc-note">loading…</div>`;
+      card.hidden = false; place(a);
+      let html;
+      if (ref.kind === "ticket") { const d = await loadData(); html = d ? ticketCard(ref.n, d) : `<div class="rc-head">^ticket(${ref.n})</div><div class="rc-note">The dashboard's data didn't load just now.</div>`; }
+      else html = reportCard(ref.n, await loadReport(a.href));
+      if (over !== a) return;
+      card.innerHTML = html; place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target), r = a && refOf(a); if (r && a !== over) show(a, r); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target), r = a && refOf(a); if (r) show(a, r); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- ref-cards: end -->
+<!-- pr-cards: begin -->
+<style>
+  /* above the nav bar (nav.js draws it at z-index 2147483000-2147483002), or a card on a link in it opens underneath */
+  .pr-card { position: absolute; z-index: 2147483003; width: max-content; max-width: min(380px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line, #d0d7de); background: var(--paper, var(--bg, Canvas));
+    color: var(--ink, CanvasText); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font: 13px/1.45 system-ui, sans-serif; pointer-events: none; }
+  .pr-card .pr-head { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-title { font-weight: 600; margin: 3px 0 4px; }
+  .pr-card .pr-meta { color: var(--muted, GrayText); font-size: 12px; }
+  .pr-card .pr-note { color: var(--muted, GrayText); font-size: 11px; margin-top: 5px; font-style: italic; }
+  .pr-state { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px; vertical-align: 1px; }
+  .pr-base { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 6px; vertical-align: 1px; }
+  .pr-base.dev { background: #dafbe1; color: #116329; } .pr-base.other { background: #fff1c2; color: #7a4b00; }
+  @media (prefers-color-scheme: dark) { .pr-base.dev { background: #12361f; color: #6fdd8b; } .pr-base.other { background: #3d2e00; color: #f2cc60; } }
+  .pr-state.open { background: #1f883d; } .pr-state.merged { background: #8250df; } .pr-state.closed { background: #cf222e; } .pr-state.draft { background: #6e7781; }
+</style>
+<script>
+/* A card for each link to a GitHub PR or issue, on hover or focus: its
+   title, state, the branch a PR targets (dev or not: the distinction that
+   matters, ^ticket(478)), author, dates and comments, asked of GitHub live, once per
+   number per page load; if GitHub does not answer, what it said when the
+   page was built (tools/link_prs.py writes this block). */
+(() => {
+  const CACHED = {"Adapton/fumola#151": {"author": "matthewhammer", "comments": 0, "created": "2026-10-23T19:59:45Z", "kind": "pull", "state": "open", "title": "Fix the traps writing a game's rules found: text !=, literal patterns, whole numbers, order, escapes", "updated": "2026-10-23T19:59:45Z", "base": "main"}, "hazelgrove/hazel#2711": {"author": "matthewhammer", "comments": 1, "created": "2026-10-20T17:35:02Z", "kind": "pull", "state": "draft", "title": "Hazel as a JS library: analyze and run programs from any page", "updated": "2026-10-23T23:17:27Z", "base": "dev"}, "hazelgrove/hazel#2719": {"author": "matthewhammer", "comments": 1, "created": "2026-10-21T21:38:03Z", "kind": "pull", "state": "draft", "title": "Hazel in another page's frame, and a program of named modules (stacked on #2711)", "updated": "2026-10-21T22:03:19Z", "base": "js-library"}, "matthewhammer/kids-choice-games#1": {"author": "matthewhammer", "comments": 0, "created": "2026-10-20T17:43:16Z", "kind": "pull", "state": "open", "title": "🧩 Scripting: the trap room's levers through a Hazel rule", "updated": "2026-10-22T02:33:40Z", "base": "main"}, "matthewhammer/kids-choice-games#2": {"author": "matthewhammer", "comments": 0, "created": "2026-10-22T04:23:36Z", "kind": "pull", "state": "draft", "title": "🧩 Experiment: the rooms' rules in Hazel, against plain JS (ticket 531)", "updated": "2026-10-22T08:10:33Z", "base": "scripting-panel"}, "matthewhammer/kids-choice-games#4": {"author": "matthewhammer", "comments": 0, "created": "2026-10-22T19:00:07Z", "kind": "pull", "state": "draft", "title": "Dress Up: room rules in Fumola (wasm), beside Hazel and plain JS (^ticket(542))", "updated": "2026-10-22T19:11:02Z", "base": "hazel-logic-531"}}, BUILT = "2026-10-24";
+  const RX = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(pull|issues)\/(\d+)$/;
+  const asked = new Map();
+  /* a PR from the pulls endpoint, which has its base branch; an issue from the issues one */
+  const ask = (key, kind) => {
+    if (!asked.has(key)) {
+      const [repo, n] = key.split("#"), pull = kind === "pull";
+      asked.set(key, fetch(`https://api.github.com/repos/${repo}/${pull ? "pulls" : "issues"}/${n}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({ title: j.title, author: j.user && j.user.login, created: j.created_at, updated: j.updated_at,
+                      comments: j.comments, kind: pull || j.pull_request ? "pull" : "issues", base: j.base && j.base.ref,
+                      state: j.merged_at || (j.pull_request && j.pull_request.merged_at) ? "merged" : j.draft ? "draft" : j.state }))
+        .catch(() => null));
+    }
+    return asked.get(key);
+  };
+  const baseChip = d => !d.base ? "" : d.base === "dev"
+    ? `<span class="pr-base dev" title="this PR merges into dev">into dev</span>`
+    : `<span class="pr-base other" title="this PR merges into ${esc(d.base)}, not dev">into ${esc(d.base)}, not dev</span>`;
+  const day = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const ago = iso => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    for (const [u, k] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]])
+      if (s >= k) { const v = Math.floor(s / k); return `${v} ${u}${v === 1 ? "" : "s"} ago`; }
+    return "just now";
+  };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const fill = (key, d, note) => {
+    const [repo, n] = key.split("#"), what = d.kind === "pull" ? "Pull request" : "Issue";
+    return `<div class="pr-head">${esc(repo)} #${n} · ${what}<span class="pr-state ${esc(d.state)}">${esc(d.state)}</span>${baseChip(d)}</div>` +
+      `<div class="pr-title">${esc(d.title)}</div>` +
+      `<div class="pr-meta">by ${esc(d.author)} · opened ${day(d.created)} · updated ${ago(d.updated)} · ${d.comments} comment${d.comments === 1 ? "" : "s"}</div>` +
+      (note ? `<div class="pr-note">${note}</div>` : "");
+  };
+  let card = null, over = null, timer = null;
+  const place = a => {
+    const r = a.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, document.documentElement.clientWidth - w - 16));
+    const below = r.bottom + 6 + h < innerHeight;
+    card.style.left = (left + scrollX) + "px";
+    card.style.top = ((below ? r.bottom + 6 : r.top - 6 - h) + scrollY) + "px";
+  };
+  const hide = () => { clearTimeout(timer); over = null; if (card) card.hidden = true; };
+  const show = a => {
+    const m = RX.exec(a.href);
+    if (!m) return;
+    const key = m[1] + "#" + m[3];
+    over = a; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!card) { card = document.createElement("div"); card.className = "pr-card"; card.setAttribute("role", "tooltip"); document.body.append(card); }
+      const cached = CACHED[key];
+      card.innerHTML = cached ? fill(key, cached, "asking GitHub…") : `<div class="pr-head">${esc(key)}</div><div class="pr-note">asking GitHub…</div>`;
+      card.hidden = false; place(a);
+      const d = await ask(key, m[2]);
+      if (over !== a) return;
+      card.innerHTML = d ? fill(key, d, "")
+        : cached ? fill(key, cached, `GitHub didn't answer just now (its limit is 60 lookups an hour per network): as of ${BUILT}`)
+        : `<div class="pr-head">${esc(key)}</div><div class="pr-note">GitHub didn't answer just now.</div>`;
+      place(a);
+    }, 250);
+  };
+  const linkOf = t => t && t.closest && t.closest("a[href]");
+  document.addEventListener("mouseover", e => { const a = linkOf(e.target); if (a && a !== over && RX.test(a.href)) show(a); });
+  document.addEventListener("mouseout", e => { const a = linkOf(e.target); if (a && a === over && !a.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("focusin", e => { const a = linkOf(e.target); if (a && RX.test(a.href)) show(a); });
+  document.addEventListener("focusout", hide);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  addEventListener("scroll", () => { if (over && card && !card.hidden) place(over); }, { passive: true });
+})();
+</script>
+<!-- pr-cards: end -->
+
+<!-- theme: begin -->
+<style>
+  .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 30; font: 13px system-ui, sans-serif; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--line, #ccc); background: var(--paper, Canvas); color: var(--muted, GrayText);
+    cursor: pointer; opacity: 0.85; }
+  .theme-toggle:hover { opacity: 1; color: var(--ink, CanvasText); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+<script>
+/* The theme switch: Auto (the system's choice), Light, Dark; remembered for this site. */
+(() => {
+  const order = ["auto", "light", "dark"], label = { auto: "◐ auto", light: "☀ light", dark: "☾ dark" };
+  const get = () => { try { return localStorage.getItem("theme") || "auto"; } catch (_) { return "auto"; } };
+  const apply = m => m === "auto" ? document.documentElement.removeAttribute("data-theme")
+                                  : document.documentElement.setAttribute("data-theme", m);
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "theme-toggle";
+  const show = () => { const m = get(); b.textContent = label[m] || label.auto;
+    b.title = "Theme: " + m + ". Click for " + order[(order.indexOf(m) + 1) % 3] + "; remembered on this site."; };
+  b.addEventListener("click", () => {
+    const m = order[(order.indexOf(get()) + 1) % 3];
+    try { m === "auto" ? localStorage.removeItem("theme") : localStorage.setItem("theme", m); } catch (_) {}
+    apply(m); show();
+  });
+  window.addEventListener("storage", e => { if (e.key === "theme") { apply(get()); show(); } });
+  show(); document.body.append(b);
+})();
+</script>
+<!-- theme: end -->
+<!-- report-data: begin -->
+<script type="application/json" id="report-data">
+{
+ "report": 32,
+ "title": "Scripting, Three Ways, Timed",
+ "date": "2026-10-23",
+ "kind": "performance",
+ "status": "work in progress",
+ "question": "Matthew: a speed run of the 📜 Scripting tab with Fumola, Hazel and JS as the default, and the game calling into a script, timed (^ticket(588)).",
+ "files": [
+  "data/correct.json",
+  "data/findings.json",
+  "data/meta.json",
+  "data/rules-fumola.txt",
+  "data/rules-hazel.txt",
+  "data/run.json",
+  "data/runs.json",
+  "data/scale.json",
+  "data/tables.json",
+  "data/trap-code.json"
+ ],
+ "tables_note": "Every table in the page, cell by cell, as printed (units in the column names or the cells); columns are the header row where the table has one.",
+ "tables": [
+  {
+   "section": "Every measure",
+   "section_id": "table",
+   "columns": [
+    "measure",
+    "JS as default",
+    "Fumola as default",
+    "Hazel as default"
+   ],
+   "rows": [
+    [
+     "tab open to Common's box",
+     "51 ms (44–60)",
+     "69 ms (67–91)",
+     "67 ms (54–71)"
+    ],
+    [
+     "engine ready",
+     "–",
+     "92 ms (69–695)",
+     "68 ms (54–72)"
+    ],
+    [
+     "Common's tiles ready",
+     "–",
+     "–",
+     "2,948 ms (2,772–3,688)"
+    ],
+    [
+     "TrapRoom's tiles ready",
+     "–",
+     "–",
+     "3,676 ms (2,948–3,688)"
+    ],
+    [
+     "TreeRoom's tiles ready",
+     "–",
+     "–",
+     "3,676 ms (2,998–3,739)"
+    ],
+    [
+     "Square's tiles ready",
+     "–",
+     "–",
+     "3,676 ms (2,998–4,541)"
+    ],
+    [
+     "World's tiles ready",
+     "–",
+     "–",
+     "3,676 ms (2,998–4,541)"
+    ],
+    [
+     "Castle's tiles ready",
+     "–",
+     "–",
+     "3,676 ms (2,998–4,541)"
+    ],
+    [
+     "loading: median frame",
+     "–",
+     "16.7 ms",
+     "16.7 ms"
+    ],
+    [
+     "loading: 95th percentile frame",
+     "–",
+     "166.6 ms",
+     "16.8 ms (16.7–16.8)"
+    ],
+    [
+     "loading: longest frame",
+     "–",
+     "167 ms",
+     "67 ms (50–67)"
+    ],
+    [
+     "loading: frames over 50 ms",
+     "0",
+     "0 (0–2)",
+     "1 (1–2)"
+    ],
+    [
+     "loading: frames a second",
+     "–",
+     "22.1",
+     "58.3 (58.3–59.1)"
+    ],
+    [
+     "scrolling each box into view: median frame",
+     "16.7 ms",
+     "16.7 ms",
+     "16.7 ms"
+    ],
+    [
+     "scrolling: 95th percentile",
+     "16.8 ms (16.7–16.8)",
+     "16.8 ms (16.7–16.8)",
+     "16.8 ms"
+    ],
+    [
+     "scrolling: longest frame",
+     "67 ms (67–1,483)",
+     "83 ms (67–367)",
+     "67 ms (67–67)"
+    ],
+    [
+     "scrolling: frames over 50 ms",
+     "2 (2–3)",
+     "2 (1–2)",
+     "3 (2–3)"
+    ],
+    [
+     "scrolling: frames a second",
+     "57.4 (42.3–57.6)",
+     "58.3 (54.8–58.8)",
+     "57.9 (57.9–58.1)"
+    ],
+    [
+     "visiting each box at max size: median frame",
+     "16.7 ms",
+     "16.7 ms",
+     "16.7 ms"
+    ],
+    [
+     "visiting: 95th percentile",
+     "16.8 ms",
+     "16.7 ms (16.7–16.8)",
+     "16.8 ms"
+    ],
+    [
+     "visiting: longest frame",
+     "467 ms (67–533)",
+     "33 ms (17–433)",
+     "100 ms (67–683)"
+    ],
+    [
+     "visiting: frames over 50 ms",
+     "3 (2–4)",
+     "0 (0–1)",
+     "8 (7–9)"
+    ],
+    [
+     "visiting: frames a second",
+     "52.4 (51.9–57.9)",
+     "59.8 (54.7–60.0)",
+     "54.4 (47.0–54.6)"
+    ],
+    [
+     "events: the game's call into the script function (median)",
+     "–",
+     "1.600 ms (1.600–1.700)",
+     "3.500 ms (3.500–4.000)"
+    ],
+    [
+     "events: the script function, 95th percentile",
+     "–",
+     "2.600 ms (2.300–4.100)",
+     "6.200 ms (4.700–10.000)"
+    ],
+    [
+     "events: the script function, longest",
+     "–",
+     "2.600 ms (2.300–4.100)",
+     "6.200 ms (4.700–10.000)"
+    ],
+    [
+     "events: the commands it gave, run by the game (median)",
+     "–",
+     "9.100 ms (8.900–9.200)",
+     "9.100 ms (9.000–10.300)"
+    ],
+    [
+     "events: the whole event, engine to commands done (median)",
+     "9.700 ms (9.100–10.000)",
+     "10.700 ms (10.700–11.300)",
+     "13.700 ms (13.300–14.300)"
+    ],
+    [
+     "events: the whole event, longest",
+     "11.000 ms (10.600–17.100)",
+     "17.300 ms (12.000–21.100)",
+     "519.200 ms (502.000–691.400)"
+    ],
+    [
+     "events: a lever pull, at the game's entry point (median)",
+     "9.700 ms (9.100–10.100)",
+     "11.000 ms (10.900–11.600)",
+     "13.900 ms (13.600–14.500)"
+    ],
+    [
+     "events: a lever pull, longest",
+     "11.200 ms (10.600–17.400)",
+     "17.700 ms (12.200–21.500)",
+     "519.400 ms (502.300–691.600)"
+    ],
+    [
+     "long tasks (over 50 ms), all phases",
+     "3 (1–3)",
+     "3 (3–4)",
+     "3"
+    ],
+    [
+     "long tasks' total time",
+     "534 ms (472–2,007)",
+     "630 ms (562–959)",
+     "1,277 ms (1,248–1,720)"
+    ],
+    [
+     "the whole run, tab to end",
+     "13,055 ms (12,930–14,226)",
+     "13,112 ms (13,056–13,701)",
+     "17,419 ms (17,295–18,333)"
+    ]
+   ]
+  },
+  {
+   "section": "As the code grows, and as we edit",
+   "section_id": "scale",
+   "columns": [
+    "engine",
+    "size",
+    "lines",
+    "first compile",
+    "an edit, until ready (median of 5)",
+    "Hazel's analysis",
+    "script function, one event"
+   ],
+   "rows": [
+    [
+     "hazel",
+     "1×",
+     "23",
+     "0.1 ms",
+     "357.5 ms (326.5–476.6)",
+     "260 ms",
+     "3 ms"
+    ],
+    [
+     "hazel",
+     "2×",
+     "46",
+     "575.2 ms",
+     "435.4 ms (412.4–566.3)",
+     "302 ms",
+     "2.7 ms"
+    ],
+    [
+     "hazel",
+     "4×",
+     "92",
+     "649.1 ms",
+     "744 ms (650.9–952.9)",
+     "428 ms",
+     "3.2 ms"
+    ],
+    [
+     "hazel",
+     "8×",
+     "184",
+     "not ready after an edit: 248,Stack_overflow,-9",
+     "not ready after an edit: 248,Stack_overflow,-9",
+     "not ready after an edit: 248,Stack_overflow,-9",
+     "not ready after an edit: 248,Stack_overflow,-9"
+    ],
+    [
+     "hazel",
+     "16×",
+     "368",
+     "not ready at first: 248,Stack_overflow,-9",
+     "not ready at first: 248,Stack_overflow,-9",
+     "not ready at first: 248,Stack_overflow,-9",
+     "not ready at first: 248,Stack_overflow,-9"
+    ],
+    [
+     "fumola",
+     "1×",
+     "69",
+     "208 ms",
+     "129.3 ms (114.6–134.5)",
+     "–",
+     "1.2 ms"
+    ],
+    [
+     "fumola",
+     "2×",
+     "112",
+     "119 ms",
+     "125 ms (119.2–137.3)",
+     "–",
+     "1.2 ms"
+    ],
+    [
+     "fumola",
+     "4×",
+     "200",
+     "122.4 ms",
+     "120.9 ms (115.4–144)",
+     "–",
+     "1.1 ms"
+    ],
+    [
+     "fumola",
+     "8×",
+     "376",
+     "122.8 ms",
+     "131.7 ms (119.2–149.7)",
+     "–",
+     "1.1 ms"
+    ],
+    [
+     "fumola",
+     "16×",
+     "728",
+     "124.8 ms",
+     "124.2 ms (121.4–146)",
+     "–",
+     "1.1 ms"
+    ]
+   ]
+  },
+  {
+   "section": "The same answers, three ways",
+   "section_id": "correct",
+   "columns": [
+    "what is compared",
+    "Hazel: cases (= comparisons)",
+    "Fumola: cases",
+    "Fumola: comparisons (cases × modes)",
+    "the JS's answer comes from"
+   ],
+   "rows": [
+    [
+     "the trap room's red and blue levers",
+     "2,304",
+     "2,304",
+     "× 2 = 4,608",
+     "trapWiring, the game's own (01-state.js), with its seeded draws (10-nature.js); the levers' outcomes restated from their few lines of JS"
+    ],
+    [
+     "the tree houses' and round room's hatches",
+     "14",
+     "14",
+     "× 2 = 28",
+     "restated from the hatch lever's JS"
+    ],
+    [
+     "placed levers and their trap doors",
+     "108",
+     "108",
+     "× 2 = 216",
+     "the game's own leverPull and leverPullApply (26-drags-and-start.js), on a stand-in square"
+    ],
+    [
+     "the castle's pits, where a fall lands",
+     "1,560",
+     "1,560",
+     "× 2 = 3,120",
+     "the pits line as castleroomScene draws it"
+    ],
+    [
+     "ways out of a room",
+     "26,478",
+     "3,978",
+     "× 2 = 7,956",
+     "the game's own wayOutOf, the 12 room kinds read from ROOM_KINDS"
+    ],
+    [
+     "the world's ways, square to square",
+     "2,296",
+     "2,296",
+     "× 2 = 4,592",
+     "the game's own worldMeets"
+    ],
+    [
+     "edges named one by one, commands written out",
+     "—",
+     "41",
+     "× 2 = 82",
+     "written in the check"
+    ],
+    [
+     "Common's helpers called alone",
+     "—",
+     "42",
+     "× 1 = 42",
+     "written in the check"
+    ],
+    [
+     "the program is ready (compiled, no errors)",
+     "1",
+     "",
+     "",
+     "not a call: checked once"
+    ],
+    [
+     "the Fumola source is ASCII; the list mode holds no map; a text with a quote is refused; literals written as the page writes them",
+     "",
+     "",
+     "5",
+     "not a call: checked once"
+    ],
+    [
+     "comparisons in all",
+     "32,761",
+     "",
+     "20,649",
+     ""
+    ]
+   ]
+  }
+ ],
+ "files_on_github": "https://github.com/matthewhammer/hazel-performance-analysis/tree/main/032/data"
+}
+</script>
+<!-- report-data: end -->
+<!-- anchors (tools/add_anchors.py) -->
+<script id="anchors-js">
+/* each section's "copy link": its public address, whichever copy of the page this is (tools/add_anchors.py) */
+(() => {
+  const n = (location.pathname.match(/(\d{3})\/?(index\.html)?$/) || [])[1];
+  const base = n ? "https://matthewhammer.org/hazel/reports/" + n + "/" : location.origin + location.pathname;
+  document.querySelectorAll(".copyanchor").forEach(b => b.addEventListener("click", async () => {
+    const url = base + "#" + b.dataset.id;
+    try { await navigator.clipboard.writeText(url); b.textContent = "copied"; b.classList.add("done"); }
+    catch (e) { prompt("this section's address", url); }
+    setTimeout(() => { b.textContent = "copy link"; b.classList.remove("done"); }, 1500);
+  }));
+})();
+</script>
+</body></html>

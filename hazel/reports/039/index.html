@@ -6,6 +6,17 @@
 <!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hazlets, So Far</title>
+<!-- og: begin (tools/og_previews.py in matthewhammer.github.io: the link preview's text and picture) -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hazlets, So Far">
+<meta property="og:description" content="A Hazlet is a JavaScript program whose event handlers are written in Hazel; Messed Up Dress Up is the first. What has been built since 2026-10-20 (the library on #2711 and #2719, tiles in a frame, the game&#x27;s Scripting tab, hazeljs 0.0.1 on npm), where each piece stands, and what comes next.">
+<meta property="og:url" content="https://matthewhammer.org/hazel/reports/039/">
+<meta property="og:image" content="https://matthewhammer.org/hazel/reports/039/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://matthewhammer.org/hazel/reports/039/og.png">
+<!-- og: end -->
 <meta name="description" content="A Hazlet is a JavaScript program whose event handlers are written in Hazel; Messed Up Dress Up is the first. What has been built since 2026-10-20 (the library on #2711 and #2719, tiles in a frame, the game's Scripting tab, hazeljs 0.0.1 on npm), where each piece stands, and what comes next.">
 <style>  :root {
     --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8;
@@ -241,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <li><p><b>One Hazlet runs today, live.</b> Messed Up Dress Up's 📜 Scripting tab (since 0.0.412, 2026-10-24) holds a Hazel program of modules: 📚 Common, then one module per room that has logic, five rooms in all. Each room's <code>on_event : (Globals, Event) -&gt; Cmd</code> answers the game's events, and each room can be run by Hazel, by Fumola or by the game's own JS (<a href="#what">Figure 1</a>).</p></li>
 <li><p><b>Nothing of it is in Hazel's dev branch yet.</b> The library the game uses, <code>hazel-lib.js</code>, is on two draft PRs, <a href="https://github.com/hazelgrove/hazel/pull/2711">#2711</a> and <a href="https://github.com/hazelgrove/hazel/pull/2719">#2719</a>, both with CI green; GitHub reports that <a href="https://github.com/hazelgrove/hazel/pull/2711">#2711</a> now conflicts with dev. The tiles a player edits in are on a branch with no PR, <code>embed-editable</code>. The game loads both from branch builds (<a href="#status">the table</a>).</p></li>
 <li><p><b>The library is on npm, as <code>hazeljs</code> 0.0.1,</b> since 2026-11-02 at 11:03 MST: one file, entry points for Node and for a script tag, TypeScript declarations and a README. A fresh project installs it from the registry and runs the README's examples. It is built from <a href="https://github.com/hazelgrove/hazel/pull/2719">#2719</a>'s head, so it carries none of dev's changes since 2026-10-19 (<a href="#package">below</a>).</p></li>
-<li><p><b>A Hazel rule is fast enough for a lever, with one pause.</b> In the game, a Hazel rule answers in about 3.5 ms of a 13.7 ms lever pull (Fumola about 1.6 ms, of 10.7). But the first event after a reset waits 0.5 to 0.7 s while the program is built (<code class="ref"><b>^report(</b>32<b>)</b></code>, a draft). Larger rules pay for crossing the boundary, and the fixes for that are on trial branches, not in the game (<a href="#speed">below</a>).</p></li>
+<li><p><b>A Hazel rule is fast enough for a lever, with one pause.</b> In the game, a Hazel rule answers in about 3.5 ms of a 13.7 ms lever pull (Fumola about 1.6 ms, of 10.7). But the first event after a reset waits 0.5 to 0.7 s while the program is built (<a href="../032/"><code class="ref"><b>^report(</b>32<b>)</b></code></a>, a draft). Larger rules pay for crossing the boundary, and the fixes for that are on trial branches, not in the game (<a href="#speed">below</a>).</p></li>
 <li><p><b>Next:</b> the package's checks, its placeholder version and a home for its source; the game loading Hazel from the package; the trap room live in <a href="../034/"><code class="ref"><b>^report(</b>34<b>)</b></code></a>, its rule edited in tiles; and the library's road to dev, which is the meeting's question (<a href="#next">What next</a>, <a href="#meeting">For the meeting</a>).</p></li>
 </ol>
 </div>
@@ -322,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <tr><td class="n">2026-10-22</td><td>The same rules in Fumola, beside Hazel and the game's JS.</td><td><a href="https://matthewhammer.org/hazel/dashboard/#ticket-542"><code class="ref"><b>^ticket(</b>542<b>)</b></code></a></td></tr>
 <tr><td class="n">2026-10-22 to 23</td><td>Tiles in the frame that select, take edits and post each edit's text back; themes, fonts, line numbers, go-to-definition.</td><td><code>embed-editable</code>, 12 commits, no PR</td></tr>
 <tr><td class="n">2026-10-23</td><td>Two days in: five rooms and Common in Hazel and in Fumola, each checked against the game's JS; fixes for Hazel's speed on trial branches.</td><td><a href="../030/"><code class="ref"><b>^report(</b>30<b>)</b></code></a></td></tr>
-<tr><td class="n">2026-10-23</td><td>The game loaded with each of the three as its default, timed as a speed run.</td><td><code class="ref"><b>^report(</b>32<b>)</b></code>, a draft</td></tr>
+<tr><td class="n">2026-10-23</td><td>The game loaded with each of the three as its default, timed as a speed run.</td><td><a href="../032/"><code class="ref"><b>^report(</b>32<b>)</b></code></a>, a draft</td></tr>
 <tr><td class="n">2026-10-24</td><td>📜 Scripting released in the game (0.0.412): the panel, tiles in every box, the event log, Fumola with types, a JS, Hazel or Fumola chip per room.</td><td><a href="https://github.com/matthewhammer/kids-choice-games/pull/1">matthewhammer/kids-choice-games#1</a></td></tr>
 <tr><td class="n">2026-10-25</td><td>A case study of the rules: what they are told, and names and types for every place and thing.</td><td><a href="../033/"><code class="ref"><b>^report(</b>33<b>)</b></code></a></td></tr>
 <tr><td class="n">2026-10-26</td><td>Should the library be official? A suggestion: merge it as experimental, and promise stability for a small core once a second user has used it.</td><td><a href="../034/"><code class="ref"><b>^report(</b>34<b>)</b></code></a></td></tr>
@@ -348,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <h2 id="speed">How fast it is<a class="anchor" href="#speed" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="speed" title="copy this section's address">copy link</button></h2>
 <ul>
-<li><b>A lever, in the game</b> (<code class="ref"><b>^report(</b>32<b>)</b></code>, a draft, 60 pulls each in a browser): a Hazel rule answers in about 3.5 ms, a Fumola rule in about 1.6 ms. The commands then take the game about 9 ms either way, so a whole pull is 9.7 ms with JS, 10.7 with Fumola and 13.7 with Hazel, under a 60 Hz frame. Hazel's one slow event is the first after a reset, 0.5 to 0.7 s, while the program is built; Fumola's slowest is 12 to 21 ms. Hazel's tiles take about 3.7 s to fill all six boxes, while the page keeps drawing.</li>
+<li><b>A lever, in the game</b> (<a href="../032/"><code class="ref"><b>^report(</b>32<b>)</b></code></a>, a draft, 60 pulls each in a browser): a Hazel rule answers in about 3.5 ms, a Fumola rule in about 1.6 ms. The commands then take the game about 9 ms either way, so a whole pull is 9.7 ms with JS, 10.7 with Fumola and 13.7 with Hazel, under a 60 Hz frame. Hazel's one slow event is the first after a reset, 0.5 to 0.7 s, while the program is built; Fumola's slowest is 12 to 21 ms. Hazel's tiles take about 3.7 s to fill all six boxes, while the page keeps drawing.</li>
 <li><b>Crossing the boundary</b> (<a href="../025/"><code class="ref"><b>^report(</b>25<b>)</b></code></a>, in Node): the library turns the whole JS argument into Hazel syntax, gives every node a fresh id, and evaluates it back into the value it already was. For the World rule's argument at 16&times;16 that floor is 8.5 to 10.6 ms a call, whatever the rule does.</li>
 <li><b>On trial branches</b> (<a href="../030/"><code class="ref"><b>^report(</b>30<b>)</b></code></a>, on GitHub's runners): with closures kept across the boundary, lists not re-typed in loops, a big value crossing once as a handle, and values skipping the evaluator's stages, a World move went from 241 ms to 0.97 ms. None of these are in the library the game loads.</li>
 </ul>
@@ -396,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <h2 id="method">How this was put together<a class="anchor" href="#method" aria-label="a link to this section">#</a><button type="button" class="copyanchor" data-id="method" title="copy this section's address">copy link</button></h2>
 <ul>
-<li><b>Nothing new was measured.</b> The times are from <a href="../025/"><code class="ref"><b>^report(</b>25<b>)</b></code></a>, <a href="../030/"><code class="ref"><b>^report(</b>30<b>)</b></code></a> and <code class="ref"><b>^report(</b>32<b>)</b></code>, and the package's README, each as its source states them.</li>
+<li><b>Nothing new was measured.</b> The times are from <a href="../025/"><code class="ref"><b>^report(</b>25<b>)</b></code></a>, <a href="../030/"><code class="ref"><b>^report(</b>30<b>)</b></code></a> and <a href="../032/"><code class="ref"><b>^report(</b>32<b>)</b></code></a>, and the package's README, each as its source states them.</li>
 <li><b>The state of each piece</b> was read on 2026-11-03 near 07:20 MST: <code>gh pr view</code> and <code>gh pr checks</code> for <a href="https://github.com/hazelgrove/hazel/pull/2711">#2711</a>, <a href="https://github.com/hazelgrove/hazel/pull/2719">#2719</a> and <a href="https://github.com/hazelgrove/hazel/pull/2681">#2681</a>; <code>git ls-remote</code> and <code>git log</code> for <code>embed-editable</code> against <code>js-library-embed</code>; <code>npm view hazeljs</code>; the game's source at Dress Up 0.0.474 (4d8384b6), <code>js/25-scripting.js</code>, for the program's types and the build URLs it loads; and the work dashboard's tickets 668 to 678.</li>
 <li><b>The data</b>: the status table is <code>039/data/status.json</code>; the page is made by <code>039/gen039.py</code> from <code>039/body.html</code>.</li>
   <!-- data-line: begin -->

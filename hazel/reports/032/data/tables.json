@@ -1,0 +1,413 @@
+[
+ {
+  "section": "Every measure",
+  "section_id": "table",
+  "columns": [
+   "measure",
+   "JS as default",
+   "Fumola as default",
+   "Hazel as default"
+  ],
+  "rows": [
+   [
+    "tab open to Common's box",
+    "51 ms (44–60)",
+    "69 ms (67–91)",
+    "67 ms (54–71)"
+   ],
+   [
+    "engine ready",
+    "–",
+    "92 ms (69–695)",
+    "68 ms (54–72)"
+   ],
+   [
+    "Common's tiles ready",
+    "–",
+    "–",
+    "2,948 ms (2,772–3,688)"
+   ],
+   [
+    "TrapRoom's tiles ready",
+    "–",
+    "–",
+    "3,676 ms (2,948–3,688)"
+   ],
+   [
+    "TreeRoom's tiles ready",
+    "–",
+    "–",
+    "3,676 ms (2,998–3,739)"
+   ],
+   [
+    "Square's tiles ready",
+    "–",
+    "–",
+    "3,676 ms (2,998–4,541)"
+   ],
+   [
+    "World's tiles ready",
+    "–",
+    "–",
+    "3,676 ms (2,998–4,541)"
+   ],
+   [
+    "Castle's tiles ready",
+    "–",
+    "–",
+    "3,676 ms (2,998–4,541)"
+   ],
+   [
+    "loading: median frame",
+    "–",
+    "16.7 ms",
+    "16.7 ms"
+   ],
+   [
+    "loading: 95th percentile frame",
+    "–",
+    "166.6 ms",
+    "16.8 ms (16.7–16.8)"
+   ],
+   [
+    "loading: longest frame",
+    "–",
+    "167 ms",
+    "67 ms (50–67)"
+   ],
+   [
+    "loading: frames over 50 ms",
+    "0",
+    "0 (0–2)",
+    "1 (1–2)"
+   ],
+   [
+    "loading: frames a second",
+    "–",
+    "22.1",
+    "58.3 (58.3–59.1)"
+   ],
+   [
+    "scrolling each box into view: median frame",
+    "16.7 ms",
+    "16.7 ms",
+    "16.7 ms"
+   ],
+   [
+    "scrolling: 95th percentile",
+    "16.8 ms (16.7–16.8)",
+    "16.8 ms (16.7–16.8)",
+    "16.8 ms"
+   ],
+   [
+    "scrolling: longest frame",
+    "67 ms (67–1,483)",
+    "83 ms (67–367)",
+    "67 ms (67–67)"
+   ],
+   [
+    "scrolling: frames over 50 ms",
+    "2 (2–3)",
+    "2 (1–2)",
+    "3 (2–3)"
+   ],
+   [
+    "scrolling: frames a second",
+    "57.4 (42.3–57.6)",
+    "58.3 (54.8–58.8)",
+    "57.9 (57.9–58.1)"
+   ],
+   [
+    "visiting each box at max size: median frame",
+    "16.7 ms",
+    "16.7 ms",
+    "16.7 ms"
+   ],
+   [
+    "visiting: 95th percentile",
+    "16.8 ms",
+    "16.7 ms (16.7–16.8)",
+    "16.8 ms"
+   ],
+   [
+    "visiting: longest frame",
+    "467 ms (67–533)",
+    "33 ms (17–433)",
+    "100 ms (67–683)"
+   ],
+   [
+    "visiting: frames over 50 ms",
+    "3 (2–4)",
+    "0 (0–1)",
+    "8 (7–9)"
+   ],
+   [
+    "visiting: frames a second",
+    "52.4 (51.9–57.9)",
+    "59.8 (54.7–60.0)",
+    "54.4 (47.0–54.6)"
+   ],
+   [
+    "events: the game's call into the script function (median)",
+    "–",
+    "1.600 ms (1.600–1.700)",
+    "3.500 ms (3.500–4.000)"
+   ],
+   [
+    "events: the script function, 95th percentile",
+    "–",
+    "2.600 ms (2.300–4.100)",
+    "6.200 ms (4.700–10.000)"
+   ],
+   [
+    "events: the script function, longest",
+    "–",
+    "2.600 ms (2.300–4.100)",
+    "6.200 ms (4.700–10.000)"
+   ],
+   [
+    "events: the commands it gave, run by the game (median)",
+    "–",
+    "9.100 ms (8.900–9.200)",
+    "9.100 ms (9.000–10.300)"
+   ],
+   [
+    "events: the whole event, engine to commands done (median)",
+    "9.700 ms (9.100–10.000)",
+    "10.700 ms (10.700–11.300)",
+    "13.700 ms (13.300–14.300)"
+   ],
+   [
+    "events: the whole event, longest",
+    "11.000 ms (10.600–17.100)",
+    "17.300 ms (12.000–21.100)",
+    "519.200 ms (502.000–691.400)"
+   ],
+   [
+    "events: a lever pull, at the game's entry point (median)",
+    "9.700 ms (9.100–10.100)",
+    "11.000 ms (10.900–11.600)",
+    "13.900 ms (13.600–14.500)"
+   ],
+   [
+    "events: a lever pull, longest",
+    "11.200 ms (10.600–17.400)",
+    "17.700 ms (12.200–21.500)",
+    "519.400 ms (502.300–691.600)"
+   ],
+   [
+    "long tasks (over 50 ms), all phases",
+    "3 (1–3)",
+    "3 (3–4)",
+    "3"
+   ],
+   [
+    "long tasks' total time",
+    "534 ms (472–2,007)",
+    "630 ms (562–959)",
+    "1,277 ms (1,248–1,720)"
+   ],
+   [
+    "the whole run, tab to end",
+    "13,055 ms (12,930–14,226)",
+    "13,112 ms (13,056–13,701)",
+    "17,419 ms (17,295–18,333)"
+   ]
+  ]
+ },
+ {
+  "section": "As the code grows, and as we edit",
+  "section_id": "scale",
+  "columns": [
+   "engine",
+   "size",
+   "lines",
+   "first compile",
+   "an edit, until ready (median of 5)",
+   "Hazel's analysis",
+   "script function, one event"
+  ],
+  "rows": [
+   [
+    "hazel",
+    "1×",
+    "23",
+    "0.1 ms",
+    "357.5 ms (326.5–476.6)",
+    "260 ms",
+    "3 ms"
+   ],
+   [
+    "hazel",
+    "2×",
+    "46",
+    "575.2 ms",
+    "435.4 ms (412.4–566.3)",
+    "302 ms",
+    "2.7 ms"
+   ],
+   [
+    "hazel",
+    "4×",
+    "92",
+    "649.1 ms",
+    "744 ms (650.9–952.9)",
+    "428 ms",
+    "3.2 ms"
+   ],
+   [
+    "hazel",
+    "8×",
+    "184",
+    "not ready after an edit: 248,Stack_overflow,-9",
+    "not ready after an edit: 248,Stack_overflow,-9",
+    "not ready after an edit: 248,Stack_overflow,-9",
+    "not ready after an edit: 248,Stack_overflow,-9"
+   ],
+   [
+    "hazel",
+    "16×",
+    "368",
+    "not ready at first: 248,Stack_overflow,-9",
+    "not ready at first: 248,Stack_overflow,-9",
+    "not ready at first: 248,Stack_overflow,-9",
+    "not ready at first: 248,Stack_overflow,-9"
+   ],
+   [
+    "fumola",
+    "1×",
+    "69",
+    "208 ms",
+    "129.3 ms (114.6–134.5)",
+    "–",
+    "1.2 ms"
+   ],
+   [
+    "fumola",
+    "2×",
+    "112",
+    "119 ms",
+    "125 ms (119.2–137.3)",
+    "–",
+    "1.2 ms"
+   ],
+   [
+    "fumola",
+    "4×",
+    "200",
+    "122.4 ms",
+    "120.9 ms (115.4–144)",
+    "–",
+    "1.1 ms"
+   ],
+   [
+    "fumola",
+    "8×",
+    "376",
+    "122.8 ms",
+    "131.7 ms (119.2–149.7)",
+    "–",
+    "1.1 ms"
+   ],
+   [
+    "fumola",
+    "16×",
+    "728",
+    "124.8 ms",
+    "124.2 ms (121.4–146)",
+    "–",
+    "1.1 ms"
+   ]
+  ]
+ },
+ {
+  "section": "The same answers, three ways",
+  "section_id": "correct",
+  "columns": [
+   "what is compared",
+   "Hazel: cases (= comparisons)",
+   "Fumola: cases",
+   "Fumola: comparisons (cases × modes)",
+   "the JS's answer comes from"
+  ],
+  "rows": [
+   [
+    "the trap room's red and blue levers",
+    "2,304",
+    "2,304",
+    "× 2 = 4,608",
+    "trapWiring, the game's own (01-state.js), with its seeded draws (10-nature.js); the levers' outcomes restated from their few lines of JS"
+   ],
+   [
+    "the tree houses' and round room's hatches",
+    "14",
+    "14",
+    "× 2 = 28",
+    "restated from the hatch lever's JS"
+   ],
+   [
+    "placed levers and their trap doors",
+    "108",
+    "108",
+    "× 2 = 216",
+    "the game's own leverPull and leverPullApply (26-drags-and-start.js), on a stand-in square"
+   ],
+   [
+    "the castle's pits, where a fall lands",
+    "1,560",
+    "1,560",
+    "× 2 = 3,120",
+    "the pits line as castleroomScene draws it"
+   ],
+   [
+    "ways out of a room",
+    "26,478",
+    "3,978",
+    "× 2 = 7,956",
+    "the game's own wayOutOf, the 12 room kinds read from ROOM_KINDS"
+   ],
+   [
+    "the world's ways, square to square",
+    "2,296",
+    "2,296",
+    "× 2 = 4,592",
+    "the game's own worldMeets"
+   ],
+   [
+    "edges named one by one, commands written out",
+    "—",
+    "41",
+    "× 2 = 82",
+    "written in the check"
+   ],
+   [
+    "Common's helpers called alone",
+    "—",
+    "42",
+    "× 1 = 42",
+    "written in the check"
+   ],
+   [
+    "the program is ready (compiled, no errors)",
+    "1",
+    "",
+    "",
+    "not a call: checked once"
+   ],
+   [
+    "the Fumola source is ASCII; the list mode holds no map; a text with a quote is refused; literals written as the page writes them",
+    "",
+    "",
+    "5",
+    "not a call: checked once"
+   ],
+   [
+    "comparisons in all",
+    "32,761",
+    "",
+    "20,649",
+    ""
+   ]
+  ]
+ }
+]

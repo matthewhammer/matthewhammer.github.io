@@ -94,6 +94,94 @@
   ]
  },
  {
+  "section": "What an entry costs as the program grows",
+  "section_id": "persize",
+  "columns": [
+   "Definitions",
+   "Each entry, as kept",
+   "Each entry, kept whole"
+  ],
+  "rows": [
+   [
+    "400",
+    "0.011 MB",
+    "0.55 MB"
+   ],
+   [
+    "1,600",
+    "0.009 MB",
+    "1.9 MB"
+   ],
+   [
+    "6,400",
+    "about 0",
+    "6.9 MB"
+   ]
+  ]
+ },
+ {
+  "section": "How the compaction works",
+  "section_id": "how",
+  "columns": [
+   "Step",
+   "Undo stack, top first",
+   "The page",
+   "Redo stack, top first",
+   "What the step costs"
+  ],
+  "rows": [
+   [
+    "Start",
+    "—",
+    "A",
+    "—",
+    ""
+   ],
+   [
+    "Edit",
+    "A",
+    "B",
+    "—",
+    "an edit"
+   ],
+   [
+    "Edit",
+    "B, A",
+    "C",
+    "—",
+    "an edit; A is compacted as B goes on top of it"
+   ],
+   [
+    "Edit",
+    "C, B, A",
+    "D",
+    "—",
+    "an edit; B is compacted"
+   ],
+   [
+    "Undo",
+    "B, A",
+    "C",
+    "D",
+    "C was whole: no rebuild"
+   ],
+   [
+    "Undo",
+    "A",
+    "B",
+    "C, D",
+    "B was compacted: its syntax is rebuilt; D is compacted"
+   ],
+   [
+    "Redo",
+    "B, A",
+    "C",
+    "D",
+    "C was whole: no rebuild"
+   ]
+  ]
+ },
+ {
   "section": "The price in time",
   "section_id": "price",
   "columns": [
