@@ -55,7 +55,9 @@
         ["Dress Up reports", H + "/hazel/dress-up/reports/", [["The series' own index", K]]],
         ["Dress Up pictures", H + "/hazel/dress-up/pictures.html", [
           ["Every picture, run by run", H + "/dress-up-pictures/"], ["Every picture, by day (to 2026-10-18)", H + "/dress-up-pictures-2026-10-18/"]]],
-        ["Dress Up music", H + "/hazel/dress-up/music.html", [["Every tune, run by run", H + "/dress-up-music/"]]]]]]],
+        ["Dress Up music", H + "/hazel/dress-up/music.html", [["Every tune, run by run", H + "/dress-up-music/"]]]]],
+      // (Matthew, 2026-11-06: "update https://matthewhammer.org/hazel/ to point at petri net example page") the second Hazlet
+      ["Petri net example (hazeljs)", H + "/hazeljs-petri-example/"]]],
     ["Fumola", F + "/", [
       ["Press", F + "/press/"], ["Alignment", F + "/alignment/"], ["Web play", F + "/web-play/"],
       ["Fumola-Hazel integration", F + "/hazel-integration/"], ["Hazel, with Fumola (a build)", F + "/hazel/experimental-lang-integration/"],
