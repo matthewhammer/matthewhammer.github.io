@@ -263,7 +263,7 @@
       "aria-valuemin": "0", "aria-valuemax": "100", "aria-label": "Between the net and the rules",
       title: "Drag to give the net or the rules more room (double-click: as it was)" });
     grid.insertBefore(divider, $(".live-right"));
-    const SPLIT_KEY = "report043-split";
+    const SPLIT_KEY = "live-split:" + location.pathname;   // (per page: this report and the example app share a site)
     const setSplit = (px, keep) => {
       const w = grid.clientWidth;
       if (px == null) {
