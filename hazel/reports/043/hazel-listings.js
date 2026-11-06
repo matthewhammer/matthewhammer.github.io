@@ -138,7 +138,11 @@
       const d = definer(P, String(m.name || ""));
       if (d) reveal(d[0], d[1]);
     } else if (m.type === "edit") {
-      const text = L.module ? String(m.text || "") : String(m.text || "").replace(/\s+$/, "");
+      // (Matthew, 2026-11-06: "introduced error, fixed it, and the other panels did not refresh") A preamble's frame holds
+      // the preamble alone, ending in `in` with nothing after it: an empty hole, which the frame writes as `?`. Taken as it
+      // was, any edit to the preamble left `in?` before the modules, the whole program broken, and every listing showing it
+      // however the edit was undone. The preamble is its text without that hole.
+      const text = L.module ? String(m.text || "") : String(m.text || "").replace(/\s+$/, "").replace(/\bin\s*\?$/, "in");
       if (text === L.text) return;
       L.undo.push(L.text); L.redo = [];
       L.text = text;
