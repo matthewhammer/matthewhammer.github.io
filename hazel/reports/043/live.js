@@ -263,7 +263,9 @@
       "aria-valuemin": "0", "aria-valuemax": "100", "aria-label": "Between the net and the rules",
       title: "Drag to give the net or the rules more room (double-click: as it was)" });
     grid.insertBefore(divider, $(".live-right"));
-    const SPLIT_KEY = "live-split:" + location.pathname;   // (per page: this report and the example app share a site)
+    // (the first column's share, whichever column a page puts first: the example app puts the rules there, as code is put
+    // on the left in Messed Up Dress Up; per page, as this report and the app share a site)
+    const SPLIT_KEY = "live-split-first:" + location.pathname;
     const setSplit = (px, keep) => {
       const w = grid.clientWidth;
       if (px == null) {
@@ -299,7 +301,7 @@
       const d = { ArrowLeft: -40, ArrowRight: 40 }[e.key];
       if (!d) return;
       e.preventDefault();
-      setSplit($(".live-left").getBoundingClientRect().width + d, true);
+      setSplit(divider.getBoundingClientRect().left - grid.getBoundingClientRect().left - 6 + d, true);   // (the first column, by the divider)
     });
     const fsBtn = el("button", { type: "button", id: "live-fs", title: "the example, full screen", text: "⛶ full screen" });
     $(".live-controls").append(fsBtn);

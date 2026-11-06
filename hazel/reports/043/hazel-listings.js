@@ -221,6 +221,18 @@
       queue.push(L);
     }
     if (!listings.length) return;
+    // (a page needs no stylesheet of its own for the listings: these defaults, the text hidden once the editor shows, have no
+    // weight, by :where(), so any rule of the page's wins; for hazeljs's copy, loaded from npm, Matthew 2026-11-06: "it would
+    // be best to have that public package reflect what we do, overall, including documentation")
+    if (!document.getElementById("hazel-listings-defaults")) {
+      const st = document.createElement("style");
+      st.id = "hazel-listings-defaults";
+      st.textContent = ':where(.hazel-listing[data-state="loading"], .hazel-listing[data-state="tiles"]) > :where(pre.hazel) { display: none; }\n'
+        + ":where(.hazel-listing-frame) { border: 0; }\n"
+        + ":where(.hazel-listing-status) { margin: 4px 0 0; padding-left: 1.2em; color: #b45309; }\n"
+        + ":where(.hazel-listing-status[hidden]) { display: none; }\n";
+      document.head.prepend(st);
+    }
     window.addEventListener("message", onMessage);
     const again = () => { const dark = pageDark(); for (const L of listings) if (L.ready) post(L, { type: "theme", dark, contrast: dark }); };
     new MutationObserver(again).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
