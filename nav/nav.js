@@ -58,9 +58,10 @@
         ["Dress Up music", H + "/hazel/dress-up/music.html", [["Every tune, run by run", H + "/dress-up-music/"]]]]],
       // (Matthew, 2026-11-06: "update https://matthewhammer.org/hazel/ to point at petri net example page") the second Hazlet
       ["Petri net example (hazeljs)", H + "/hazeljs-petri-example/"],
-      // (Matthew, 2026-11-15, ^ticket(728)) the third Hazlet: a series of ancient oracles, each its own app
-      ["Ancient oracles (hazeljs)", H + "/hazeljs-oracles/", [
-        ["I Ching", H + "/hazeljs-oracles/i-ching/"], ["Tarot", H + "/hazeljs-oracles/tarot/"]]]]],
+      // (Matthew, 2026-11-15, ^ticket(728); moved 2026-11-19, ^ticket(776)) the third Hazlet: Hazel activities, each its own app
+      ["Hazel activities (hazeljs)", H + "/hazeljs-examples/", [
+        ["I Ching", H + "/hazeljs-examples/i-ching/"], ["Tarot", H + "/hazeljs-examples/tarot/"],
+        ["Astrology", H + "/hazeljs-examples/astrology/"]]]]],
     ["Fumola", F + "/", [
       ["Press", F + "/press/"], ["Alignment", F + "/alignment/"], ["Web play", F + "/web-play/"],
       ["Fumola-Hazel integration", F + "/hazel-integration/"], ["Hazel, with Fumola (a build)", F + "/hazel/experimental-lang-integration/"],
