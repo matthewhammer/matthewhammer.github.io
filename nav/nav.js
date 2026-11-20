@@ -61,7 +61,7 @@
       // (Matthew, 2026-11-15, ^ticket(728); moved 2026-11-19, ^ticket(776)) the third Hazlet: Hazel activities, each its own app
       ["Hazel activities (hazeljs)", H + "/hazeljs-examples/", [
         ["I Ching", H + "/hazeljs-examples/i-ching/"], ["Tarot", H + "/hazeljs-examples/tarot/"],
-        ["Astrology", H + "/hazeljs-examples/astrology/"], ["Solitaire", H + "/hazeljs-examples/solitaire/"], ["Minesweeper", H + "/hazeljs-examples/minesweeper/"], ["Go", H + "/hazeljs-examples/go/"], ["Checkers", H + "/hazeljs-examples/checkers/"]]]]],
+        ["Astrology", H + "/hazeljs-examples/astrology/"], ["Solitaire", H + "/hazeljs-examples/solitaire/"], ["Minesweeper", H + "/hazeljs-examples/minesweeper/"], ["Go", H + "/hazeljs-examples/go/"], ["Checkers", H + "/hazeljs-examples/checkers/"], ["Mahjong", H + "/hazeljs-examples/mahjong/"]]]]],
     ["Fumola", F + "/", [
       ["Press", F + "/press/"], ["Alignment", F + "/alignment/"], ["Web play", F + "/web-play/"],
       ["Fumola-Hazel integration", F + "/hazel-integration/"], ["Hazel, with Fumola (a build)", F + "/hazel/experimental-lang-integration/"],
