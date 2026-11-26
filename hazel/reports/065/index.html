@@ -6,6 +6,17 @@
 <!-- nav: begin --><meta name="theme-support" content="data-theme"><script src="https://matthewhammer.org/nav/nav.js"></script><!-- nav: end -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>hazel-jit’s PR, Described</title>
+<!-- og: begin (tools/og_previews.py in matthewhammer.github.io: the link preview's text and picture) -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="hazel-jit’s PR, Described">
+<meta property="og:description" content="A working draft of the description for hazelgrove/hazel#2859, hazel-jit for dev, to iterate on before it goes on GitHub: an executive summary for whoever decides, an engineering summary for whoever reviews, then the details. Every evaluator test also runs compiled where it compiles: 234 of 289…">
+<meta property="og:url" content="https://matthewhammer.org/hazel/reports/065/">
+<meta property="og:image" content="https://matthewhammer.org/hazel/reports/065/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://matthewhammer.org/hazel/reports/065/og.png">
+<!-- og: end -->
 <meta name="description" content="A working draft of the description for hazelgrove/hazel#2859, hazel-jit for dev, to iterate on before it goes on GitHub: an executive summary for whoever decides, an engineering summary for whoever reviews, then the details. Every evaluator test also runs compiled where it compiles: 234 of 289 do, and none differs from the interpreter. Beside ReScript, Melange and js_of_ocaml, hazel-jit now lays out records as they do, as plain objects. Four ways on the games of hazeljs-examples: hazel-jit now runs their rules 4,148 times as fast as the interpreter and 3.1 times as fast as on 2026-11-19, and takes 3.8 times the time of the same game written by hand in JavaScript, where it took 11.9 times. Gnome world&#x27;s speed run, timed three ways: 44,933 steps in 25.5 s with hazel-jit now, 24.7 s in plain JS, about 4.2 minutes interpreted; the rules are 1.3% of it with hazel-jit, the water most of the rest. With the day&#x27;s changes merged: tail calls as loops, a named function&#x27;s tuple parts as JS arguments, constructors without arguments made once, a module&#x27;s members by name; and where conversion at the edges still costs, and how to bring it down.">
 <style>  :root {
     --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8;

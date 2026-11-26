@@ -2,6 +2,17 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gnome World: Which Parts Are Hazel</title>
+<!-- og: begin (tools/og_previews.py in matthewhammer.github.io: the link preview's text and picture) -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Gnome World: Which Parts Are Hazel">
+<meta property="og:description" content="Which parts of Gnome world are Hazel and which JavaScript, asked of event handling, physics, the world&#x27;s state and the drawing. Hazel decides what the world is and how the gnome moves: the plan from a seed, the gnome&#x27;s step 60 times a second (0.016 ms a call, compiled by hazel-jit), the beavers&#x27;…">
+<meta property="og:url" content="https://matthewhammer.org/hazel/reports/064/">
+<meta property="og:image" content="https://matthewhammer.org/hazel/reports/064/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://matthewhammer.org/hazel/reports/064/og.png">
+<!-- og: end -->
 <meta name="description" content="Which parts of Gnome world are Hazel and which JavaScript, asked of event handling, physics, the world&#x27;s state and the drawing. Hazel decides what the world is and how the gnome moves: the plan from a seed, the gnome&#x27;s step 60 times a second (0.016 ms a call, compiled by hazel-jit), the beavers&#x27; minds, the villagers&#x27; words, the roots. JavaScript holds all the state (nine arrays of 186,368 tiles), takes the input, runs everything else that moves (the water is 2.2 ms of a 2.4 ms step) and draws it all: 92% of the code, 70% of it drawing. Clover the rabbit is Hazel&#x27;s gnome step with JavaScript around it. Since 0.0.107 the magic carpet&#x27;s flight is Hazel&#x27;s too, the cat tail&#x27;s flight was written in Hazel from the start (0.0.116), since 0.0.134 Clover&#x27;s ride, since 0.0.135 the boulders and since 0.0.136 picking things up and since 0.0.137 the wind are Hazel&#x27;s: pieces of a plan to move the logic over piece by piece, each checked against the JavaScript it replaces and timed (in Hazel each takes 3 to 8 times the JavaScript&#x27;s time in Node, under 2.5 µs a step).">
 <style>  :root {
     --bg: #fbfaf7; --paper: #ffffff; --ink: #1f2328; --muted: #5b6470; --line: #e3e0d8;
