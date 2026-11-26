@@ -1,10 +1,10 @@
 {
  "game": "mahjong-solitaire",
- "when": "2026-11-25T16:01:58.558Z",
+ "when": "2026-11-25T17:37:10.281Z",
  "quick": false,
  "machine": {
   "cpus": 4,
-  "model": "AMD EPYC 9V74 80-Core Processor",
+  "model": "AMD EPYC 9V45 96-Core Processor",
   "node": "v22.23.5",
   "platform": "linux 7.0.0-1020-azure"
  },
@@ -18,18 +18,18 @@
   },
   "build": "2c4a61560f22850146835684331f33992d21e9a6"
  },
- "examples": "84760bea3de0bce42a3536850caf5790b94bd1f9",
+ "examples": "05894e1ec845d5bf5e3ec7fb2e38f55a062014ad",
  "once": {
-  "interpretedBuildMs": 1932.593032,
-  "jitBuildMs": 1043.9051719999998,
+  "interpretedBuildMs": 1466.530937,
+  "jitBuildMs": 747.392159,
   "jitCompiled": true,
   "jitReason": null,
-  "compileMs": 915.0933209999998,
+  "compileMs": 752.2456429999997,
   "compiledJsBytes": 75068,
   "runtimeBytes": 23572,
   "wrappedBytes": 101892,
   "pageCompiledFrom": "2af8e537cf",
-  "compiledLoadMs": 2.4279249999999593,
+  "compiledLoadMs": 2.3100109999995766,
   "aotAsIs": true
  },
  "ops": [],
@@ -39,39 +39,47 @@
    "steps": 72,
    "ways": {
     "interpreted": {
-     "ms": 10538.136954999998,
-     "usPerCall": 73181.50663194443,
+     "ms": 7837.752985000006,
+     "usPerCall": 54428.840173611155,
      "calls": 144,
      "reps": 1,
-     "min": 10538.136954999998,
+     "min": 7837.752985000006,
      "same": true
     },
     "jit": {
-     "ms": 1.5282329999899957,
-     "usPerCall": 10.612729166597193,
+     "ms": 1.1664524999987407,
+     "usPerCall": 8.10036458332459,
      "calls": 144,
      "reps": 50,
-     "min": 1.3793310000128258,
+     "min": 1.0337979999931122,
      "same": true
     },
     "jit, fresh copies": {
-     "ms": 30.877987999989273,
-     "usPerCall": 214.43047222214773,
+     "ms": 24.566870000013296,
+     "usPerCall": 170.60326388898122,
      "calls": 144,
      "reps": 5,
-     "min": 29.924517000001288,
+     "min": 21.96569800001089,
      "same": true
     },
     "compiled": {
-     "ms": 7.7362850000035905,
-     "usPerCall": 53.724201388913826,
+     "ms": 5.512022000000798,
+     "usPerCall": 38.27793055556109,
      "calls": 144,
-     "reps": 38,
-     "min": 7.10858900000494,
+     "reps": 50,
+     "min": 4.9170519999970566,
+     "same": true
+    },
+    "plain JS": {
+     "ms": 0.439977999997609,
+     "usPerCall": 3.0554027777611736,
+     "calls": 144,
+     "reps": 50,
+     "min": 0.4070170000086364,
      "same": true
     }
    }
   }
  ],
- "clockNs": 59.92651999999907
+ "clockNs": 76.77684000000227
 }

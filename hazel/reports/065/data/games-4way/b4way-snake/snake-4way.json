@@ -1,12 +1,12 @@
 {
  "game": "snake",
- "when": "2026-11-25T16:01:44.641Z",
+ "when": "2026-11-25T17:36:56.019Z",
  "quick": false,
  "machine": {
   "cpus": 4,
-  "model": "AMD EPYC 7763 64-Core Processor",
+  "model": "Intel(R) Xeon(R) 6975P-C",
   "node": "v22.23.5",
-  "platform": "linux 7.0.0-1020-azure"
+  "platform": "linux 7.0.0-1016-aws"
  },
  "package": {
   "name": "hazeljs",
@@ -18,60 +18,68 @@
   },
   "build": "2c4a61560f22850146835684331f33992d21e9a6"
  },
- "examples": "84760bea3de0bce42a3536850caf5790b94bd1f9",
+ "examples": "05894e1ec845d5bf5e3ec7fb2e38f55a062014ad",
  "once": {
-  "interpretedBuildMs": 728.9982439999999,
-  "jitBuildMs": 251.56188100000008,
+  "interpretedBuildMs": 662.427258,
+  "jitBuildMs": 314.347536,
   "jitCompiled": true,
   "jitReason": null,
-  "compileMs": 213.9579839999999,
-  "compiledJsBytes": 19642,
+  "compileMs": 288.8584250000001,
+  "compiledJsBytes": 29092,
   "runtimeBytes": 23572,
-  "wrappedBytes": 45250,
-  "pageCompiledFrom": "7d310be18a",
-  "compiledLoadMs": 1.9223560000000361,
+  "wrappedBytes": 54886,
+  "pageCompiledFrom": "c6d3f505d9",
+  "compiledLoadMs": 1.1076580000001286,
   "aotAsIs": true
  },
  "ops": [],
  "runs": [
   {
-   "name": "116 frames (the robot's turns, one of chance now and then)",
-   "steps": 116,
+   "name": "105 frames (the robot's turns, one of chance now and then)",
+   "steps": 105,
    "ways": {
     "interpreted": {
-     "ms": 315.11217000000056,
-     "usPerCall": 2716.4842241379356,
-     "calls": 116,
+     "ms": 172.9110399999995,
+     "usPerCall": 1646.771809523805,
+     "calls": 105,
      "reps": 1,
-     "min": 315.11217000000056,
+     "min": 172.9110399999995,
      "same": true
     },
     "jit": {
-     "ms": 0.5365160000011429,
-     "usPerCall": 4.6251379310443355,
-     "calls": 116,
+     "ms": 0.3033529999994471,
+     "usPerCall": 2.8890761904709246,
+     "calls": 105,
      "reps": 50,
-     "min": 0.14659600000004502,
+     "min": 0.20631199999957062,
      "same": true
     },
     "jit, fresh copies": {
-     "ms": 0.3356735000000981,
-     "usPerCall": 2.893737068966363,
-     "calls": 116,
+     "ms": 0.21056349999992108,
+     "usPerCall": 2.005366666665915,
+     "calls": 105,
      "reps": 50,
-     "min": 0.24341099999833204,
+     "min": 0.17698699999937162,
      "same": true
     },
     "compiled": {
-     "ms": 0.5560409999994818,
-     "usPerCall": 4.793456896547256,
-     "calls": 116,
+     "ms": 0.45855699999992794,
+     "usPerCall": 4.367209523808838,
+     "calls": 105,
      "reps": 50,
-     "min": 0.40413099999955193,
+     "min": 0.24195700000018405,
+     "same": true
+    },
+    "plain JS": {
+     "ms": 0.11062500000059572,
+     "usPerCall": 1.053571428577102,
+     "calls": 105,
+     "reps": 50,
+     "min": 0.07093300000110503,
      "same": true
     }
    }
   }
  ],
- "clockNs": 180.57305000000042
+ "clockNs": 53.82934999999861
 }
